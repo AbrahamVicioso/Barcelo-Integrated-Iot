@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
-namespace Authentication.Persistence.Data
+namespace Authentication.Api.Data
 {
     public class AuthenticationDbContext : IdentityDbContext<User>
     {

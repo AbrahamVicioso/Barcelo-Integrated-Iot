@@ -23,7 +23,7 @@
           "Port": 5284
         }
       ],
-      "UpstreamPathTemplate": "/api/users/{everything}",
+      "UpstreamPathTemplate": "/api/user/{everything}",
       "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE" ]
     },
     // Route for Reservas Service
@@ -36,11 +36,11 @@
           "Port": 5141
         }
       ],
-      "UpstreamPathTemplate": "/api/reservas/{everything}",
+      "UpstreamPathTemplate": "/api/reserva/{everything}",
       "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE" ]
     }
   ],
   "GlobalConfiguration": {
-    "BaseUrl": "https://localhost:5019"
+    "BaseUrl": "http://localhost:5019"
   }
 }
