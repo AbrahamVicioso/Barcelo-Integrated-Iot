@@ -1,0 +1,17 @@
+[
+  {
+    "Name": "Startup Project",
+    "Projects": [
+      {
+        "Path": "Authenticate\\Authentication.Api\\Authentication.Api.csproj",
+        "Action": "Start",
+        "DebugTarget": "http"
+      },
+      {
+        "Path": "ApiGateway\\ApiGateway.csproj",
+        "Action": "Start",
+        "DebugTarget": "http"
+      }
+    ]
+  }
+]
