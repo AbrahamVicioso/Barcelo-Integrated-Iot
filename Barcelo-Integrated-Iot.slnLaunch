@@ -16,6 +16,11 @@
         "Path": "Usuarios\\Usuarios.API\\Usuarios.API.csproj",
         "Action": "Start",
         "DebugTarget": "http"
+      },
+      {
+        "Path": "Reservas\\Reservas.API\\Reservas.API.csproj",
+        "Action": "Start",
+        "DebugTarget": "http"
       }
     ]
   }
