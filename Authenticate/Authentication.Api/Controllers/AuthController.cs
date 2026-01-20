@@ -1,7 +1,10 @@
-﻿using Authentication.Domain.Entities;
+﻿using Authentication.Api.Contracts;
+using Authentication.Api.UseCases.Commands.LoginUser;
+using Authentication.Domain.Entities;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Wolverine;
 
 namespace Authentication.Api.Controllers
 {
@@ -9,30 +12,23 @@ namespace Authentication.Api.Controllers
     [ApiController]
     public class AuthController : ControllerBase
     {
-        private readonly UserManager<User> _userManager;
-        private readonly SignInManager<User> _signInManager;
+        private readonly IMessageBus _bus;
 
-        public AuthController(UserManager<User> userManager, SignInManager<User> signInManager)
+        public AuthController(IMessageBus bus)
         {
-            this._userManager = userManager;
-            this._signInManager = signInManager;
+            this._bus = bus;
         }
 
         [HttpPost]
         public async Task<IActionResult> Login(LoginRequest loginRequest)
-        {
-            var user = await _userManager.FindByEmailAsync(loginRequest.Email);
-
-            if (user == null)
+        {   
+            await _bus.InvokeAsync<LoginUserCommand>(new LoginUserCommand
             {
-                return Unauthorized("Invalid email or password.");
-            }
+                Email = loginRequest.Email,
+                Password = loginRequest.Password
+            });
 
-            var result = await _userManager.CheckPasswordAsync(user, loginRequest.Password);
-
-            if (!result) return Unauthorized();
-
-            return Ok("Login successful.");
+            return Ok();
         }
     }
 
