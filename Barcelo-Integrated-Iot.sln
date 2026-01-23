@@ -47,7 +47,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Infrastructure", "Infrastru
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Database", "Database", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
 EndProject
-Project("{00D1A9C2-B5F0-4AF3-8072-F6C62B433612}") = "SqlServer.Database", "SqlServer.Database\SqlServer.Database.sqlproj", "{E9A88746-74E3-406B-B5FB-1304B591316E}"
+Project("{00D1A9C2-B5F0-4AF3-8072-F6C62B433612}") = "BarceloIoTDatabase", "SqlServer.Database\BarceloIoTDatabase.sqlproj", "{E9A88746-74E3-406B-B5FB-1304B591316E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
