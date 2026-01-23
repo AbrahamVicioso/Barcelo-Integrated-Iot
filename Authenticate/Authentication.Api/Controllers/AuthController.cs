@@ -2,8 +2,11 @@
 using Authentication.Api.UseCases.Commands.LoginUser;
 using Authentication.Api.UseCases.Commands.RegisterUser;
 using Authentication.Domain.Entities;
+using Microsoft.AspNetCore.Authentication.BearerToken;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
 using Wolverine;
 
@@ -21,15 +24,9 @@ namespace Authentication.Api.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Login(LoginRequest loginRequest)
-        {   
-            await _bus.InvokeAsync<LoginUserCommand>(new LoginUserCommand
-            {
-                Email = loginRequest.Email,
-                Password = loginRequest.Password
-            });
-
-            return Ok();
+        public async Task<Results<Ok<AccessTokenResponse>, EmptyHttpResult, ProblemHttpResult>> Login(LoginRequest loginRequest)
+        {
+            return await _bus.InvokeAsync<Results<Ok<AccessTokenResponse>, EmptyHttpResult, ProblemHttpResult>>(loginRequest);
         }
 
         [HttpPost]
@@ -43,18 +40,5 @@ namespace Authentication.Api.Controllers
 
             return Ok();
         }
-    }
-
-    public class LoginRequest
-    {
-        public string Email { get; set; }
-        public string Password { get; set; }
-    }
-
-    public class RegisterRequest
-    {
-        public string Email { get; set; }
-        public string Password { get; set; }
-        public string Username { get; set; }
     }
 }

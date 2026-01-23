@@ -1,7 +1,9 @@
 ﻿using Authentication.Api.Contracts;
 using Authentication.Api.Data;
 using Authentication.Api.Services;
+using Authentication.Api.UseCases.Commands.LoginUser;
 using Microsoft.EntityFrameworkCore;
+using Wolverine;
 
 namespace Authentication.Api
 {
@@ -15,6 +17,11 @@ namespace Authentication.Api
             });
 
             services.AddScoped<IJwtGenerator, JwtGenerator>();
+
+            services.AddWolverine(opts =>
+            {
+                opts.Discovery.IncludeAssembly(typeof(LoginUserHandler).Assembly);
+            });
 
             return services;
         }

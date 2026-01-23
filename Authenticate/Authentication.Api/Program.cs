@@ -15,7 +15,7 @@ builder.Services.AddOpenApi();
 builder.Services.AddAuthorizationConfiguration();
 builder.Services.AddServicesDependency();
 
-builder.Host.UseWolverine();
+//builder.Host.UseWolverine();
 
 builder.Services.AddCors(options =>
 {
