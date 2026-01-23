@@ -45,6 +45,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Core", "Core", "{2EF5EEE0-0
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Infrastructure", "Infrastructure", "{5F40C3DB-4F58-4B31-9748-0527B56997E3}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Database", "Database", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
+EndProject
+Project("{00D1A9C2-B5F0-4AF3-8072-F6C62B433612}") = "SqlServer.Database", "SqlServer.Database\SqlServer.Database.sqlproj", "{E9A88746-74E3-406B-B5FB-1304B591316E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -91,6 +95,12 @@ Global
 		{83A7506B-334B-2C8D-17E4-1DE83998BEA7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{83A7506B-334B-2C8D-17E4-1DE83998BEA7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{83A7506B-334B-2C8D-17E4-1DE83998BEA7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E9A88746-74E3-406B-B5FB-1304B591316E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E9A88746-74E3-406B-B5FB-1304B591316E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E9A88746-74E3-406B-B5FB-1304B591316E}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
+		{E9A88746-74E3-406B-B5FB-1304B591316E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E9A88746-74E3-406B-B5FB-1304B591316E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E9A88746-74E3-406B-B5FB-1304B591316E}.Release|Any CPU.Deploy.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -113,6 +123,7 @@ Global
 		{43F05A5B-9757-4F5D-B334-E5C51D10D60F} = {51E97536-C013-4C40-BFED-2D551DEDDCFD}
 		{2EF5EEE0-0C5A-483F-87C3-0CFD17046A4A} = {51E97536-C013-4C40-BFED-2D551DEDDCFD}
 		{5F40C3DB-4F58-4B31-9748-0527B56997E3} = {51E97536-C013-4C40-BFED-2D551DEDDCFD}
+		{E9A88746-74E3-406B-B5FB-1304B591316E} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {66E40636-A10D-4764-8E34-5D9290000439}
