@@ -7,7 +7,7 @@ namespace Authentication.Api
 {
     static class DependencyInjection
     {
-        public static IServiceCollection AddAuthenticationApi(this IServiceCollection services)
+        public static IServiceCollection AddServicesDependency(this IServiceCollection services)
         {
             services.AddDbContext<AuthenticationDbContext>(opt =>
             {

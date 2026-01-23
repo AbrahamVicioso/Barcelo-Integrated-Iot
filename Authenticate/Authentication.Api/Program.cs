@@ -13,7 +13,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 builder.Services.AddAuthorizationConfiguration();
-builder.Services.AddAuthenticationApi();
+builder.Services.AddServicesDependency();
 
 builder.Host.UseWolverine();
 
@@ -45,11 +45,12 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-using (var scope = app.Services.CreateScope())
-{
-    var services = scope.ServiceProvider;
-    var context = services.GetRequiredService<AuthenticationDbContext>();
-    await context.Database.EnsureCreatedAsync();
-}
+// AUTO GENERATE DB (FOR DEMO PURPOSES ONLY)
+//using (var scope = app.Services.CreateScope())
+//{
+//    var services = scope.ServiceProvider;
+//    var context = services.GetRequiredService<AuthenticationDbContext>();
+//    await context.Database.EnsureCreatedAsync();
+//}
 
 app.Run();

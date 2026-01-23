@@ -1,4 +1,5 @@
-﻿using Authentication.Api.Services;
+﻿using Authentication.Api.Contracts;
+using Authentication.Api.Services;
 using Authentication.Domain.Entities;
 using Microsoft.AspNetCore.Identity;
 
@@ -6,13 +7,12 @@ namespace Authentication.Api.UseCases.Commands.LoginUser
 {
     public class LoginUserHandler
     {
-        public static async Task Handle(LoginUserCommand command, UserManager<User> _userManager, JwtGenerator jwtGenerator)
+        public static async Task Handle(LoginUserCommand command, UserManager<User> _userManager, IJwtGenerator jwtGenerator)
         {
             var user = await _userManager.FindByEmailAsync(command.Email);
 
             if (user == null)
             {
-
                 throw new UnauthorizedAccessException();
             }
 
