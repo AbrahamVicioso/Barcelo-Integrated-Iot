@@ -30,15 +30,9 @@ namespace Authentication.Api.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Register(RegisterRequest loginRequest)
+        public async Task<Results<Ok, ValidationProblem>> Register(RegisterRequest registerRequest)
         {
-            await _bus.InvokeAsync<RegisterUserCommand>(new RegisterUserCommand
-            {
-                Email = loginRequest.Email,
-                Password = loginRequest.Password
-            });
-
-            return Ok();
+            return await _bus.InvokeAsync<Results<Ok, ValidationProblem>> (registerRequest);
         }
     }
 }

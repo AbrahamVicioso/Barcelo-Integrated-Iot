@@ -2,6 +2,8 @@
 using Authentication.Api.Data;
 using Authentication.Api.Services;
 using Authentication.Api.UseCases.Commands.LoginUser;
+using Authentication.Domain.Entities;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Wolverine;
 
