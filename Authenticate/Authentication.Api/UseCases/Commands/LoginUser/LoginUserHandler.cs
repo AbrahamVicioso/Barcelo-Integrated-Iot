@@ -38,10 +38,12 @@ namespace Authentication.Api.UseCases.Commands.LoginUser
                 user
             );
 
+            var refreshToken = jwtGenerator.GenerateRefreshToken();
+
             return TypedResults.Ok(new AccessTokenResponse
             {
                 AccessToken = token,
-                RefreshToken = token,
+                RefreshToken = refreshToken,
                 ExpiresIn = 3600
             });
         }
