@@ -1,9 +1,11 @@
 ﻿
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
+using Reservas.API;
 using Reservas.Application;
 using Reservas.Persistence;
 using Reservas.Persistence.Data;
+using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,17 +15,7 @@ builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
-// ⭐ MISMO Data Protection que la API de Auth
-builder.Services.AddDataProtection()
-    .PersistKeysToFileSystem(new DirectoryInfo(@"C:\SharedKeys")) // MISMA carpeta
-    .SetApplicationName("MiApp"); // MISMO nombre
-
-// Configurar autenticación con Bearer Token de Identity
-builder.Services
-    .AddAuthentication(IdentityConstants.BearerScheme)
-    .AddBearerToken(IdentityConstants.BearerScheme);
-
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorizationServices();
 
 // Register Application and Persistence layers
 builder.Services.AddApplicationLayer();
@@ -43,14 +35,17 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+
+    app.MapScalarApiReference();
+    app.MapGet("/", () => Results.Redirect("/scalar"));
 }
 
 app.UseHttpsRedirection();
 
 app.UseRouting();
 
-
 app.UseCors();
+
 app.UseAuthentication();
 app.UseAuthorization();
 

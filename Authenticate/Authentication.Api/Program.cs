@@ -1,12 +1,5 @@
 ﻿using Authentication.Api;
-using Authentication.Api.Data;
-using Authentication.Domain.Entities;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
-using System.Security.Claims;
-using Wolverine;
 
 var builder = WebApplication.CreateBuilder(args);
 

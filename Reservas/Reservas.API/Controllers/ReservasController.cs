@@ -1,4 +1,5 @@
  using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Reservas.Application.Features.Reservas.Commands;
 using Reservas.Application.Features.Reservas.Queries;
@@ -17,6 +18,7 @@ public class ReservasController : ControllerBase
     }
 
     [HttpGet]
+    [Authorize]
     public async Task<IActionResult> GetAll()
     {
         var result = await _mediator.Send(new GetAllReservasQuery());
