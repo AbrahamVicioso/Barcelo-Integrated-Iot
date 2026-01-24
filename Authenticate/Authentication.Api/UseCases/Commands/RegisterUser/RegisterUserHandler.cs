@@ -1,4 +1,5 @@
 ﻿using Authentication.Api.Services;
+using Authentication.Api.Utils.Commons;
 using Authentication.Domain.Entities;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
@@ -14,7 +15,6 @@ namespace Authentication.Api.UseCases.Commands.RegisterUser
 {
     public class RegisterUserHandler
     {
-
         public static async Task<Results<Ok, ValidationProblem>> Handle(
             RegisterRequest registerRequest,
             UserManager<User> userManager,
@@ -25,7 +25,7 @@ namespace Authentication.Api.UseCases.Commands.RegisterUser
 
             if (string.IsNullOrEmpty(registerRequest.Email) || !_emailAddressAttribute.IsValid(registerRequest.Email))
             {
-                return CreateValidationProblem(IdentityResult.Failed(userManager.ErrorDescriber.InvalidEmail(registerRequest.Email)));
+                return IdentityResult.Failed(userManager.ErrorDescriber.InvalidEmail(registerRequest.Email)).ToValidationProblem();
             }
 
             var user = new User();
@@ -37,43 +37,11 @@ namespace Authentication.Api.UseCases.Commands.RegisterUser
 
             if (!result.Succeeded)
             {
-                return CreateValidationProblem(result);
+                return result.ToValidationProblem();
             }
             
             //AQUI VA EL SERVICIO DE CONFIMATION EMAIL
             return TypedResults.Ok();
-        }
-        private static ValidationProblem CreateValidationProblem(string errorCode, string errorDescription) 
-        {
-            return TypedResults.ValidationProblem(
-                new Dictionary<string, string[]>
-                {
-                    { errorCode, [errorDescription] }
-            });
-        }
-
-        private static ValidationProblem CreateValidationProblem(IdentityResult result)
-        {
-            var errorDictionary = new Dictionary<string, string[]>(1);
-
-            foreach (var error in result.Errors)
-            {
-                string[] newDescriptions;
-
-                if (errorDictionary.TryGetValue(error.Code, out var desriptions)) {
-                    newDescriptions = new string[desriptions.Length + 1];
-                    Array.Copy(desriptions, newDescriptions, desriptions.Length);
-                    newDescriptions[desriptions.Length] = error.Description;
-                }
-                else
-                {
-                    newDescriptions = [error.Description];
-                }
-
-                errorDictionary[error.Code] = newDescriptions;
-            }
-
-            return TypedResults.ValidationProblem(errorDictionary);
         }
     }
 }
