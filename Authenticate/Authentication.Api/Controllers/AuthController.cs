@@ -3,11 +3,15 @@ using Authentication.Api.UseCases.Commands.LoginUser;
 using Authentication.Api.UseCases.Commands.RegisterUser;
 using Authentication.Domain.Entities;
 using Microsoft.AspNetCore.Authentication.BearerToken;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
+using System.Net.Http;
+using System.Security.Claims;
+using System.Threading.Tasks;
 using Wolverine;
 
 namespace Authentication.Api.Controllers
@@ -17,10 +21,12 @@ namespace Authentication.Api.Controllers
     public class AuthController : ControllerBase
     {
         private readonly IMessageBus _bus;
+        private readonly UserManager<User> userManager;
 
-        public AuthController(IMessageBus bus)
+        public AuthController(IMessageBus bus, UserManager<User> userManager)
         {
             this._bus = bus;
+            this.userManager = userManager;
         }
 
         [HttpPost]
@@ -33,6 +39,28 @@ namespace Authentication.Api.Controllers
         public async Task<Results<Ok, ValidationProblem>> Register(RegisterRequest registerRequest)
         {
             return await _bus.InvokeAsync<Results<Ok, ValidationProblem>> (registerRequest);
+        }
+
+        [Authorize]
+        [HttpGet]
+        public async Task<Results<Ok<InfoResponse>, ValidationProblem, NotFound>> Info()
+        {
+            if (await userManager.GetUserAsync(HttpContext?.User as ClaimsPrincipal) is not { } user)
+            {
+                return TypedResults.NotFound();
+            }
+
+            return TypedResults.Ok(await CreateInfoResponseAsync(user, userManager));
+        }
+
+        private static async Task<InfoResponse> CreateInfoResponseAsync<TUser>(TUser user, UserManager<TUser> userManager)
+            where TUser : class
+        {
+            return new()
+            {
+                Email = await userManager.GetEmailAsync(user) ?? throw new NotSupportedException("Users must have an email."),
+                IsEmailConfirmed = await userManager.IsEmailConfirmedAsync(user),
+            };
         }
     }
 }
