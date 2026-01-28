@@ -1,20 +1,20 @@
-﻿using MediatR;
+using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Reservas.Application.DTOs;
-using Reservas.Application.Features.Hoteles.Commands;
-using Reservas.Application.Features.Hoteles.Queries;
+using Reservas.Application.Features.Habitaciones.Commands;
+using Reservas.Application.Features.Habitaciones.Queries;
 using System.Threading.Tasks;
 
 namespace Reservas.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class HotelController : ControllerBase
+    public class HabitacionController : ControllerBase
     {
         private readonly IMediator _mediator;
 
-        public HotelController(IMediator mediator)
+        public HabitacionController(IMediator mediator)
         {
             _mediator = mediator;
         }
@@ -22,30 +22,37 @@ namespace Reservas.API.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
-            var result = await _mediator.Send(new GetAllHotelesQuery());
+            var result = await _mediator.Send(new GetAllHabitacionesQuery());
             return result.IsSuccess ? Ok(result.Data) : BadRequest(result.ErrorMessage);
         }
 
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
         {
-            var result = await _mediator.Send(new GetHotelByIdQuery { HotelId = id });
+            var result = await _mediator.Send(new GetHabitacionByIdQuery { HabitacionId = id });
             return result.IsSuccess ? Ok(result.Data) : NotFound(result.ErrorMessage);
         }
 
-        [HttpPost]
-        public async Task<IActionResult> Create([FromBody] CreateHotelDto hotelDto)
+        [HttpGet("hotel/{hotelId}")]
+        public async Task<IActionResult> GetByHotelId(int hotelId)
         {
-            var result = await _mediator.Send(new CreateHotelCommand { Hotel = hotelDto });
+            var result = await _mediator.Send(new GetHabitacionesByHotelIdQuery { HotelId = hotelId });
+            return result.IsSuccess ? Ok(result.Data) : BadRequest(result.ErrorMessage);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Create([FromBody] CreateHabitacionDto habitacionDto)
+        {
+            var result = await _mediator.Send(new CreateHabitacionCommand { Habitacion = habitacionDto });
             return result.IsSuccess ? CreatedAtAction(nameof(GetById), new { id = result.Data }, result.Data) : BadRequest(result.ErrorMessage);
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, [FromBody] UpdateHotelCommand command)
+        public async Task<IActionResult> Update(int id, [FromBody] UpdateHabitacionCommand command)
         {
-            if (id != command.HotelId)
+            if (id != command.HabitacionId)
             {
-                return BadRequest("El ID del hotel no coincide con el ID de la solicitud.");
+                return BadRequest("El ID de la habitación no coincide con el ID de la solicitud.");
             }
 
             var result = await _mediator.Send(command);
@@ -55,7 +62,7 @@ namespace Reservas.API.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
-            var result = await _mediator.Send(new DeleteHotelCommand { HotelId = id });
+            var result = await _mediator.Send(new DeleteHabitacionCommand { HabitacionId = id });
             return result.IsSuccess ? Ok(result.Data) : NotFound(result.ErrorMessage);
         }
     }

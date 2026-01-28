@@ -1,14 +1,12 @@
 ﻿using Reservas.Domain.Entities;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace Reservas.Application.Interfaces
+namespace Reservas.Application.Interfaces;
+
+public interface IHotelRepository
 {
-    public interface IHotelRepository
-    {
-        Task<IEnumerable<Hotel>> getAll();
-    }
+    Task<IEnumerable<Hotel>> GetAll();
+    Task<Hotel?> GetById(int id);
+    Task AddAsync(Hotel hotel, CancellationToken cancellationToken = default);
+    Task UpdateAsync(Hotel hotel, CancellationToken cancellationToken = default);
+    Task DeleteAsync(Hotel hotel, CancellationToken cancellationToken = default);
 }

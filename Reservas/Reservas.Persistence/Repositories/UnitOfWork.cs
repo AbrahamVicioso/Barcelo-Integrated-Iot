@@ -15,11 +15,15 @@ public class UnitOfWork : IUnitOfWork
         Reservas = new ReservaRepository(_context);
         ActividadesRecreativas = new ActividadRecreativaRepository(_context);
         ReservasActividades = new ReservaActividadRepository(_context);
+        Hoteles = new HotelRepository(_context);
+        Habitaciones = new HabitacionRepository(_context);
     }
 
     public IReservaRepository Reservas { get; private set; }
     public IActividadRecreativaRepository ActividadesRecreativas { get; private set; }
     public IReservaActividadRepository ReservasActividades { get; private set; }
+    public IHotelRepository Hoteles { get; private set; }
+    public IHabitacionRepository Habitaciones { get; private set; }
 
     public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {

@@ -1,5 +1,7 @@
 using AutoMapper;
 using Reservas.Application.DTOs;
+using Reservas.Application.Features.Habitaciones.Commands;
+using Reservas.Application.Features.Hoteles.Commands;
 using Reservas.Application.Features.Reservas.Commands;
 using Reservas.Domain.Entites;
 using Reservas.Domain.Entities;
@@ -28,6 +30,25 @@ public class MappingProfile : Profile
             .ForMember(dest => dest.NumeroReserva, opt => opt.Ignore())
             .ForMember(dest => dest.FechaCreacion, opt => opt.Ignore())
             .ForMember(dest => dest.CreadoPor, opt => opt.Ignore());
+
+        // Hotel mappings
+        CreateMap<CreateHotelDto, Hotel>()
+            .ForMember(dest => dest.HotelId, opt => opt.Ignore())
+            .ForMember(dest => dest.EstaActivo, opt => opt.Ignore())
+            .ForMember(dest => dest.FechaCreacion, opt => opt.Ignore());
+
+        CreateMap<UpdateHotelCommand, Hotel>()
+            .ForMember(dest => dest.FechaCreacion, opt => opt.Ignore());
+
+        // Habitacion mappings
+        CreateMap<Habitacion, HabitacionDto>();
+        CreateMap<CreateHabitacionDto, Habitacion>()
+            .ForMember(dest => dest.HabitacionId, opt => opt.Ignore())
+            .ForMember(dest => dest.FechaCreacion, opt => opt.Ignore());
+
+        CreateMap<UpdateHabitacionCommand, Habitacion>()
+            .ForMember(dest => dest.FechaCreacion, opt => opt.Ignore())
+            .ForMember(dest => dest.Hotel, opt => opt.Ignore());
 
         // ActividadesRecreativa mappings
         CreateMap<ActividadesRecreativa, ActividadRecreativaDto>();
