@@ -1,5 +1,6 @@
 using AutoMapper;
 using Reservas.Application.DTOs;
+using Reservas.Application.Features.Reservas.Commands;
 using Reservas.Domain.Entites;
 using Reservas.Domain.Entities;
 
@@ -11,6 +12,7 @@ public class MappingProfile : Profile
     {
         // Reserva mappings
         CreateMap<Reserva, ReservaDto>();
+        CreateMap<CreateReservaCommand,Reserva >();
         CreateMap<Hotel, HotelesDto>();
         CreateMap<CreateReservaDto, Reserva>()
             .ForMember(dest => dest.ReservaId, opt => opt.Ignore())

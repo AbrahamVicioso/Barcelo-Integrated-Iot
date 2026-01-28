@@ -1,6 +1,6 @@
 using Reservas.Domain.Entites;
 
-namespace Reservas.Domain.Interfaces;
+namespace Reservas.Application.Interfaces;
 
 public interface IActividadRecreativaRepository : IGenericRepository<ActividadesRecreativa>
 {

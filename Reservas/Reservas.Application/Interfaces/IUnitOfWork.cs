@@ -1,4 +1,4 @@
-namespace Reservas.Domain.Interfaces;
+namespace Reservas.Application.Interfaces;
 
 public interface IUnitOfWork : IDisposable
 {

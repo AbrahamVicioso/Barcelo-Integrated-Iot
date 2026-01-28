@@ -49,6 +49,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Database", "Database", "{02
 EndProject
 Project("{00D1A9C2-B5F0-4AF3-8072-F6C62B433612}") = "BarceloIoTDatabase", "SqlServer.Database\BarceloIoTDatabase.sqlproj", "{E9A88746-74E3-406B-B5FB-1304B591316E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Reservas.Email", "Reservas.Email\Reservas.Email.csproj", "{007721B7-E376-4BD6-BF40-8C50FFFB9BAE}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -101,6 +103,10 @@ Global
 		{E9A88746-74E3-406B-B5FB-1304B591316E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E9A88746-74E3-406B-B5FB-1304B591316E}.Release|Any CPU.Build.0 = Release|Any CPU
 		{E9A88746-74E3-406B-B5FB-1304B591316E}.Release|Any CPU.Deploy.0 = Release|Any CPU
+		{007721B7-E376-4BD6-BF40-8C50FFFB9BAE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{007721B7-E376-4BD6-BF40-8C50FFFB9BAE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{007721B7-E376-4BD6-BF40-8C50FFFB9BAE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{007721B7-E376-4BD6-BF40-8C50FFFB9BAE}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -124,6 +130,7 @@ Global
 		{2EF5EEE0-0C5A-483F-87C3-0CFD17046A4A} = {51E97536-C013-4C40-BFED-2D551DEDDCFD}
 		{5F40C3DB-4F58-4B31-9748-0527B56997E3} = {51E97536-C013-4C40-BFED-2D551DEDDCFD}
 		{E9A88746-74E3-406B-B5FB-1304B591316E} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{007721B7-E376-4BD6-BF40-8C50FFFB9BAE} = {5F40C3DB-4F58-4B31-9748-0527B56997E3}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {66E40636-A10D-4764-8E34-5D9290000439}

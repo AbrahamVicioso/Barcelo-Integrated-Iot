@@ -1,6 +1,7 @@
 using MediatR;
 using Reservas.Application.Common;
-using Reservas.Domain.Interfaces;
+using Reservas.Application.Interfaces;
+
 
 namespace Reservas.Application.Features.Reservas.Commands;
 

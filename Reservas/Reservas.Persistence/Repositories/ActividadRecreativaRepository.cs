@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Reservas.Domain.Entites;
-using Reservas.Domain.Interfaces;
 using Reservas.Persistence.Data;
+using Reservas.Application.Interfaces;
 
 namespace Reservas.Persistence.Repositories;
 

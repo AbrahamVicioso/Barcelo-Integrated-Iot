@@ -1,5 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using Reservas.Domain.Interfaces;
+using Reservas.Application.Interfaces;
 using Reservas.Persistence.Data;
 using System.Linq.Expressions;
 

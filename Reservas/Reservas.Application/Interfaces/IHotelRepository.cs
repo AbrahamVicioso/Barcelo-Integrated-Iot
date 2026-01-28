@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Reservas.Domain.Interfaces
+namespace Reservas.Application.Interfaces
 {
     public interface IHotelRepository
     {

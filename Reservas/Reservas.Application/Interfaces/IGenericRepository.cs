@@ -1,6 +1,6 @@
 using System.Linq.Expressions;
 
-namespace Reservas.Domain.Interfaces;
+namespace Reservas.Application.Interfaces;
 
 public interface IGenericRepository<T> where T : class
 {

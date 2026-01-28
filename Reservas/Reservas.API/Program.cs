@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using Reservas.API;
 using Reservas.Application;
+using Reservas.Email;
 using Reservas.Persistence;
 using Reservas.Persistence.Data;
 using Scalar.AspNetCore;
@@ -20,6 +21,7 @@ builder.Services.AddAuthorizationServices();
 // Register Application and Persistence layers
 builder.Services.AddApplicationLayer();
 builder.Services.AddPersistenceLayer();
+builder.Services.AddEmailServices(builder.Configuration);
 
 builder.Services.AddCors(options =>
 {

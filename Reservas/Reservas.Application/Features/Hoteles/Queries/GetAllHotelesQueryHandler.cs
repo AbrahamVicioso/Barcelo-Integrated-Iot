@@ -3,7 +3,7 @@ using MediatR;
 using Reservas.Application.Common;
 using Reservas.Application.DTOs;
 using Reservas.Domain.Entities;
-using Reservas.Domain.Interfaces;
+using Reservas.Application.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;

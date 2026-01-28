@@ -3,7 +3,9 @@ using MediatR;
 using Reservas.Application.Common;
 using Reservas.Application.DTOs;
 using Reservas.Domain.Entites;
-using Reservas.Domain.Interfaces;
+using Reservas.Application.Interfaces;
+
+
 
 namespace Reservas.Application.Features.Reservas.Commands;
 
@@ -11,18 +13,28 @@ public class CreateReservaCommandHandler : IRequestHandler<CreateReservaCommand,
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
+    private readonly IEmailRepository _emailRepository;
+    private readonly IHuespedRepository _huespedRepository;
 
-    public CreateReservaCommandHandler(IUnitOfWork unitOfWork, IMapper mapper)
+    public CreateReservaCommandHandler(IUnitOfWork unitOfWork, IMapper mapper, IEmailRepository repository, IHuespedRepository huespedRepository)
     {
         _unitOfWork = unitOfWork;
         _mapper = mapper;
+        this._emailRepository = repository;
+        this._huespedRepository = huespedRepository;
     }
 
     public async Task<Result<ReservaDto>> Handle(CreateReservaCommand request, CancellationToken cancellationToken)
     {
         try
         {
-            var reserva = _mapper.Map<Reserva>(request);
+            var reserva = new Reserva {
+                FechaCheckIn = request.FechaCheckIn,
+                FechaCheckOut = request.FechaCheckOut,
+                HuespedId = request.HuespedId,
+                HabitacionId = request.HabitacionId,
+                
+            };
 
             // Generate unique reservation number
             reserva.NumeroReserva = $"RES-{DateTime.UtcNow:yyyyMMddHHmmss}-{Guid.NewGuid().ToString("N")[..8].ToUpper()}";
@@ -31,6 +43,10 @@ public class CreateReservaCommandHandler : IRequestHandler<CreateReservaCommand,
 
             await _unitOfWork.Reservas.AddAsync(reserva, cancellationToken);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+            var email = await _huespedRepository.GetHuespedIdByEmail(reserva.HuespedId);
+             
+            await _emailRepository.SendEmailAsync(email, reserva.NumeroReserva, "HOLA" );
 
             var reservaDto = _mapper.Map<ReservaDto>(reserva);
             return Result<ReservaDto>.Success(reservaDto);

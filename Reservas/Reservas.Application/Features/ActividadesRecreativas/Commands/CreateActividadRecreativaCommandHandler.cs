@@ -2,8 +2,8 @@ using AutoMapper;
 using MediatR;
 using Reservas.Application.Common;
 using Reservas.Application.DTOs;
+using Reservas.Application.Interfaces;
 using Reservas.Domain.Entites;
-using Reservas.Domain.Interfaces;
 
 namespace Reservas.Application.Features.ActividadesRecreativas.Commands;
 
