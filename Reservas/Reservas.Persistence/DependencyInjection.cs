@@ -22,6 +22,7 @@ namespace Reservas.Persistence
             services.AddScoped<IReservaRepository, ReservaRepository>();
             services.AddScoped<IActividadRecreativaRepository, ActividadRecreativaRepository>();
             services.AddScoped<IReservaActividadRepository, ReservaActividadRepository>();
+            services.AddScoped<IHotelRepository, HotelRepository>();
 
             return services;
         }

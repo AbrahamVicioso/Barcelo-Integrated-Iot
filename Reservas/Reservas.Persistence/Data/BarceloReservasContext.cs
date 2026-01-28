@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Reservas.Domain.Entites;
+using Reservas.Domain.Entities;
 
 namespace Reservas.Persistence.Data;
 
@@ -18,91 +19,19 @@ public partial class BarceloReservasContext : DbContext
 
     public virtual DbSet<Reserva> Reservas { get; set; }
 
-    public virtual DbSet<ReservasActividade> ReservasActividades { get; set; }
+    public virtual DbSet<Hotel> Hoteles { get; set; }
+
+    public virtual DbSet<ActividadesRecreativa> ReservasActividades { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<ActividadesRecreativa>(entity =>
-        {
-            entity.HasKey(e => e.ActividadId);
-
-            entity.Property(e => e.Categoria)
-                .IsRequired()
-                .HasMaxLength(50);
-            entity.Property(e => e.Descripcion).HasMaxLength(2000);
-            entity.Property(e => e.EstaActiva).HasDefaultValue(true);
-            entity.Property(e => e.FechaCreacion).HasDefaultValueSql("(getutcdate())");
-            entity.Property(e => e.ImagenUrl)
-                .HasMaxLength(500)
-                .HasColumnName("ImagenURL");
-            entity.Property(e => e.NombreActividad)
-                .IsRequired()
-                .HasMaxLength(200);
-            entity.Property(e => e.PrecioPorPersona).HasColumnType("decimal(10, 2)");
-            entity.Property(e => e.Ubicacion)
-                .IsRequired()
-                .HasMaxLength(200);
-        });
-
-        modelBuilder.Entity<Reserva>(entity =>
-        {
-            entity.ToTable(tb =>
-                {
-                    tb.HasTrigger("TRG_ActualizarEstadoHabitacion");
-                    tb.HasTrigger("TRG_Audit_Reservas");
-                    tb.HasTrigger("TRG_DesactivarCredencialesCheckout");
-                });
-
-            entity.HasIndex(e => new { e.Estado, e.FechaCheckIn, e.FechaCheckOut }, "IX_Reservas_Estado_Fechas");
-
-            entity.HasIndex(e => e.HabitacionId, "IX_Reservas_HabitacionId");
-
-            entity.HasIndex(e => e.HuespedId, "IX_Reservas_HuespedId");
-
-            entity.HasIndex(e => e.NumeroReserva, "IX_Reservas_NumeroReserva");
-
-            entity.HasIndex(e => e.NumeroReserva, "UQ_Reservas_NumeroReserva").IsUnique();
-
-            entity.Property(e => e.CreadoPor).HasMaxLength(450);
-            entity.Property(e => e.Estado)
-                .IsRequired()
-                .HasMaxLength(30)
-                .HasDefaultValue("Pendiente");
-            entity.Property(e => e.FechaCreacion).HasDefaultValueSql("(getutcdate())");
-            entity.Property(e => e.MontoPagado).HasColumnType("decimal(10, 2)");
-            entity.Property(e => e.MontoTotal).HasColumnType("decimal(10, 2)");
-            entity.Property(e => e.NumeroHuespedes).HasDefaultValue(1);
-            entity.Property(e => e.NumeroReserva)
-                .IsRequired()
-                .HasMaxLength(50);
-            entity.Property(e => e.Observaciones).HasMaxLength(1000);
-        });
-
-        modelBuilder.Entity<ReservasActividade>(entity =>
-        {
-            entity.HasKey(e => e.ReservaActividadId);
-
-            entity.HasIndex(e => new { e.FechaReserva, e.HoraReserva }, "IX_ReservasActividades_Fecha");
-
-            entity.HasIndex(e => e.HuespedId, "IX_ReservasActividades_HuespedId");
-
-            entity.Property(e => e.Estado)
-                .IsRequired()
-                .HasMaxLength(30)
-                .HasDefaultValue("Confirmada");
-            entity.Property(e => e.FechaCreacion).HasDefaultValueSql("(getutcdate())");
-            entity.Property(e => e.FechaReserva).HasColumnType("date");
-            entity.Property(e => e.MontoTotal).HasColumnType("decimal(10, 2)");
-            entity.Property(e => e.NotasEspeciales).HasMaxLength(500);
-            entity.Property(e => e.NumeroPersonas).HasDefaultValue(1);
-
-            entity.HasOne(d => d.Actividad).WithMany(p => p.ReservasActividades)
-                .HasForeignKey(d => d.ActividadId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_ReservasActividades_Actividades");
-        });
 
         OnModelCreatingPartial(modelBuilder);
+
+        modelBuilder.ApplyConfigurationsFromAssembly(
+            typeof(BarceloReservasContext).Assembly
+        );
+
     }
 
     partial void OnModelCreatingPartial(ModelBuilder modelBuilder);
