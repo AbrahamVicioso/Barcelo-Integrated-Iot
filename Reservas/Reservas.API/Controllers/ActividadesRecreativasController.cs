@@ -6,7 +6,7 @@ using Reservas.Application.Features.ActividadesRecreativas.Queries;
 namespace Reservas.API.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("[controller]")]
 public class ActividadesRecreativasController : ControllerBase
 {
     private readonly IMediator _mediator;
