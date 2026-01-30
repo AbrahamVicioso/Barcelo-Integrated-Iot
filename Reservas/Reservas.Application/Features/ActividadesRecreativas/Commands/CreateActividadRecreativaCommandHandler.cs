@@ -22,7 +22,7 @@ public class CreateActividadRecreativaCommandHandler : IRequestHandler<CreateAct
     {
         try
         {
-            var actividad = _mapper.Map<ActividadesRecreativa>(request);
+            var actividad = _mapper.Map<Domain.Entites.ActividadesRecreativas>(request);
             actividad.EstaActiva = true;
             actividad.FechaCreacion = DateTime.UtcNow;
 

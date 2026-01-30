@@ -5,13 +5,13 @@ using Reservas.Persistence.Data;
 
 namespace Reservas.Persistence.Repositories;
 
-public class ReservaActividadRepository : GenericRepository<ReservasActividade>, IReservaActividadRepository
+public class ReservaActividadRepository : GenericRepository<ReservasActividades>, IReservaActividadRepository
 {
     public ReservaActividadRepository(BarceloReservasContext context) : base(context)
     {
     }
 
-    public async Task<IEnumerable<ReservasActividade>> GetReservasByHuespedIdAsync(int huespedId, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<ReservasActividades>> GetReservasByHuespedIdAsync(int huespedId, CancellationToken cancellationToken = default)
     {
         return await _dbSet
             .Include(r => r.Actividad)
@@ -20,7 +20,7 @@ public class ReservaActividadRepository : GenericRepository<ReservasActividade>,
             .ToListAsync(cancellationToken);
     }
 
-    public async Task<IEnumerable<ReservasActividade>> GetReservasByActividadIdAsync(int actividadId, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<ReservasActividades>> GetReservasByActividadIdAsync(int actividadId, CancellationToken cancellationToken = default)
     {
         return await _dbSet
             .Include(r => r.Actividad)
@@ -29,7 +29,7 @@ public class ReservaActividadRepository : GenericRepository<ReservasActividade>,
             .ToListAsync(cancellationToken);
     }
 
-    public async Task<IEnumerable<ReservasActividade>> GetReservasByFechaAsync(DateTime fecha, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<ReservasActividades>> GetReservasByFechaAsync(DateTime fecha, CancellationToken cancellationToken = default)
     {
         return await _dbSet
             .Include(r => r.Actividad)
@@ -38,7 +38,7 @@ public class ReservaActividadRepository : GenericRepository<ReservasActividade>,
             .ToListAsync(cancellationToken);
     }
 
-    public async Task<IEnumerable<ReservasActividade>> GetReservasByEstadoAsync(string estado, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<ReservasActividades>> GetReservasByEstadoAsync(string estado, CancellationToken cancellationToken = default)
     {
         return await _dbSet
             .Include(r => r.Actividad)

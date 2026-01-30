@@ -5,13 +5,13 @@ using Reservas.Application.Interfaces;
 
 namespace Reservas.Persistence.Repositories;
 
-public class ActividadRecreativaRepository : GenericRepository<ActividadesRecreativa>, IActividadRecreativaRepository
+public class ActividadRecreativaRepository : GenericRepository<ActividadesRecreativas>, IActividadRecreativaRepository
 {
     public ActividadRecreativaRepository(BarceloReservasContext context) : base(context)
     {
     }
 
-    public async Task<IEnumerable<ActividadesRecreativa>> GetActividadesActivasAsync(CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<ActividadesRecreativas>> GetActividadesActivasAsync(CancellationToken cancellationToken = default)
     {
         return await _dbSet
             .Where(a => a.EstaActiva)
@@ -19,7 +19,7 @@ public class ActividadRecreativaRepository : GenericRepository<ActividadesRecrea
             .ToListAsync(cancellationToken);
     }
 
-    public async Task<IEnumerable<ActividadesRecreativa>> GetActividadesByCategoriaAsync(string categoria, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<ActividadesRecreativas>> GetActividadesByCategoriaAsync(string categoria, CancellationToken cancellationToken = default)
     {
         return await _dbSet
             .Where(a => a.Categoria == categoria && a.EstaActiva)
@@ -27,7 +27,7 @@ public class ActividadRecreativaRepository : GenericRepository<ActividadesRecrea
             .ToListAsync(cancellationToken);
     }
 
-    public async Task<IEnumerable<ActividadesRecreativa>> GetActividadesByHotelIdAsync(int hotelId, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<ActividadesRecreativas>> GetActividadesByHotelIdAsync(int hotelId, CancellationToken cancellationToken = default)
     {
         return await _dbSet
             .Where(a => a.HotelId == hotelId && a.EstaActiva)

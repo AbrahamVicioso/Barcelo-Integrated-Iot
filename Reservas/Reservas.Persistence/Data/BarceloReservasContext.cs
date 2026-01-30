@@ -15,7 +15,7 @@ public partial class BarceloReservasContext : DbContext
     {
     }
 
-    public virtual DbSet<ActividadesRecreativa> ActividadesRecreativas { get; set; }
+    public virtual DbSet<ActividadesRecreativas> ActividadesRecreativas { get; set; }
 
     public virtual DbSet<Reserva> Reservas { get; set; }
 
@@ -23,7 +23,7 @@ public partial class BarceloReservasContext : DbContext
 
     public virtual DbSet<Habitacion> Habitaciones { get; set; }
 
-    public virtual DbSet<ActividadesRecreativa> ReservasActividades { get; set; }
+    public virtual DbSet<ActividadesRecreativas> ReservasActividades { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

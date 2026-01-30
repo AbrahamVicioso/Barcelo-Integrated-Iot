@@ -5,7 +5,7 @@ using System.Collections.Generic;
 
 namespace Reservas.Domain.Entites;
 
-public partial class ReservasActividade
+public partial class ReservasActividades
 {
     public int ReservaActividadId { get; set; }
 
@@ -31,5 +31,5 @@ public partial class ReservasActividade
 
     public DateTime? FechaRecordatorio { get; set; }
 
-    public virtual ActividadesRecreativa Actividad { get; set; }
+    public virtual ActividadesRecreativas Actividad { get; set; }
 }

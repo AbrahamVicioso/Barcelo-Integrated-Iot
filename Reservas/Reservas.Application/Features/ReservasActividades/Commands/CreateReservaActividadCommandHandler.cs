@@ -22,7 +22,7 @@ public class CreateReservaActividadCommandHandler : IRequestHandler<CreateReserv
     {
         try
         {
-            var reserva = _mapper.Map<ReservasActividade>(request);
+            var reserva = _mapper.Map<Domain.Entites.ReservasActividades>(request);
             reserva.Estado = "Confirmada";
             reserva.FechaCreacion = DateTime.UtcNow;
             reserva.RecordatorioEnviado = false;

@@ -4,11 +4,12 @@ using Reservas.Domain.Entites;
 
 namespace Reservas.Persistence.Configuration
 {
-    public class ReservasActividadesConfiguration : IEntityTypeConfiguration<ReservasActividade>
+    public class ReservasActividadesConfiguration : IEntityTypeConfiguration<ReservasActividades>
     {
 
-        public void Configure(EntityTypeBuilder<ReservasActividade> builder)
+        public void Configure(EntityTypeBuilder<ReservasActividades> builder)
         {
+            builder.ToTable("ReservasActividades");
             builder.HasKey(e => e.ReservaActividadId);
 
             builder.HasIndex(e => new { e.FechaReserva, e.HoraReserva }, "IX_ReservasActividades_Fecha");

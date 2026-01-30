@@ -10,10 +10,11 @@ using System.Threading.Tasks;
 
 namespace Reservas.Persistence.Configuration
 {
-    public class ActividadesRecreativaConfiguration : IEntityTypeConfiguration<ActividadesRecreativa>
+    public class ActividadesRecreativaConfiguration : IEntityTypeConfiguration<ActividadesRecreativas>
     {
-        public void Configure(EntityTypeBuilder<ActividadesRecreativa> builder)
+        public void Configure(EntityTypeBuilder<ActividadesRecreativas> builder)
         {
+            builder.ToTable("ActividadesRecreativas");
             builder.HasKey(e => e.ActividadId);
 
             builder.Property(e => e.Categoria)

@@ -1,8 +1,10 @@
 using AutoMapper;
 using Reservas.Application.DTOs;
+using Reservas.Application.Features.ActividadesRecreativas.Commands;
 using Reservas.Application.Features.Habitaciones.Commands;
 using Reservas.Application.Features.Hoteles.Commands;
 using Reservas.Application.Features.Reservas.Commands;
+using Reservas.Application.Features.ReservasActividades.Commands;
 using Reservas.Domain.Entites;
 using Reservas.Domain.Entities;
 
@@ -49,23 +51,19 @@ public class MappingProfile : Profile
         CreateMap<UpdateHabitacionCommand, Habitacion>()
             .ForMember(dest => dest.FechaCreacion, opt => opt.Ignore())
             .ForMember(dest => dest.Hotel, opt => opt.Ignore());
-
-        // ActividadesRecreativa mappings
-        CreateMap<ActividadesRecreativa, ActividadRecreativaDto>();
-        CreateMap<CreateActividadRecreativaDto, ActividadesRecreativa>()
+        //testing
+        CreateMap<CreateActividadRecreativaCommand,ActividadesRecreativas>()
             .ForMember(dest => dest.ActividadId, opt => opt.Ignore())
             .ForMember(dest => dest.EstaActiva, opt => opt.Ignore())
             .ForMember(dest => dest.FechaCreacion, opt => opt.Ignore())
             .ForMember(dest => dest.ReservasActividades, opt => opt.Ignore());
 
-        CreateMap<UpdateActividadRecreativaDto, ActividadesRecreativa>()
+        CreateMap<UpdateActividadRecreativaCommand, ActividadesRecreativas>()
             .ForMember(dest => dest.HotelId, opt => opt.Ignore())
             .ForMember(dest => dest.FechaCreacion, opt => opt.Ignore())
             .ForMember(dest => dest.ReservasActividades, opt => opt.Ignore());
 
-        // ReservasActividade mappings
-        CreateMap<ReservasActividade, ReservaActividadDto>();
-        CreateMap<CreateReservaActividadDto, ReservasActividade>()
+        CreateMap<CreateReservaActividadCommand, ReservasActividades>()
             .ForMember(dest => dest.ReservaActividadId, opt => opt.Ignore())
             .ForMember(dest => dest.Estado, opt => opt.Ignore())
             .ForMember(dest => dest.FechaCreacion, opt => opt.Ignore())
@@ -73,7 +71,30 @@ public class MappingProfile : Profile
             .ForMember(dest => dest.FechaRecordatorio, opt => opt.Ignore())
             .ForMember(dest => dest.Actividad, opt => opt.Ignore());
 
-        CreateMap<UpdateReservaActividadDto, ReservasActividade>()
+        // ActividadesRecreativa mappings
+        CreateMap<ActividadesRecreativas, ActividadRecreativaDto>();
+        CreateMap<CreateActividadRecreativaDto, ActividadesRecreativas>()
+            .ForMember(dest => dest.ActividadId, opt => opt.Ignore())
+            .ForMember(dest => dest.EstaActiva, opt => opt.Ignore())
+            .ForMember(dest => dest.FechaCreacion, opt => opt.Ignore())
+            .ForMember(dest => dest.ReservasActividades, opt => opt.Ignore());
+
+        CreateMap<UpdateActividadRecreativaDto, ActividadesRecreativas>()
+            .ForMember(dest => dest.HotelId, opt => opt.Ignore())
+            .ForMember(dest => dest.FechaCreacion, opt => opt.Ignore())
+            .ForMember(dest => dest.ReservasActividades, opt => opt.Ignore());
+
+        // ReservasActividade mappings
+        CreateMap<ReservasActividades, ReservaActividadDto>();
+        CreateMap<CreateReservaActividadDto, ReservasActividades>()
+            .ForMember(dest => dest.ReservaActividadId, opt => opt.Ignore())
+            .ForMember(dest => dest.Estado, opt => opt.Ignore())
+            .ForMember(dest => dest.FechaCreacion, opt => opt.Ignore())
+            .ForMember(dest => dest.RecordatorioEnviado, opt => opt.Ignore())
+            .ForMember(dest => dest.FechaRecordatorio, opt => opt.Ignore())
+            .ForMember(dest => dest.Actividad, opt => opt.Ignore());
+
+        CreateMap<UpdateReservaActividadDto, ReservasActividades>()
             .ForMember(dest => dest.ActividadId, opt => opt.Ignore())
             .ForMember(dest => dest.HuespedId, opt => opt.Ignore())
             .ForMember(dest => dest.FechaCreacion, opt => opt.Ignore())
