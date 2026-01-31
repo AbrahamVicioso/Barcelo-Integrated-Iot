@@ -1,12 +1,11 @@
 using AutoMapper;
 using MediatR;
-using Usuarios.Application.Common;
 using Usuarios.Application.DTOs.Huespedes;
 using Usuarios.Domain.Interfaces;
 
 namespace Usuarios.Application.UseCases.Huespedes.Commands.UpdateHuespede;
 
-public class UpdateHuespedeCommandHandler : IRequestHandler<UpdateHuespedeCommand, Result<HuespedeDto>>
+public class UpdateHuespedeCommandHandler : IRequestHandler<UpdateHuespedeCommand, HuespedeDto>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
@@ -17,12 +16,12 @@ public class UpdateHuespedeCommandHandler : IRequestHandler<UpdateHuespedeComman
         _mapper = mapper;
     }
 
-    public async Task<Result<HuespedeDto>> Handle(UpdateHuespedeCommand request, CancellationToken cancellationToken)
+    public async Task<HuespedeDto> Handle(UpdateHuespedeCommand request, CancellationToken cancellationToken)
     {
         var huespede = await _unitOfWork.Huespedes.GetByIdAsync(request.Huespede.HuespedId);
         if (huespede == null)
         {
-            return Result<HuespedeDto>.Failure("Huésped no encontrado");
+           throw new Exception("Huésped no encontrado");
         }
 
         huespede.NombreCompleto = request.Huespede.NombreCompleto;
@@ -36,6 +35,6 @@ public class UpdateHuespedeCommandHandler : IRequestHandler<UpdateHuespedeComman
         await _unitOfWork.SaveChangesAsync();
 
         var huespedeDto = _mapper.Map<HuespedeDto>(huespede);
-        return Result<HuespedeDto>.Success(huespedeDto, "Huésped actualizado exitosamente");
+        return huespedeDto;
     }
 }

@@ -25,8 +25,6 @@ public class HuespedesController : ControllerBase
     public async Task<IActionResult> GetAll()
     {
         var result = await _mediator.Send(new GetAllHuespedesQuery());
-        if (!result.IsSuccess)
-            return BadRequest(result);
         return Ok(result);
     }
 
@@ -34,8 +32,6 @@ public class HuespedesController : ControllerBase
     public async Task<IActionResult> GetById(int id)
     {
         var result = await _mediator.Send(new GetHuespedeByIdQuery(id));
-        if (!result.IsSuccess)
-            return NotFound(result);
         return Ok(result);
     }
 
@@ -43,8 +39,6 @@ public class HuespedesController : ControllerBase
     public async Task<IActionResult> GetVip()
     {
         var result = await _mediator.Send(new GetHuespedesVipQuery());
-        if (!result.IsSuccess)
-            return BadRequest(result);
         return Ok(result);
     }
 
@@ -52,9 +46,7 @@ public class HuespedesController : ControllerBase
     public async Task<IActionResult> Create([FromBody] CreateHuespedeDto dto)
     {
         var result = await _mediator.Send(new CreateHuespedeCommand(dto));
-        if (!result.IsSuccess)
-            return BadRequest(result);
-        return CreatedAtAction(nameof(GetById), new { id = result.Data!.HuespedId }, result);
+        return CreatedAtAction(nameof(GetById), new { id = result.HuespedId }, result);
     }
 
     [HttpPut("{id}")]
@@ -64,8 +56,6 @@ public class HuespedesController : ControllerBase
             return BadRequest("El ID no coincide");
 
         var result = await _mediator.Send(new UpdateHuespedeCommand(dto));
-        if (!result.IsSuccess)
-            return BadRequest(result);
         return Ok(result);
     }
 
@@ -73,8 +63,6 @@ public class HuespedesController : ControllerBase
     public async Task<IActionResult> Delete(int id)
     {
         var result = await _mediator.Send(new DeleteHuespedeCommand(id));
-        if (!result.IsSuccess)
-            return BadRequest(result);
         return Ok(result);
     }
 }

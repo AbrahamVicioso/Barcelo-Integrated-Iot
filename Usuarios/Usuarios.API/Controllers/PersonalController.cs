@@ -26,8 +26,6 @@ public class PersonalController : ControllerBase
     public async Task<IActionResult> GetAll()
     {
         var result = await _mediator.Send(new GetAllPersonalQuery());
-        if (!result.IsSuccess)
-            return BadRequest(result);
         return Ok(result);
     }
 
@@ -35,8 +33,6 @@ public class PersonalController : ControllerBase
     public async Task<IActionResult> GetById(int id)
     {
         var result = await _mediator.Send(new GetPersonalByIdQuery(id));
-        if (!result.IsSuccess)
-            return NotFound(result);
         return Ok(result);
     }
 
@@ -44,8 +40,6 @@ public class PersonalController : ControllerBase
     public async Task<IActionResult> GetActivo()
     {
         var result = await _mediator.Send(new GetPersonalActivoQuery());
-        if (!result.IsSuccess)
-            return BadRequest(result);
         return Ok(result);
     }
 
@@ -53,8 +47,6 @@ public class PersonalController : ControllerBase
     public async Task<IActionResult> GetByDepartamento(string departamento)
     {
         var result = await _mediator.Send(new GetPersonalByDepartamentoQuery(departamento));
-        if (!result.IsSuccess)
-            return BadRequest(result);
         return Ok(result);
     }
 
@@ -62,9 +54,7 @@ public class PersonalController : ControllerBase
     public async Task<IActionResult> Create([FromBody] CreatePersonalDto dto)
     {
         var result = await _mediator.Send(new CreatePersonalCommand(dto));
-        if (!result.IsSuccess)
-            return BadRequest(result);
-        return CreatedAtAction(nameof(GetById), new { id = result.Data!.PersonalId }, result);
+        return CreatedAtAction(nameof(GetById), new { id = result.PersonalId }, result);
     }
 
     [HttpPut("{id}")]
@@ -74,8 +64,6 @@ public class PersonalController : ControllerBase
             return BadRequest("El ID no coincide");
 
         var result = await _mediator.Send(new UpdatePersonalCommand(dto));
-        if (!result.IsSuccess)
-            return BadRequest(result);
         return Ok(result);
     }
 
@@ -83,8 +71,6 @@ public class PersonalController : ControllerBase
     public async Task<IActionResult> Delete(int id)
     {
         var result = await _mediator.Send(new DeletePersonalCommand(id));
-        if (!result.IsSuccess)
-            return BadRequest(result);
         return Ok(result);
     }
 }

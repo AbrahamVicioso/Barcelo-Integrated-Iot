@@ -1,12 +1,11 @@
 using AutoMapper;
 using MediatR;
-using Usuarios.Application.Common;
 using Usuarios.Application.DTOs.Personal;
 using Usuarios.Domain.Interfaces;
 
 namespace Usuarios.Application.UseCases.Personal.Commands.UpdatePersonal;
 
-public class UpdatePersonalCommandHandler : IRequestHandler<UpdatePersonalCommand, Result<PersonalDto>>
+public class UpdatePersonalCommandHandler : IRequestHandler<UpdatePersonalCommand, PersonalDto>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
@@ -17,12 +16,12 @@ public class UpdatePersonalCommandHandler : IRequestHandler<UpdatePersonalComman
         _mapper = mapper;
     }
 
-    public async Task<Result<PersonalDto>> Handle(UpdatePersonalCommand request, CancellationToken cancellationToken)
+    public async Task<PersonalDto> Handle(UpdatePersonalCommand request, CancellationToken cancellationToken)
     {
         var personal = await _unitOfWork.Personal.GetByIdAsync(request.Personal.PersonalId);
         if (personal == null)
         {
-            return Result<PersonalDto>.Failure("Personal no encontrado");
+            throw new Exception("Personal no encontrado");
         }
 
         if (request.Personal.Supervisor.HasValue)
@@ -30,12 +29,12 @@ public class UpdatePersonalCommandHandler : IRequestHandler<UpdatePersonalComman
             var supervisor = await _unitOfWork.Personal.GetByIdAsync(request.Personal.Supervisor.Value);
             if (supervisor == null)
             {
-                return Result<PersonalDto>.Failure("El supervisor especificado no existe");
+                throw new Exception("El supervisor especificado no existe");
             }
 
             if (request.Personal.Supervisor.Value == request.Personal.PersonalId)
             {
-                return Result<PersonalDto>.Failure("El personal no puede ser su propio supervisor");
+                throw new Exception("El personal no puede ser su propio supervisor");
             }
         }
 
@@ -50,6 +49,6 @@ public class UpdatePersonalCommandHandler : IRequestHandler<UpdatePersonalComman
         await _unitOfWork.SaveChangesAsync();
 
         var personalDto = _mapper.Map<PersonalDto>(personal);
-        return Result<PersonalDto>.Success(personalDto, "Personal actualizado exitosamente");
+        return personalDto;
     }
 }

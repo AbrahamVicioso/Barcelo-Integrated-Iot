@@ -26,8 +26,6 @@ public class PermisosPersonalController : ControllerBase
     public async Task<IActionResult> GetAll()
     {
         var result = await _mediator.Send(new GetAllPermisosQuery());
-        if (!result.IsSuccess)
-            return BadRequest(result);
         return Ok(result);
     }
 
@@ -35,8 +33,6 @@ public class PermisosPersonalController : ControllerBase
     public async Task<IActionResult> GetById(int id)
     {
         var result = await _mediator.Send(new GetPermisoByIdQuery(id));
-        if (!result.IsSuccess)
-            return NotFound(result);
         return Ok(result);
     }
 
@@ -44,17 +40,13 @@ public class PermisosPersonalController : ControllerBase
     public async Task<IActionResult> GetByPersonal(int personalId)
     {
         var result = await _mediator.Send(new GetPermisosByPersonalQuery(personalId));
-        if (!result.IsSuccess)
-            return BadRequest(result);
         return Ok(result);
     }
 
     [HttpGet("personal/{personalId}/activos")]
     public async Task<IActionResult> GetActivos(int personalId)
     {
-        var result = await _mediator.Send(new GetPermisosActivosQuery(personalId));
-        if (!result.IsSuccess)
-            return BadRequest(result);
+        var result = await _mediator.Send(new GetPermisosActivosQuery(personalId));;
         return Ok(result);
     }
 
@@ -62,9 +54,7 @@ public class PermisosPersonalController : ControllerBase
     public async Task<IActionResult> Create([FromBody] CreatePermisosPersonalDto dto)
     {
         var result = await _mediator.Send(new CreatePermisoCommand(dto));
-        if (!result.IsSuccess)
-            return BadRequest(result);
-        return CreatedAtAction(nameof(GetById), new { id = result.Data!.PermisoId }, result);
+        return CreatedAtAction(nameof(GetById), new { id = result.PermisoId }, result);
     }
 
     [HttpPut("{id}")]
@@ -74,8 +64,6 @@ public class PermisosPersonalController : ControllerBase
             return BadRequest("El ID no coincide");
 
         var result = await _mediator.Send(new UpdatePermisoCommand(dto));
-        if (!result.IsSuccess)
-            return BadRequest(result);
         return Ok(result);
     }
 
@@ -83,8 +71,6 @@ public class PermisosPersonalController : ControllerBase
     public async Task<IActionResult> Delete(int id)
     {
         var result = await _mediator.Send(new DeletePermisoCommand(id));
-        if (!result.IsSuccess)
-            return BadRequest(result);
         return Ok(result);
     }
 }
