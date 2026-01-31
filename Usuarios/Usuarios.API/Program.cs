@@ -1,9 +1,11 @@
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
+using Scalar.AspNetCore;
 using Usuarios.Application.Mappings;
 using Usuarios.Domain.Interfaces;
 using Usuarios.Persistence.Data;
 using Usuarios.Persistence.Repositories;
+using Usuarios.Application;
 
 namespace Usuarios.API
 {
@@ -17,8 +19,7 @@ namespace Usuarios.API
             builder.Services.AddDbContext<BarceloIoTSystemContext>(options =>
                 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-            // Add AutoMapper
-            builder.Services.AddAutoMapper(typeof(MappingProfile));
+            builder.Services.AddApplicationService();
 
             // Add MediatR
             builder.Services.AddMediatR(cfg => {
@@ -58,6 +59,7 @@ namespace Usuarios.API
             if (app.Environment.IsDevelopment())
             {
                 app.MapOpenApi();
+                app.MapScalarApiReference();
             }
 
             app.UseHttpsRedirection();
