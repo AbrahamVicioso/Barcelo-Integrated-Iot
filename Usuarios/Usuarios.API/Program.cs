@@ -21,7 +21,7 @@ namespace Usuarios.API
                 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
             builder.Services.AddApplicationService();
-            builder.Services.AddExternalService();
+            builder.Services.AddExternalService(builder.Configuration);
 
             // Add MediatR
             builder.Services.AddMediatR(cfg => {

@@ -17,9 +17,9 @@ namespace Usuarios.ExternalService.Repositories
             this._httpClient = httpClient;
         }
 
-        public async Task<Guid> CreateUserAsynx(string email, string password)
+        public async Task<Guid> CreateUserAsync(string email, string password)
         {
-            var response = _httpClient.PostAsJsonAsync("/api/auth/register", 
+            var response = _httpClient.PostAsJsonAsync("/api/auth/CreateOrGetUser", 
                 new { Email = email, Password = password }
             ).Result;
 

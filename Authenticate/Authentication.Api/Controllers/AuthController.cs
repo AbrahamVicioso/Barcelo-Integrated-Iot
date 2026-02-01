@@ -1,4 +1,5 @@
 ﻿using Authentication.Api.Contracts;
+using Authentication.Api.UseCases.Commands.CreateOrGetUser;
 using Authentication.Api.UseCases.Commands.LoginUser;
 using Authentication.Api.UseCases.Commands.RegisterUser;
 using Authentication.Domain.Entities;
@@ -39,6 +40,12 @@ namespace Authentication.Api.Controllers
         public async Task<Results<Ok, ValidationProblem>> Register(RegisterRequest registerRequest)
         {
             return await _bus.InvokeAsync<Results<Ok, ValidationProblem>> (registerRequest);
+        }
+
+        [HttpPost]
+        public async Task<Results<Ok<string>, ValidationProblem>> CreateOrGetUser(CreateOrGetUserRequest request)
+        {
+            return await CreateOrGetUserHandler.Handle(request, userManager);
         }
 
         [Authorize]

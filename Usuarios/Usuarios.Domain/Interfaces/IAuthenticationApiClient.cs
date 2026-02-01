@@ -8,6 +8,6 @@ namespace Usuarios.Domain.Interfaces
 {
     public interface IAuthenticationApiClient
     {
-        Task<Guid> CreateUserAsynx(string email, string password);
+        Task<Guid> CreateUserAsync(string email, string password);
     }
 }
