@@ -67,6 +67,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Notification.Kafka", "Notif
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Notification.Worker", "Notification.Worker\Notification.Worker.csproj", "{4FA88E8F-A8E6-467A-A9DC-FA8911901A1D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Usuarios.ExternalService", "Usuarios.ExternalService\Usuarios.ExternalService.csproj", "{F5AC89F7-643A-4586-9944-09883CCF6DA7}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -139,6 +141,10 @@ Global
 		{4FA88E8F-A8E6-467A-A9DC-FA8911901A1D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4FA88E8F-A8E6-467A-A9DC-FA8911901A1D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4FA88E8F-A8E6-467A-A9DC-FA8911901A1D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F5AC89F7-643A-4586-9944-09883CCF6DA7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F5AC89F7-643A-4586-9944-09883CCF6DA7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F5AC89F7-643A-4586-9944-09883CCF6DA7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F5AC89F7-643A-4586-9944-09883CCF6DA7}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -170,6 +176,7 @@ Global
 		{F01CED43-4C65-42F9-982A-4D5F0E64514F} = {68CF255F-1749-436B-B4D7-633B38BFACCA}
 		{927BCED2-252B-4A2A-916F-29FCDF5FF260} = {09254391-0C80-40BD-A6C1-9291123661E6}
 		{4FA88E8F-A8E6-467A-A9DC-FA8911901A1D} = {B798D64E-E965-4C8F-AD33-444B8AA9B031}
+		{F5AC89F7-643A-4586-9944-09883CCF6DA7} = {F547F726-F1A7-4EE8-BF22-CB4464A4D74F}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {66E40636-A10D-4764-8E34-5D9290000439}

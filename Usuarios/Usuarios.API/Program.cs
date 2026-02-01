@@ -6,6 +6,7 @@ using Usuarios.Domain.Interfaces;
 using Usuarios.Persistence.Data;
 using Usuarios.Persistence.Repositories;
 using Usuarios.Application;
+using Usuarios.ExternalService;
 
 namespace Usuarios.API
 {
@@ -20,6 +21,7 @@ namespace Usuarios.API
                 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
             builder.Services.AddApplicationService();
+            builder.Services.AddExternalService();
 
             // Add MediatR
             builder.Services.AddMediatR(cfg => {
