@@ -11,12 +11,12 @@ using Usuarios.Application.UseCases.Huespedes.Queries.GetHuespedesVip;
 namespace Usuarios.API.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
-public class HuespedesController : ControllerBase
+[Route("[controller]")]
+public class HuespedController : ControllerBase
 {
     private readonly IMediator _mediator;
 
-    public HuespedesController(IMediator mediator)
+    public HuespedController(IMediator mediator)
     {
         _mediator = mediator;
     }

@@ -13,4 +13,5 @@ public class CreateHuespedeDto
     public bool EsVip { get; set; }
     public string? PreferenciasAlimentarias { get; set; }
     public string? NotasEspeciales { get; set; }
+    public string? correoElectronico { get; set; }
 }

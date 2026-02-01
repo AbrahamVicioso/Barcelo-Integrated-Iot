@@ -12,7 +12,7 @@ using Usuarios.Application.UseCases.Personal.Queries.GetPersonalById;
 namespace Usuarios.API.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("[controller]")]
 public class PersonalController : ControllerBase
 {
     private readonly IMediator _mediator;

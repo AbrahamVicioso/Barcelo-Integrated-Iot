@@ -51,6 +51,8 @@ Project("{00D1A9C2-B5F0-4AF3-8072-F6C62B433612}") = "BarceloIoTDatabase", "SqlSe
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Reservas.Email", "Reservas.Email\Reservas.Email.csproj", "{007721B7-E376-4BD6-BF40-8C50FFFB9BAE}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Notificaciones", "Notificaciones", "{ABBD8B88-643B-4D7C-9763-A57F927E7EFA}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU

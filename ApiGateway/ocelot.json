@@ -40,6 +40,9 @@
       "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE" ]
     }
   ],
+  "IgnoreRoutes": [
+    "/scalar/{everything}"
+  ],
   "GlobalConfiguration": {
     "BaseUrl": "http://localhost:5019"
   }

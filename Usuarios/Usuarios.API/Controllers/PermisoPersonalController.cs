@@ -12,12 +12,12 @@ using Usuarios.Application.UseCases.PermisosPersonal.Queries.GetPermisosByPerson
 namespace Usuarios.API.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
-public class PermisosPersonalController : ControllerBase
+[Route("[controller]")]
+public class PermisoPersonalController : ControllerBase
 {
     private readonly IMediator _mediator;
 
-    public PermisosPersonalController(IMediator mediator)
+    public PermisoPersonalController(IMediator mediator)
     {
         _mediator = mediator;
     }
