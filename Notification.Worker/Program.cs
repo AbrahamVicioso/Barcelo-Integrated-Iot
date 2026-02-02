@@ -16,10 +16,7 @@ namespace Notification.Worker
             builder.ConfigureAppConfiguration((context, config) =>
             {
                 config.AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
-                if (context.HostingEnvironment.IsDevelopment())
-                {
-                    config.AddUserSecrets<Program>();
-                }
+                config.AddUserSecrets<Program>();
                 config.AddEnvironmentVariables();
             });
 
