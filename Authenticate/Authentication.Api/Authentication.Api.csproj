@@ -20,7 +20,7 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Grpc.AspNetCore" Version="2.65.0" />
-    <PackageReference Include="Scalar.AspNetCore" Version="1.2.33" />
+    <PackageReference Include="Scalar.AspNetCore" Version="2.12.17" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.0" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.8.0" />
   </ItemGroup>
