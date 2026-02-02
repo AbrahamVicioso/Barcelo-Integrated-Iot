@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+option csharp_namespace = "Authentication.Api.Protos";
+
+package authentication;
+
+// Service for user authentication operations
+service UserLookup {
+  // Get user ID by email address
+  rpc GetUserIdByEmail (GetUserIdByEmailRequest) returns (GetUserIdByEmailResponse);
+}
+
+// Request message for getting user ID by email
+message GetUserIdByEmailRequest {
+  string email = 1;
+}
+
+// Response message containing the user ID
+message GetUserIdByEmailResponse {
+  string user_id = 1;
+  bool found = 2;
+}

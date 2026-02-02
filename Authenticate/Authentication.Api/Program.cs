@@ -1,4 +1,6 @@
 ﻿using Authentication.Api;
+using Authentication.Api.Services;
+using Grpc.AspNetCore;
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -7,6 +9,9 @@ builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 builder.Services.AddAuthorizationConfiguration();
 builder.Services.AddServicesDependency();
+
+// Add gRPC services
+builder.Services.AddGrpc();
 
 //builder.Host.UseWolverine();
 
@@ -30,13 +35,16 @@ if (app.Environment.IsDevelopment())
     app.MapGet("/", () => Results.Redirect("/scalar"));
 }
 
-app.UseHttpsRedirection();
+//app.UseHttpsRedirection();
 
 app.UseCors("AllowAll");
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+// Map gRPC service
+app.MapGrpcService<UserLookupService>();
 
 // AUTO GENERATE DB (FOR DEMO PURPOSES ONLY)
 //using (var scope = app.Services.CreateScope())

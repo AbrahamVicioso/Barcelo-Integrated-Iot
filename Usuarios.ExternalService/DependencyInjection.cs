@@ -1,28 +1,43 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Usuarios.Domain.Interfaces;
-using Microsoft.Extensions.Http;
-using Usuarios.ExternalService.Repositories;
-using Usuarios.ExternalService.Utils;
+﻿using Grpc.Net.Client;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Logging;
+using System.Net.Http;
+using Usuarios.ExternalService.Repositories;
+using Usuarios.Domain.Interfaces;
 
 namespace Usuarios.ExternalService
 {
     public static class DependencyInjection
     {
-        public static IServiceCollection AddExternalService(this IServiceCollection services, IConfiguration configuration)
+        public static IServiceCollection AddExternalServices(this IServiceCollection services, IConfiguration configuration)
         {
-            services.Configure<AuthenticationApiOptions>(configuration.GetSection(AuthenticationApiOptions.SectionName));
+            // Configure the gRPC channel
+            var authenticationServiceUrl = configuration["AuthenticationService:GrpcUrl"] 
+                ?? "http://localhost:5117";
 
-            services.AddHttpClient<IAuthenticationApiClient, AuthenticationApiClient>((sp,client) =>
+            services.AddSingleton<GrpcChannel>(sp =>
             {
-                var options = sp.GetRequiredService<IOptions<AuthenticationApiOptions>>().Value;
-                client.BaseAddress = new Uri(options.BaseUrl );
+                var logger = sp.GetRequiredService<ILogger<GrpcChannel>>();
+                logger.LogInformation("Creating gRPC channel to: {Url}", authenticationServiceUrl);
+                
+                return GrpcChannel.ForAddress(authenticationServiceUrl, new GrpcChannelOptions
+                {
+                    HttpHandler = new SocketsHttpHandler
+                    {
+                        EnableMultipleHttp2Connections = true
+                    }
+                });
+            });
+
+            services.AddSingleton<AuthenticationGrpcClient>();
+
+            services.AddScoped<IAuthenticationApiClient>(provider =>
+            {
+                var channel = provider.GetRequiredService<GrpcChannel>();
+                var logger = provider.GetRequiredService<ILogger<AuthenticationGrpcClient>>();
+                var client = new AuthenticationGrpcClient(channel, logger);
+                return client;
             });
 
             return services;

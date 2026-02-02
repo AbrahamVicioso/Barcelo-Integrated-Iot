@@ -9,5 +9,6 @@ namespace Usuarios.Domain.Interfaces
     public interface IAuthenticationApiClient
     {
         Task<Guid> CreateUserAsync(string email, string password);
+        Task<Guid?> GetUserIdByEmailAsync(string email);
     }
 }
