@@ -30,7 +30,7 @@ namespace Notification.Email
                     recipientAddress: notification.To,
                     content: new EmailContent(notification.Subject)
                     {
-                        PlainText = notification.Body
+                        Html = notification.Body
                 });
 
                 await emailClient.SendAsync(Azure.WaitUntil.Started, message);

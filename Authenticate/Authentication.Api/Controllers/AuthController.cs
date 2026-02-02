@@ -26,15 +26,27 @@ namespace Authentication.Api.Controllers
         private readonly UserManager<User> userManager;
         private readonly IUserStore<User> userStore;
         private readonly IKafkaProducerService kafkaProducerService;
+        private readonly SignInManager<User> signInManager;
+        private readonly IJwtGenerator jwtGenerator;
 
         public AuthController(
             UserManager<User> userManager,
             IUserStore<User> userStore,
-            IKafkaProducerService kafkaProducerService)
+            IKafkaProducerService kafkaProducerService,
+            SignInManager<User> signInManager,
+            IJwtGenerator jwtGenerator)
         {
             this.userManager = userManager;
             this.userStore = userStore;
             this.kafkaProducerService = kafkaProducerService;
+            this.signInManager = signInManager;
+            this.jwtGenerator = jwtGenerator;
+        }
+
+        [HttpPost]
+        public async Task<Results<Ok<AccessTokenResponse>, EmptyHttpResult, ProblemHttpResult>> Login(LoginRequest loginRequest)
+        {
+            return await LoginUserHandler.Handle(loginRequest, signInManager,userManager,jwtGenerator);
         }
 
         [HttpPost]

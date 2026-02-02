@@ -157,24 +157,25 @@ namespace Notification.Kafka.Services
             {
                 _logger.LogDebug("Received message: {Message}", messageValue);
 
-                // Try to deserialize as NotificationEvent first
-                var notificationEvent = JsonSerializer.Deserialize<NotificationEvent>(messageValue, new JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true
-                });
+                //// Try to deserialize as NotificationEvent first
+                //var notificationEvent = JsonSerializer.Deserialize<NotificationEvent>(messageValue, new JsonSerializerOptions
+                //{
+                //    PropertyNameCaseInsensitive = true
+                //});
 
-                if (notificationEvent != null)
-                {
-                    await ProcessNotificationEventAsync(notificationEvent, cancellationToken);
-                    return;
-                }
-
+                //if (notificationEvent != null)
+                //{
+                //    await ProcessNotificationEventAsync(notificationEvent, cancellationToken);
+                //    return;
+                //}
+                Console.WriteLine(messageValue);
                 // Try to deserialize as UserCreatedEvent
                 var userCreatedEvent = JsonSerializer.Deserialize<UserCreatedEvent>(messageValue, new JsonSerializerOptions
                 {
                     PropertyNameCaseInsensitive = true
                 });
 
+                    Console.WriteLine(userCreatedEvent.Email);
                 if (userCreatedEvent != null)
                 {
                     await ProcessUserCreatedEventAsync(userCreatedEvent, cancellationToken);
