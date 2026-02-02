@@ -24,22 +24,8 @@ public class CreateHuespedeCommandHandler : IRequestHandler<CreateHuespedeComman
 
     public async Task<HuespedeDto> Handle(CreateHuespedeCommand request, CancellationToken cancellationToken)
     {
-        // Look up user ID by email using gRPC
-        if (string.IsNullOrEmpty(request.Huespede.correoElectronico))
-        {
-            throw new Exception("El correo electrónico es requerido");
-        }
-
-        var usuarioId = await _authenticationApiClient.GetUserIdByEmailAsync(request.Huespede.correoElectronico);
-
-        if (usuarioId == null)
-        {
-            throw new Exception("No se encontró un usuario con ese correo electrónico en el servicio de autenticación");
-        }
-
-        request.Huespede.UsuarioId = usuarioId.Value.ToString();
-
         var existingByUsuario = await _unitOfWork.Huespedes.GetByUsuarioIdAsync(request.Huespede.UsuarioId);
+
         if (existingByUsuario != null)
         {
             throw new Exception("Ya existe un huésped con ese UsuarioId");
