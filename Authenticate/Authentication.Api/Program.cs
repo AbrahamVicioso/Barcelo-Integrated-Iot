@@ -8,7 +8,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 builder.Services.AddAuthorizationConfiguration();
-builder.Services.AddServicesDependency();
+builder.Services.AddServicesDependency(builder.Configuration);
 
 // Add gRPC services
 builder.Services.AddGrpc();

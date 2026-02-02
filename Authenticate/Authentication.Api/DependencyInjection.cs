@@ -5,13 +5,13 @@ using Authentication.Api.UseCases.Commands.LoginUser;
 using Authentication.Domain.Entities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Wolverine;
+using Microsoft.Extensions.Configuration;
 
 namespace Authentication.Api
 {
     static class DependencyInjection
     {
-        public static IServiceCollection AddServicesDependency(this IServiceCollection services)
+        public static IServiceCollection AddServicesDependency(this IServiceCollection services, IConfiguration configuration)
         {
             services.AddDbContext<AuthenticationDbContext>(opt =>
             {
@@ -20,10 +20,11 @@ namespace Authentication.Api
 
             services.AddScoped<IJwtGenerator, JwtGenerator>();
 
-            services.AddWolverine(opts =>
-            {
-                opts.Discovery.IncludeAssembly(typeof(LoginUserHandler).Assembly);
-            });
+            // Configure Kafka Producer
+            var kafkaConfig = new KafkaProducerConfig();
+            configuration.GetSection("KafkaProducer").Bind(kafkaConfig);
+            services.AddSingleton(kafkaConfig);
+            services.AddSingleton<IKafkaProducerService, KafkaProducerService>();
 
             return services;
         }

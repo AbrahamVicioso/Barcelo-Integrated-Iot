@@ -21,6 +21,10 @@
         "Path": "Reservas\\Reservas.API\\Reservas.API.csproj",
         "Action": "Start",
         "DebugTarget": "http"
+      },
+      {
+        "Path": "Notification.Worker\\Notification.Worker.csproj",
+        "Action": "Start"
       }
     ]
   }

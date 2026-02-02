@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace EmailService.Infrastructure.Repositories
+namespace Notification.Email.Repositories
 {
     public class EmailRepository
     {
