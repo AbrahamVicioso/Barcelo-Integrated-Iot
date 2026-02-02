@@ -1,5 +1,6 @@
 ﻿using Authentication.Api.Contracts;
 using Authentication.Api.DTOs;
+using Authentication.Api.Services;
 using Authentication.Api.UseCases.Commands.CreateOrGetUser;
 using Authentication.Api.UseCases.Commands.CreateUserWithRandomPassword;
 using Authentication.Api.UseCases.Commands.LoginUser;
@@ -15,7 +16,6 @@ using Microsoft.AspNetCore.Mvc;
 using System.Net.Http;
 using System.Security.Claims;
 using System.Threading.Tasks;
-using Wolverine;
 
 namespace Authentication.Api.Controllers
 {
@@ -23,31 +23,30 @@ namespace Authentication.Api.Controllers
     [ApiController]
     public class AuthController : ControllerBase
     {
-        private readonly IMessageBus _bus;
         private readonly UserManager<User> userManager;
+        private readonly IUserStore<User> userStore;
+        private readonly IKafkaProducerService kafkaProducerService;
 
-        public AuthController(IMessageBus bus, UserManager<User> userManager)
+        public AuthController(
+            UserManager<User> userManager,
+            IUserStore<User> userStore,
+            IKafkaProducerService kafkaProducerService)
         {
-            this._bus = bus;
             this.userManager = userManager;
-        }
-
-        [HttpPost]
-        public async Task<Results<Ok<AccessTokenResponse>, EmptyHttpResult, ProblemHttpResult>> Login(LoginRequest loginRequest)
-        {
-            return await _bus.InvokeAsync<Results<Ok<AccessTokenResponse>, EmptyHttpResult, ProblemHttpResult>>(loginRequest);
+            this.userStore = userStore;
+            this.kafkaProducerService = kafkaProducerService;
         }
 
         [HttpPost]
         public async Task<Results<Ok, ValidationProblem>> Register(RegisterRequest registerRequest)
         {
-            return await _bus.InvokeAsync<Results<Ok, ValidationProblem>> (registerRequest);
+            return await RegisterUserHandler.Handle(registerRequest, userManager, userStore);
         }
 
         [HttpPost]
         public async Task<Results<Ok<CreateUserWithRandomPasswordResponse>, ValidationProblem>> Create([FromBody] EmailRequest request)
         {
-            return await CreateUserWithRandomPasswordHandler.Handle(request, userManager);
+            return await CreateUserWithRandomPasswordHandler.Handle(request, userManager, kafkaProducerService);
         }
 
         [Authorize]
