@@ -1,3 +1,4 @@
+using Azure.Communication.Email;
 using Microsoft.Extensions.Logging;
 using Notification.Domain.Entities;
 using Notification.Domain.Interfaces;
@@ -11,34 +12,28 @@ namespace Notification.Email
     {
         private readonly SmtpSettings _smtpSettings;
         private readonly ILogger<EmailService> _logger;
+        private readonly EmailClient emailClient;
 
-        public EmailService(SmtpSettings smtpSettings, ILogger<EmailService> logger)
+        public EmailService(SmtpSettings smtpSettings, ILogger<EmailService> logger, EmailClient emailClient)
         {
             _smtpSettings = smtpSettings;
             _logger = logger;
+            this.emailClient = emailClient;
         }
 
         public async Task<bool> SendEmailAsync(EmailNotification notification, CancellationToken cancellationToken = default)
         {
             try
             {
-                using var mailMessage = new MailMessage
-                {
-                    From = new MailAddress(_smtpSettings.FromEmail, _smtpSettings.FromName),
-                    Subject = notification.Subject,
-                    Body = notification.Body,
-                    IsBodyHtml = notification.IsHtml
-                };
+                var message = new EmailMessage(
+                    senderAddress: _smtpSettings.Username,
+                    recipientAddress: notification.To,
+                    content: new EmailContent(notification.Subject)
+                    {
+                        PlainText = notification.Body
+                });
 
-                mailMessage.To.Add(new MailAddress(notification.To));
-
-                using var smtpClient = new SmtpClient(_smtpSettings.Host, _smtpSettings.Port)
-                {
-                    Credentials = new NetworkCredential(_smtpSettings.Username, _smtpSettings.Password),
-                    EnableSsl = _smtpSettings.EnableSsl
-                };
-
-                await smtpClient.SendMailAsync(mailMessage, cancellationToken);
+                await emailClient.SendAsync(Azure.WaitUntil.Started, message);
                 
                 _logger.LogInformation("Email sent successfully to {Recipient}", notification.To);
                 return true;
@@ -50,28 +45,11 @@ namespace Notification.Email
             }
         }
 
-        public async Task<bool> SendEmailAsync(string to, string subject, string body, bool isHtml = false, CancellationToken cancellationToken = default)
-        {
-            var notification = new EmailNotification
-            {
-                To = to,
-                Subject = subject,
-                Body = body,
-                IsHtml = isHtml
-            };
-
-            return await SendEmailAsync(notification, cancellationToken);
-        }
     }
 
     public class SmtpSettings
     {
-        public string Host { get; set; } = string.Empty;
-        public int Port { get; set; } = 587;
+        public string ConnectionString { get; set; } = string.Empty;
         public string Username { get; set; } = string.Empty;
-        public string Password { get; set; } = string.Empty;
-        public string FromEmail { get; set; } = string.Empty;
-        public string FromName { get; set; } = string.Empty;
-        public bool EnableSsl { get; set; } = true;
     }
 }

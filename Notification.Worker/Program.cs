@@ -16,15 +16,17 @@ namespace Notification.Worker
             builder.ConfigureAppConfiguration((context, config) =>
             {
                 config.AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
+                if (context.HostingEnvironment.IsDevelopment())
+                {
+                    config.AddUserSecrets<Program>();
+                }
                 config.AddEnvironmentVariables();
             });
 
             builder.ConfigureServices((context, services) =>
             {
                 // Configure SmtpSettings
-                var smtpSettings = new SmtpSettings();
-                context.Configuration.GetSection("SmtpSettings").Bind(smtpSettings);
-                services.AddSingleton(smtpSettings);
+                services.AddEmailService(context.Configuration);
 
                 // Add Email Service
                 services.AddSingleton<IEmailService, EmailService>();
