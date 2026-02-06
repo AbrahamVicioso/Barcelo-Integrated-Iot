@@ -9,7 +9,7 @@ using System.IdentityModel.Tokens.Jwt;
 namespace Reservas.API.Controllers;
 
 [ApiController]
-[Route("[controller]")]
+[Route("")]
 public class ReservasController : ControllerBase
 {
     private readonly IMediator _mediator;
@@ -20,7 +20,7 @@ public class ReservasController : ControllerBase
     }
 
     [HttpGet]
-    [Authorize]
+    //[Authorize]
     public async Task<IActionResult> GetAll()
     {
         var result = await _mediator.Send(new GetAllReservasQuery());
