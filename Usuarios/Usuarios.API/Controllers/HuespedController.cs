@@ -6,6 +6,7 @@ using Usuarios.Application.UseCases.Huespedes.Commands.DeleteHuespede;
 using Usuarios.Application.UseCases.Huespedes.Commands.UpdateHuespede;
 using Usuarios.Application.UseCases.Huespedes.Queries.GetAllHuespedes;
 using Usuarios.Application.UseCases.Huespedes.Queries.GetHuespedeById;
+using Usuarios.Application.UseCases.Huespedes.Queries.GetHuespedeByUserId;
 using Usuarios.Application.UseCases.Huespedes.Queries.GetHuespedesVip;
 
 namespace Usuarios.API.Controllers;
@@ -39,6 +40,13 @@ public class HuespedController : ControllerBase
     public async Task<IActionResult> GetVip()
     {
         var result = await _mediator.Send(new GetHuespedesVipQuery());
+        return Ok(result);
+    }
+
+    [HttpGet("user/{usuarioId}")]
+    public async Task<IActionResult> GetByUserId(string usuarioId)
+    {
+        var result = await _mediator.Send(new GetHuespedeByUserIdQuery(usuarioId));
         return Ok(result);
     }
 
