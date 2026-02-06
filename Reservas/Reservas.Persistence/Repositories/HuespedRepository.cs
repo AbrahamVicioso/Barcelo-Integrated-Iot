@@ -18,6 +18,24 @@ namespace Reservas.Persistence.Repositories
         {
             this._context = barceloReservasContext;
         }
+
+        public async Task<int?> GetHuespedIdByUserIdAsync(string userId, CancellationToken cancellationToken = default)
+        {
+            var conn = _context.Database.GetDbConnection();
+            await conn.OpenAsync(cancellationToken);
+
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = @"
+                SELECT H.HuespedId
+                FROM Huespedes H
+                WHERE H.UsuarioId = @userId
+            ";
+            cmd.Parameters.Add(new SqlParameter("@userId", userId));
+
+            var result = await cmd.ExecuteScalarAsync(cancellationToken);
+            return result != null ? Convert.ToInt32(result) : null;
+        }
+
         public async Task<string> GetHuespedIdByEmail(int idHuesped)
         {
             var conn = _context.Database.GetDbConnection();
@@ -25,21 +43,15 @@ namespace Reservas.Persistence.Repositories
 
             using var cmd = conn.CreateCommand();
             cmd.CommandText = @"
-        SELECT u.Email
-        FROM Huespedes H
-        INNER JOIN Users u ON H.UsuarioId = u.Id
-        WHERE H.HuespedId = @huespedId
-    ";
+                SELECT u.Email
+                FROM Huespedes H
+                INNER JOIN Users u ON H.UsuarioId = u.Id
+                WHERE H.HuespedId = @huespedId
+            ";
             cmd.Parameters.Add(new SqlParameter("@huespedId", idHuesped));
 
             var result = await cmd.ExecuteScalarAsync();
             return result?.ToString() ?? string.Empty;
         }
-    }
-    
-
-    public class EmailDto
-    {
-        public string Email { get; set; }
     }
 }

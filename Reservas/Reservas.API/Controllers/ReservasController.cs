@@ -39,6 +39,14 @@ public class ReservasController : ControllerBase
         return result.IsSuccess ? Ok(result.Data) : BadRequest(result.ErrorMessage);
     }
 
+    [HttpGet("user/{userId}")]
+    [Authorize]
+    public async Task<IActionResult> GetByUserId(string userId)
+    {
+        var result = await _mediator.Send(new GetReservasByUserIdQuery { UserId = userId });
+        return result.IsSuccess ? Ok(result.Data) : BadRequest(result.ErrorMessage);
+    }
+
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateReservaCommand command)
     {

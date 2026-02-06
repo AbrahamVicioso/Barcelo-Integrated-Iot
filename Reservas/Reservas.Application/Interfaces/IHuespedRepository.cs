@@ -8,6 +8,7 @@ namespace Reservas.Application.Interfaces
 {
     public interface IHuespedRepository
     {
-        public Task<string> GetHuespedIdByEmail(int idHuesped);
+        Task<int?> GetHuespedIdByUserIdAsync(string userId, CancellationToken cancellationToken = default);
+        Task<string> GetHuespedIdByEmail(int idHuesped);
     }
 }
