@@ -12,6 +12,7 @@ namespace Notification.Kafka.Services
     public class NotificationKafkaConsumer : IKafkaConsumer
     {
         private const string UserCreatedEventType = "user.created";
+        private const string ReservaCreadaEventType = "reserva.creada";
         
         private readonly IConsumer<string, string> _consumer;
         private readonly IAdminClient _adminClient;
@@ -157,25 +158,24 @@ namespace Notification.Kafka.Services
             {
                 _logger.LogDebug("Received message: {Message}", messageValue);
 
-                //// Try to deserialize as NotificationEvent first
-                //var notificationEvent = JsonSerializer.Deserialize<NotificationEvent>(messageValue, new JsonSerializerOptions
-                //{
-                //    PropertyNameCaseInsensitive = true
-                //});
+                // Try to deserialize as ReservaCreadaEvent first (new)
+                var reservaCreadaEvent = JsonSerializer.Deserialize<ReservaCreadaEvent>(messageValue, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
 
-                //if (notificationEvent != null)
-                //{
-                //    await ProcessNotificationEventAsync(notificationEvent, cancellationToken);
-                //    return;
-                //}
-                Console.WriteLine(messageValue);
+                if (reservaCreadaEvent != null)
+                {
+                    await ProcessReservaCreadaEventAsync(reservaCreadaEvent, cancellationToken);
+                    return;
+                }
+
                 // Try to deserialize as UserCreatedEvent
                 var userCreatedEvent = JsonSerializer.Deserialize<UserCreatedEvent>(messageValue, new JsonSerializerOptions
                 {
                     PropertyNameCaseInsensitive = true
                 });
 
-                    Console.WriteLine(userCreatedEvent.Email);
                 if (userCreatedEvent != null)
                 {
                     await ProcessUserCreatedEventAsync(userCreatedEvent, cancellationToken);
@@ -242,6 +242,34 @@ namespace Notification.Kafka.Services
             }
         }
 
+        private async Task ProcessReservaCreadaEventAsync(ReservaCreadaEvent reservaEvent, CancellationToken cancellationToken)
+        {
+            _logger.LogInformation("Processing ReservaCreadaEvent for reservation: {NumeroReserva}", reservaEvent.NumeroReserva);
+
+            var emailBody = GenerateReservaCreadaEmailBody(reservaEvent);
+
+            var emailNotification = new EmailNotification
+            {
+                To = reservaEvent.Email,
+                Subject = $"Confirmación de Reserva - {reservaEvent.NumeroReserva}",
+                Body = emailBody,
+                IsHtml = true
+            };
+
+            var sent = await _emailService.SendEmailAsync(emailNotification, cancellationToken);
+
+            if (sent)
+            {
+                _logger.LogInformation("Reserva created email sent successfully to {Email} for reservation {NumeroReserva}", 
+                    reservaEvent.Email, reservaEvent.NumeroReserva);
+            }
+            else
+            {
+                _logger.LogError("Failed to send reserva created email to {Email} for reservation {NumeroReserva}", 
+                    reservaEvent.Email, reservaEvent.NumeroReserva);
+            }
+        }
+
         private string GenerateUserCreatedEmailBody(UserCreatedEvent userEvent)
         {
             return $@"
@@ -274,6 +302,49 @@ namespace Notification.Kafka.Services
             </div>
             <p>Por seguridad, te recomendamos cambiar tu contraseña después de iniciar sesión por primera vez.</p>
             <p>Si tienes alguna pregunta, no dudes en contactar a nuestro equipo de soporte.</p>
+        </div>
+        <div class='footer'>
+            <p>© 2026 Barcelo Integrated IoT. Todos los derechos reservados.</p>
+        </div>
+    </div>
+</body>
+</html>";
+        }
+
+        private string GenerateReservaCreadaEmailBody(ReservaCreadaEvent reservaEvent)
+        {
+            return $@"
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='utf-8'>
+    <style>
+        body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+        .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+        .header {{ background-color: #28a745; color: white; padding: 20px; text-align: center; }}
+        .content {{ padding: 20px; background-color: #f9f9f9; }}
+        .reservation-details {{ background-color: #fff; border: 1px solid #ddd; padding: 15px; margin: 15px 0; }}
+        .reservation-number {{ font-family: monospace; font-size: 20px; color: #28a745; font-weight: bold; }}
+        .footer {{ text-align: center; padding: 20px; font-size: 12px; color: #666; }}
+    </style>
+</head>
+<body>
+    <div class='container'>
+        <div class='header'>
+            <h1>Reserva Confirmada</h1>
+        </div>
+        <div class='content'>
+            <p>¡Tu reserva ha sido confirmada exitosamente!</p>
+            <div class='reservation-details'>
+                <p><strong>Número de Reserva:</strong> <span class='reservation-number'>{reservaEvent.NumeroReserva}</span></p>
+                <p><strong>Hotel:</strong> {reservaEvent.HotelNombre}</p>
+                <p><strong>Habitación:</strong> {reservaEvent.HabitacionNumero}</p>
+                <p><strong>Check-in:</strong> {reservaEvent.FechaCheckIn:dd/MM/yyyy}</p>
+                <p><strong>Check-out:</strong> {reservaEvent.FechaCheckOut:dd/MM/yyyy}</p>
+                <p><strong>Monto Total:</strong> ${reservaEvent.MontoTotal:N2}</p>
+            </div>
+            <p>Gracias por elegir Barcelo Integrated IoT para tu estadía.</p>
+            <p>Si tienes alguna pregunta o necesitas asistencia, no dudes en contactar a nuestro equipo de soporte.</p>
         </div>
         <div class='footer'>
             <p>© 2026 Barcelo Integrated IoT. Todos los derechos reservados.</p>

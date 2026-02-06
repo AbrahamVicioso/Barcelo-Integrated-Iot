@@ -1,13 +1,15 @@
  using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 using Reservas.Application.Features.Reservas.Commands;
 using Reservas.Application.Features.Reservas.Queries;
+using System.IdentityModel.Tokens.Jwt;
 
 namespace Reservas.API.Controllers;
 
 [ApiController]
-[Route("[controller]")]
+[Route("")]
 public class ReservasController : ControllerBase
 {
     private readonly IMediator _mediator;
@@ -18,10 +20,26 @@ public class ReservasController : ControllerBase
     }
 
     [HttpGet]
-    [Authorize]
+    //[Authorize]
     public async Task<IActionResult> GetAll()
     {
         var result = await _mediator.Send(new GetAllReservasQuery());
+        return result.IsSuccess ? Ok(result.Data) : BadRequest(result.ErrorMessage);
+    }
+
+    [HttpGet("me")]
+    [Authorize]
+    public async Task<IActionResult> GetMyReservations()
+    {
+        // Get the userId from the JWT claim
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if (string.IsNullOrEmpty(userId))
+        {
+            return Unauthorized("No se pudo identificar al usuario");
+        }
+
+        var result = await _mediator.Send(new GetReservasByUserIdFromApiQuery { UserId = userId });
         return result.IsSuccess ? Ok(result.Data) : BadRequest(result.ErrorMessage);
     }
 
@@ -36,6 +54,14 @@ public class ReservasController : ControllerBase
     public async Task<IActionResult> GetByHuespedId(int huespedId)
     {
         var result = await _mediator.Send(new GetReservasByHuespedIdQuery { HuespedId = huespedId });
+        return result.IsSuccess ? Ok(result.Data) : BadRequest(result.ErrorMessage);
+    }
+
+    [HttpGet("user/{userId}")]
+    [Authorize]
+    public async Task<IActionResult> GetByUserId(string userId)
+    {
+        var result = await _mediator.Send(new GetReservasByUserIdQuery { UserId = userId });
         return result.IsSuccess ? Ok(result.Data) : BadRequest(result.ErrorMessage);
     }
 

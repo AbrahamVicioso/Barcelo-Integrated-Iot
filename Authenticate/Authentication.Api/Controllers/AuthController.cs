@@ -1,21 +1,16 @@
 ﻿using Authentication.Api.Contracts;
 using Authentication.Api.DTOs;
 using Authentication.Api.Services;
-using Authentication.Api.UseCases.Commands.CreateOrGetUser;
 using Authentication.Api.UseCases.Commands.CreateUserWithRandomPassword;
 using Authentication.Api.UseCases.Commands.LoginUser;
 using Authentication.Api.UseCases.Commands.RegisterUser;
 using Authentication.Domain.Entities;
 using Microsoft.AspNetCore.Authentication.BearerToken;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
-using System.Net.Http;
-using System.Security.Claims;
-using System.Threading.Tasks;
 
 namespace Authentication.Api.Controllers
 {

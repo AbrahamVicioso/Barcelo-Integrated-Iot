@@ -9,6 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Confluent.Kafka" Version="2.3.0" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.12" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.4" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.11">
@@ -22,6 +23,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\Reservas.Email\Reservas.Email.csproj" />
     <ProjectReference Include="..\Reservas.Application\Reservas.Application.csproj" />
+    <ProjectReference Include="..\Reservas.Infrastructure\Reservas.Infrastructure.csproj" />
     <ProjectReference Include="..\Reservas.Persistence\Reservas.Persistence.csproj" />
   </ItemGroup>
 

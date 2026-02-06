@@ -1,11 +1,11 @@
 using AutoMapper;
 using MediatR;
+using Microsoft.Extensions.Logging;
 using Reservas.Application.Common;
 using Reservas.Application.DTOs;
-using Reservas.Domain.Entites;
 using Reservas.Application.Interfaces;
-
-
+using Reservas.Domain.Entites;
+using Notification.Domain.Events;
 
 namespace Reservas.Application.Features.Reservas.Commands;
 
@@ -15,13 +15,23 @@ public class CreateReservaCommandHandler : IRequestHandler<CreateReservaCommand,
     private readonly IMapper _mapper;
     private readonly IEmailRepository _emailRepository;
     private readonly IHuespedRepository _huespedRepository;
+    private readonly IReservaKafkaProducer _kafkaProducer;
+    private readonly ILogger<CreateReservaCommandHandler> _logger;
 
-    public CreateReservaCommandHandler(IUnitOfWork unitOfWork, IMapper mapper, IEmailRepository repository, IHuespedRepository huespedRepository)
+    public CreateReservaCommandHandler(
+        IUnitOfWork unitOfWork, 
+        IMapper mapper, 
+        IEmailRepository emailRepository, 
+        IHuespedRepository huespedRepository,
+        IReservaKafkaProducer kafkaProducer,
+        ILogger<CreateReservaCommandHandler> logger)
     {
         _unitOfWork = unitOfWork;
         _mapper = mapper;
-        this._emailRepository = repository;
-        this._huespedRepository = huespedRepository;
+        _emailRepository = emailRepository;
+        _huespedRepository = huespedRepository;
+        _kafkaProducer = kafkaProducer;
+        _logger = logger;
     }
 
     public async Task<Result<ReservaDto>> Handle(CreateReservaCommand request, CancellationToken cancellationToken)
@@ -45,14 +55,31 @@ public class CreateReservaCommandHandler : IRequestHandler<CreateReservaCommand,
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
             var email = await _huespedRepository.GetHuespedIdByEmail(reserva.HuespedId);
-             
+              
             await _emailRepository.SendEmailAsync(email, reserva.NumeroReserva, "HOLA" );
+
+            // Publish to Kafka for notification
+            var reservaCreadaEvent = new ReservaCreadaEvent
+            {
+                Email = email,
+                NumeroReserva = reserva.NumeroReserva,
+                FechaCheckIn = reserva.FechaCheckIn,
+                FechaCheckOut = reserva.FechaCheckOut,
+                MontoTotal = request.MontoTotal,
+                HabitacionNumero = $"Habitación {request.HabitacionId}",
+                HotelNombre = "Barcelo Hotel",
+                CreatedAt = DateTime.UtcNow
+            };
+
+            await _kafkaProducer.PublishReservaCreadaAsync(reservaCreadaEvent, cancellationToken);
+            _logger.LogInformation("Published ReservaCreadaEvent for reservation {NumeroReserva}", reserva.NumeroReserva);
 
             var reservaDto = _mapper.Map<ReservaDto>(reserva);
             return Result<ReservaDto>.Success(reservaDto);
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "Error creating reservation");
             return Result<ReservaDto>.Failure($"Error al crear la reserva: {ex.Message}");
         }
     }

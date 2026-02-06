@@ -2,6 +2,8 @@ using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
 using System.Reflection;
 using AutoMapper;
+using Reservas.Application.Interfaces;
+using Reservas.Application.Services;
 
 namespace Reservas.Application;
 
@@ -17,6 +19,9 @@ public static class DependencyInjection
 
         // Register FluentValidation
         services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
+
+        // Register HTTP services
+        services.AddHttpClient<IUsuariosApiService, UsuariosApiService>();
 
         return services;
     }
