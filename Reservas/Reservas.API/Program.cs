@@ -1,4 +1,5 @@
 ﻿
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using Reservas.API;
@@ -9,6 +10,7 @@ using Reservas.Email;
 using Reservas.Persistence;
 using Reservas.Persistence.Data;
 using Scalar.AspNetCore;
+using System.Security.Claims;
 
 var builder = WebApplication.CreateBuilder(args);
 
