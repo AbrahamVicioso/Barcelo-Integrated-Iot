@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using Reservas.API;
 using Reservas.Application;
+using Reservas.Application.Interfaces;
+using Reservas.Application.Services;
 using Reservas.Email;
 using Reservas.Persistence;
 using Reservas.Persistence.Data;
@@ -22,6 +24,12 @@ builder.Services.AddAuthorizationServices();
 builder.Services.AddApplicationLayer();
 builder.Services.AddPersistenceLayer();
 builder.Services.AddEmailServices(builder.Configuration);
+
+// Configure HttpClient for Usuarios API
+builder.Services.AddHttpClient<IUsuariosApiService, UsuariosApiService>(client =>
+{
+    client.BaseAddress = new Uri(builder.Configuration["Apis:Usuarios:BaseUrl"] ?? "http://localhost:5284/");
+});
 
 builder.Services.AddCors(options =>
 {
