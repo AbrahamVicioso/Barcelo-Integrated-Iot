@@ -7,6 +7,7 @@ using Reservas.Application;
 using Reservas.Application.Interfaces;
 using Reservas.Application.Services;
 using Reservas.Email;
+using Reservas.Infrastructure;
 using Reservas.Persistence;
 using Reservas.Persistence.Data;
 using Scalar.AspNetCore;
@@ -26,6 +27,7 @@ builder.Services.AddAuthorizationServices();
 builder.Services.AddApplicationLayer();
 builder.Services.AddPersistenceLayer();
 builder.Services.AddEmailServices(builder.Configuration);
+builder.Services.AddInfrastructureLayer(builder.Configuration);
 
 // Configure HttpClient for Usuarios API
 builder.Services.AddHttpClient<IUsuariosApiService, UsuariosApiService>(client =>

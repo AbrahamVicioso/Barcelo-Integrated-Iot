@@ -16,6 +16,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Reservas.Domain\Reservas.Domain.csproj" />
+    <ProjectReference Include="..\..\Notification.Domain\Notification.Domain.csproj" />
   </ItemGroup>
 
 </Project>

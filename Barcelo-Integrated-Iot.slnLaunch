@@ -24,7 +24,8 @@
       },
       {
         "Path": "Notification.Worker\\Notification.Worker.csproj",
-        "Action": "Start"
+        "Action": "Start",
+        "DebugTarget": "Notification.Worker"
       }
     ]
   }
