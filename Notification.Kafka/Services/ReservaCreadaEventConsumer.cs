@@ -230,10 +230,8 @@ namespace Notification.Kafka.Services
             <div class='reservation-details'>
                 <p><strong>Número de Reserva:</strong> <span class='reservation-number'>{reservaEvent.NumeroReserva}</span></p>
                 <p><strong>Hotel:</strong> {reservaEvent.HotelNombre}</p>
-                <p><strong>Habitación:</strong> {reservaEvent.HabitacionNumero}</p>
                 <p><strong>Check-in:</strong> {reservaEvent.FechaCheckIn:dd/MM/yyyy}</p>
                 <p><strong>Check-out:</strong> {reservaEvent.FechaCheckOut:dd/MM/yyyy}</p>
-                <p><strong>Monto Total:</strong> ${reservaEvent.MontoTotal:N2}</p>
             </div>
             <p>Gracias por elegir Barcelo Integrated IoT para tu estadía.</p>
             <p>Si tienes alguna pregunta o necesitas asistencia, no dudes en contactar a nuestro equipo de soporte.</p>
