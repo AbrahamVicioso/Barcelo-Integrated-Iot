@@ -57,8 +57,6 @@ public class CreateReservaCommandHandler : IRequestHandler<CreateReservaCommand,
 
             var email = await _huespedRepository.GetHuespedIdByEmail(reserva.HuespedId);
               
-            await _emailRepository.SendEmailAsync(email, reserva.NumeroReserva, "HOLA" );
-
             // Publish to Kafka for notification
             var reservaCreadaEvent = new ReservaCreadaEvent
             {
