@@ -43,7 +43,8 @@ public class CreateReservaCommandHandler : IRequestHandler<CreateReservaCommand,
                 FechaCheckOut = request.FechaCheckOut,
                 HuespedId = request.HuespedId,
                 HabitacionId = request.HabitacionId,
-                
+                MontoTotal = request.MontoTotal,
+                MontoPagado = request.MontoPagado
             };
 
             // Generate unique reservation number
