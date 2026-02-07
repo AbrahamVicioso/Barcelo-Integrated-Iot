@@ -9,26 +9,23 @@ using Notification.Kafka.Configuration;
 
 namespace Notification.Kafka.Services
 {
-    public class NotificationKafkaConsumer : IKafkaConsumer
+    public class ReservaCreadaEventConsumer : IKafkaConsumer
     {
-        private const string UserCreatedEventType = "user.created";
-        private const string ReservaCreadaEventType = "reserva.creada";
-        
         private readonly IConsumer<string, string> _consumer;
         private readonly IAdminClient _adminClient;
         private readonly IEmailService _emailService;
-        private readonly KafkaConsumerConfig _config;
-        private readonly ILogger<NotificationKafkaConsumer> _logger;
+        private readonly ReservaCreadaConsumerConfig _config;
+        private readonly ILogger<ReservaCreadaEventConsumer> _logger;
         private CancellationTokenSource? _cancellationTokenSource;
         private Task? _consumeTask;
         private bool _disposed;
 
         public bool IsRunning { get; private set; }
 
-        public NotificationKafkaConsumer(
-            KafkaConsumerConfig config,
+        public ReservaCreadaEventConsumer(
+            ReservaCreadaConsumerConfig config,
             IEmailService emailService,
-            ILogger<NotificationKafkaConsumer> logger)
+            ILogger<ReservaCreadaEventConsumer> logger)
         {
             _config = config;
             _emailService = emailService;
@@ -53,7 +50,6 @@ namespace Notification.Kafka.Services
                 })
                 .Build();
 
-            // Create admin client for topic management
             var adminConfig = new AdminClientConfig
             {
                 BootstrapServers = config.BootstrapServers
@@ -65,7 +61,6 @@ namespace Notification.Kafka.Services
         {
             try
             {
-                // Check if topic exists using admin client
                 var metadata = _adminClient.GetMetadata(TimeSpan.FromSeconds(10));
                 var topics = metadata.Topics.Select(t => t.Topic).ToList();
 
@@ -108,7 +103,6 @@ namespace Notification.Kafka.Services
 
             _cancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             
-            // Ensure topic exists before subscribing
             EnsureTopicExists();
             
             _consumer.Subscribe(_config.Topic);
@@ -116,7 +110,7 @@ namespace Notification.Kafka.Services
 
             _consumeTask = Task.Run(() => ConsumeMessages(_cancellationTokenSource.Token), _cancellationTokenSource.Token);
 
-            _logger.LogInformation("Kafka consumer started. Listening to topic: {Topic}", _config.Topic);
+            _logger.LogInformation("ReservaCreadaEventConsumer started. Listening to topic: {Topic}", _config.Topic);
 
             return Task.CompletedTask;
         }
@@ -144,11 +138,11 @@ namespace Notification.Kafka.Services
             }
             catch (OperationCanceledException)
             {
-                _logger.LogInformation("Kafka consumer stopping due to cancellation");
+                _logger.LogInformation("ReservaCreadaEventConsumer stopping due to cancellation");
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Unexpected error in Kafka consumer");
+                _logger.LogError(ex, "Unexpected error in ReservaCreadaEventConsumer");
             }
         }
 
@@ -158,7 +152,6 @@ namespace Notification.Kafka.Services
             {
                 _logger.LogDebug("Received message: {Message}", messageValue);
 
-                // Try to deserialize as ReservaCreadaEvent first (new)
                 var reservaCreadaEvent = JsonSerializer.Deserialize<ReservaCreadaEvent>(messageValue, new JsonSerializerOptions
                 {
                     PropertyNameCaseInsensitive = true
@@ -170,19 +163,7 @@ namespace Notification.Kafka.Services
                     return;
                 }
 
-                // Try to deserialize as UserCreatedEvent
-                var userCreatedEvent = JsonSerializer.Deserialize<UserCreatedEvent>(messageValue, new JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true
-                });
-
-                if (userCreatedEvent != null)
-                {
-                    await ProcessUserCreatedEventAsync(userCreatedEvent, cancellationToken);
-                    return;
-                }
-
-                _logger.LogWarning("Could not deserialize message as any known event type");
+                _logger.LogWarning("Could not deserialize message as ReservaCreadaEvent");
             }
             catch (JsonException ex)
             {
@@ -190,55 +171,7 @@ namespace Notification.Kafka.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error processing notification message");
-            }
-        }
-
-        private async Task ProcessNotificationEventAsync(NotificationEvent notificationEvent, CancellationToken cancellationToken)
-        {
-            var emailNotification = new EmailNotification
-            {
-                To = notificationEvent.RecipientEmail,
-                Subject = notificationEvent.Subject,
-                Body = notificationEvent.Body,
-                IsHtml = false
-            };
-
-            var sent = await _emailService.SendEmailAsync(emailNotification, cancellationToken);
-
-            if (sent)
-            {
-                _logger.LogInformation("Email notification sent successfully to {Recipient}", notificationEvent.RecipientEmail);
-            }
-            else
-            {
-                _logger.LogError("Failed to send email notification to {Recipient}", notificationEvent.RecipientEmail);
-            }
-        }
-
-        private async Task ProcessUserCreatedEventAsync(UserCreatedEvent userEvent, CancellationToken cancellationToken)
-        {
-            _logger.LogInformation("Processing UserCreatedEvent for user: {Email}", userEvent.Email);
-
-            var emailBody = GenerateUserCreatedEmailBody(userEvent);
-
-            var emailNotification = new EmailNotification
-            {
-                To = userEvent.Email,
-                Subject = "Bienvenido a Barcelo Integrated IoT - Tu cuenta ha sido creada",
-                Body = emailBody,
-                IsHtml = true
-            };
-
-            var sent = await _emailService.SendEmailAsync(emailNotification, cancellationToken);
-
-            if (sent)
-            {
-                _logger.LogInformation("User created email sent successfully to {Email}", userEvent.Email);
-            }
-            else
-            {
-                _logger.LogError("Failed to send user created email to {Email}", userEvent.Email);
+                _logger.LogError(ex, "Error processing reserva created event");
             }
         }
 
@@ -268,47 +201,6 @@ namespace Notification.Kafka.Services
                 _logger.LogError("Failed to send reserva created email to {Email} for reservation {NumeroReserva}", 
                     reservaEvent.Email, reservaEvent.NumeroReserva);
             }
-        }
-
-        private string GenerateUserCreatedEmailBody(UserCreatedEvent userEvent)
-        {
-            return $@"
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset='utf-8'>
-    <style>
-        body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
-        .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
-        .header {{ background-color: #007bff; color: white; padding: 20px; text-align: center; }}
-        .content {{ padding: 20px; background-color: #f9f9f9; }}
-        .credentials {{ background-color: #fff; border: 1px solid #ddd; padding: 15px; margin: 15px 0; }}
-        .password {{ font-family: monospace; font-size: 18px; color: #007bff; font-weight: bold; }}
-        .footer {{ text-align: center; padding: 20px; font-size: 12px; color: #666; }}
-    </style>
-</head>
-<body>
-    <div class='container'>
-        <div class='header'>
-            <h1>Bienvenido a Barcelo Integrated IoT</h1>
-        </div>
-        <div class='content'>
-            <p>Hola <strong>{userEvent.UserName}</strong>,</p>
-            <p>Tu cuenta ha sido creada exitosamente en el sistema Barcelo Integrated IoT.</p>
-            <div class='credentials'>
-                <p><strong>Credenciales de acceso:</strong></p>
-                <p>Email: {userEvent.Email}</p>
-                <p>Contraseña: <span class='password'>{userEvent.GeneratedPassword}</span></p>
-            </div>
-            <p>Por seguridad, te recomendamos cambiar tu contraseña después de iniciar sesión por primera vez.</p>
-            <p>Si tienes alguna pregunta, no dudes en contactar a nuestro equipo de soporte.</p>
-        </div>
-        <div class='footer'>
-            <p>© 2026 Barcelo Integrated IoT. Todos los derechos reservados.</p>
-        </div>
-    </div>
-</body>
-</html>";
         }
 
         private string GenerateReservaCreadaEmailBody(ReservaCreadaEvent reservaEvent)
@@ -367,7 +259,7 @@ namespace Notification.Kafka.Services
             _consumer.Close();
             IsRunning = false;
 
-            _logger.LogInformation("Kafka consumer stopped");
+            _logger.LogInformation("ReservaCreadaEventConsumer stopped");
 
             return Task.CompletedTask;
         }

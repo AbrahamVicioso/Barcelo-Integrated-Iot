@@ -4,6 +4,7 @@ using Microsoft.Extensions.Hosting;
 using Notification.Domain.Interfaces;
 using Notification.Email;
 using Notification.Kafka.Configuration;
+using Notification.Kafka.Services;
 
 namespace Notification.Worker
 {
@@ -28,16 +29,23 @@ namespace Notification.Worker
                 // Add Email Service
                 services.AddSingleton<IEmailService, EmailService>();
 
-                // Configure KafkaConsumerConfig
-                var kafkaConfig = new KafkaConsumerConfig();
-                context.Configuration.GetSection("KafkaConsumer").Bind(kafkaConfig);
-                services.AddSingleton(kafkaConfig);
+                // Configure UserCreatedConsumerConfig
+                var userCreatedConsumerConfig = new UserCreatedConsumerConfig();
+                context.Configuration.GetSection("KafkaConsumer:UserCreated").Bind(userCreatedConsumerConfig);
+                services.AddSingleton(userCreatedConsumerConfig);
 
-                // Add Kafka Consumer
-                services.AddSingleton<IKafkaConsumer, Kafka.Services.NotificationKafkaConsumer>();
+                // Configure ReservaCreadaConsumerConfig
+                var reservaCreadaConsumerConfig = new ReservaCreadaConsumerConfig();
+                context.Configuration.GetSection("KafkaConsumer:ReservaCreada").Bind(reservaCreadaConsumerConfig);
+                services.AddSingleton(reservaCreadaConsumerConfig);
 
-                // Add Background Service for Kafka Consumer
-                services.AddHostedService<NotificationWorker>();
+                // Add Kafka Consumers as separate instances
+                services.AddSingleton<UserCreatedEventConsumer>();
+                services.AddSingleton<ReservaCreadaEventConsumer>();
+
+                // Add Background Services for Kafka Consumers
+                services.AddHostedService<UserCreatedNotificationWorker>();
+                services.AddHostedService<ReservaCreadaNotificationWorker>();
             });
 
             IHost host = builder.Build();
@@ -46,14 +54,14 @@ namespace Notification.Worker
         }
     }
 
-    public class NotificationWorker : BackgroundService
+    public class UserCreatedNotificationWorker : BackgroundService
     {
-        private readonly IKafkaConsumer _kafkaConsumer;
-        private readonly ILogger<NotificationWorker> _logger;
+        private readonly UserCreatedEventConsumer _kafkaConsumer;
+        private readonly ILogger<UserCreatedNotificationWorker> _logger;
 
-        public NotificationWorker(
-            IKafkaConsumer kafkaConsumer,
-            ILogger<NotificationWorker> logger)
+        public UserCreatedNotificationWorker(
+            UserCreatedEventConsumer kafkaConsumer,
+            ILogger<UserCreatedNotificationWorker> logger)
         {
             _kafkaConsumer = kafkaConsumer;
             _logger = logger;
@@ -61,7 +69,7 @@ namespace Notification.Worker
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            _logger.LogInformation("Starting Notification Worker...");
+            _logger.LogInformation("Starting User Created Notification Worker...");
 
             await _kafkaConsumer.StartAsync(stoppingToken);
 
@@ -74,7 +82,43 @@ namespace Notification.Worker
 
         public override async Task StopAsync(CancellationToken cancellationToken)
         {
-            _logger.LogInformation("Stopping Notification Worker...");
+            _logger.LogInformation("Stopping User Created Notification Worker...");
+
+            await _kafkaConsumer.StopAsync(cancellationToken);
+
+            await base.StopAsync(cancellationToken);
+        }
+    }
+
+    public class ReservaCreadaNotificationWorker : BackgroundService
+    {
+        private readonly ReservaCreadaEventConsumer _kafkaConsumer;
+        private readonly ILogger<ReservaCreadaNotificationWorker> _logger;
+
+        public ReservaCreadaNotificationWorker(
+            ReservaCreadaEventConsumer kafkaConsumer,
+            ILogger<ReservaCreadaNotificationWorker> logger)
+        {
+            _kafkaConsumer = kafkaConsumer;
+            _logger = logger;
+        }
+
+        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+        {
+            _logger.LogInformation("Starting Reserva Creada Notification Worker...");
+
+            await _kafkaConsumer.StartAsync(stoppingToken);
+
+            // Keep the worker running
+            while (!stoppingToken.IsCancellationRequested)
+            {
+                await Task.Delay(Timeout.Infinite, stoppingToken);
+            }
+        }
+
+        public override async Task StopAsync(CancellationToken cancellationToken)
+        {
+            _logger.LogInformation("Stopping Reserva Creada Notification Worker...");
 
             await _kafkaConsumer.StopAsync(cancellationToken);
 

@@ -14,7 +14,6 @@ namespace Notification.Kafka
             configuration.GetSection("KafkaConsumer").Bind(kafkaConfig);
 
             services.AddSingleton(kafkaConfig);
-            services.AddSingleton<IKafkaConsumer, NotificationKafkaConsumer>();
 
             return services;
         }
