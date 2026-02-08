@@ -26,6 +26,11 @@
         "Path": "Notification.Worker\\Notification.Worker.csproj",
         "Action": "Start",
         "DebugTarget": "Notification.Worker"
+      },
+      {
+        "Path": "Dispositivos.API\\Dispositivos.API.csproj",
+        "Action": "Start",
+        "DebugTarget": "http"
       }
     ]
   }

@@ -1,3 +1,6 @@
+using Dispositivos.Application;
+using Dispositivos.Persistence;
+using Scalar.AspNetCore;
 
 namespace Dispositivos.API
 {
@@ -8,10 +11,15 @@ namespace Dispositivos.API
             var builder = WebApplication.CreateBuilder(args);
 
             // Add services to the container.
-
             builder.Services.AddControllers();
-            // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
             builder.Services.AddOpenApi();
+
+            // Add Application Layer
+            builder.Services.AddApplicationLayer();
+
+            // Add Persistence Layer
+            var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+            builder.Services.AddPersistenceLayer(connectionString);
 
             var app = builder.Build();
 
@@ -19,12 +27,12 @@ namespace Dispositivos.API
             if (app.Environment.IsDevelopment())
             {
                 app.MapOpenApi();
+                app.MapScalarApiReference();
             }
 
             app.UseHttpsRedirection();
 
             app.UseAuthorization();
-
 
             app.MapControllers();
 

@@ -38,6 +38,19 @@
       ],
       "UpstreamPathTemplate": "/api/reserva/{everything}",
       "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE" ]
+    },
+    // Route for Devices Service
+    {
+      "DownstreamPathTemplate": "/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 5185
+        }
+      ],
+      "UpstreamPathTemplate": "/api/device/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE" ]
     }
   ],
   "IgnoreRoutes": [
