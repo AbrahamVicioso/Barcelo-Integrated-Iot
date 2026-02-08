@@ -32,6 +32,7 @@ public class HabitacionRepository : IHabitacionRepository
     {
         return await _context.Habitaciones
             .Where(h => h.HotelId == hotelId)
+            .Include(h => h.Hotel)
             .ToListAsync();
     }
 

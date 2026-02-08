@@ -56,7 +56,9 @@ public class CreateReservaCommandHandler : IRequestHandler<CreateReservaCommand,
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
             var email = await _huespedRepository.GetHuespedIdByEmail(reserva.HuespedId);
-              
+
+            var habitacion = await _unitOfWork.Habitaciones.GetById(reserva.HabitacionId);
+
             // Publish to Kafka for notification
             var reservaCreadaEvent = new ReservaCreadaEvent
             {
@@ -65,8 +67,8 @@ public class CreateReservaCommandHandler : IRequestHandler<CreateReservaCommand,
                 FechaCheckIn = reserva.FechaCheckIn,
                 FechaCheckOut = reserva.FechaCheckOut,
                 MontoTotal = request.MontoTotal,
-                HabitacionNumero = $"Habitación {request.HabitacionId}",
-                HotelNombre = "Barcelo Hotel",
+                HabitacionNumero = $"Habitación {habitacion.NumeroHabitacion}",
+                HotelNombre = habitacion.Hotel.Nombre ?? "Hotel Barcelo",
                 CreatedAt = DateTime.UtcNow
             };
 
