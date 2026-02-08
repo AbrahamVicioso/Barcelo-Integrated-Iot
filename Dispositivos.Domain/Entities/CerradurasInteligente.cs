@@ -9,7 +9,7 @@ public partial class CerradurasInteligente
 {
     public int CerraduraId { get; set; }
 
-    public int DispositivoId { get; set; }
+    public Guid DispositivoId { get; set; }
 
     public int HabitacionId { get; set; }
 

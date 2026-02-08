@@ -7,7 +7,7 @@ using Dispositivos.Domain.Entities;
 
 namespace Dispositivos.Application.Features.Dispositivos.Commands;
 
-public class CreateDispositivoCommandHandler : IRequestHandler<CreateDispositivoCommand, Result<int>>
+public class CreateDispositivoCommandHandler : IRequestHandler<CreateDispositivoCommand, Result<Guid>>
 {
     private readonly IMapper _mapper;
     private readonly IUnitOfWork _unitOfWork;
@@ -18,7 +18,7 @@ public class CreateDispositivoCommandHandler : IRequestHandler<CreateDispositivo
         _unitOfWork = unitOfWork;
     }
 
-    public async Task<Result<int>> Handle(CreateDispositivoCommand request, CancellationToken cancellationToken)
+    public async Task<Result<Guid>> Handle(CreateDispositivoCommand request, CancellationToken cancellationToken)
     {
         try
         {
@@ -28,11 +28,11 @@ public class CreateDispositivoCommandHandler : IRequestHandler<CreateDispositivo
             await _unitOfWork.Dispositivos.AddAsync(dispositivo, cancellationToken);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-            return Result<int>.Success(dispositivo.DispositivoId);
+            return Result<Guid>.Success(dispositivo.DispositivoId);
         }
         catch (Exception ex)
         {
-            return Result<int>.Failure($"Error al crear el dispositivo: {ex.Message}");
+            return Result<Guid>.Failure($"Error al crear el dispositivo: {ex.Message}");
         }
     }
 }

@@ -26,7 +26,7 @@ public class DispositivoController : ControllerBase
     }
 
     [HttpGet("{id}")]
-    public async Task<IActionResult> GetById(int id)
+    public async Task<IActionResult> GetById(Guid id)
     {
         var result = await _mediator.Send(new GetDispositivoByIdQuery { DispositivoId = id });
         return result.IsSuccess ? Ok(result.Data) : NotFound(result.ErrorMessage);
@@ -47,7 +47,7 @@ public class DispositivoController : ControllerBase
     }
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> Update(int id, [FromBody] UpdateDispositivoDto dispositivoDto)
+    public async Task<IActionResult> Update(Guid id, [FromBody] UpdateDispositivoDto dispositivoDto)
     {
         if (id != dispositivoDto.DispositivoId)
         {
@@ -59,7 +59,7 @@ public class DispositivoController : ControllerBase
     }
 
     [HttpDelete("{id}")]
-    public async Task<IActionResult> Delete(int id)
+    public async Task<IActionResult> Delete(Guid id)
     {
         var result = await _mediator.Send(new DeleteDispositivoCommand { DispositivoId = id });
         return result.IsSuccess ? Ok(result.Data) : NotFound(result.ErrorMessage);

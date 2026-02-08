@@ -1,5 +1,5 @@
 ﻿CREATE TABLE [dbo].[Dispositivos](
-	[DispositivoId] [int] IDENTITY(1,1) NOT NULL,
+	[DispositivoId] UNIQUEIDENTIFIER DEFAULT NEWID() NOT NULL,
 	[HotelId] [int] NOT NULL,
 	[NumeroSerieDispositivo] [nvarchar](100) NOT NULL,
 	[DireccionMAC] [nvarchar](50) NOT NULL,

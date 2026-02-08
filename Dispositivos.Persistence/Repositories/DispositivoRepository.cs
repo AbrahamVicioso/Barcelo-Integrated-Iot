@@ -23,7 +23,7 @@ public class DispositivoRepository : IDispositivoRepository
             .ToListAsync();
     }
 
-    public async Task<Dispositivo?> GetById(int id)
+    public async Task<Dispositivo?> GetById(Guid id)
     {
         return await _context.Dispositivos
             .Include(d => d.CerradurasInteligentes)

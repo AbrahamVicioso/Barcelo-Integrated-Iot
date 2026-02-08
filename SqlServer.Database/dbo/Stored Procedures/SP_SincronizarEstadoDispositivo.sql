@@ -1,6 +1,6 @@
 ﻿-- **NUEVO SP: Sincronizar estado de dispositivo**
 CREATE PROCEDURE [dbo].[SP_SincronizarEstadoDispositivo]
-    @DispositivoId INT,
+    @DispositivoId UNIQUEIDENTIFIER,
     @NivelBateria INT,
     @EstaEnLinea BIT,
     @VersionFirmware NVARCHAR(20) = NULL,

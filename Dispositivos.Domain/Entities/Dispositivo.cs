@@ -7,7 +7,7 @@ namespace Dispositivos.Domain.Entities;
 
 public partial class Dispositivo
 {
-    public int DispositivoId { get; set; }
+    public Guid DispositivoId { get; set; }
 
     public int HotelId { get; set; }
 

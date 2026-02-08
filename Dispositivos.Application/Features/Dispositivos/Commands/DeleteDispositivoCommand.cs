@@ -5,5 +5,5 @@ namespace Dispositivos.Application.Features.Dispositivos.Commands;
 
 public class DeleteDispositivoCommand : IRequest<Result<bool>>
 {
-    public int DispositivoId { get; set; }
+    public Guid DispositivoId { get; set; }
 }

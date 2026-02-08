@@ -2,7 +2,7 @@ namespace Dispositivos.Application.DTOs;
 
 public class DispositivoDto
 {
-    public int DispositivoId { get; set; }
+    public Guid DispositivoId { get; set; }
     public int HotelId { get; set; }
     public string? NombreHotel { get; set; }
     public string NumeroSerieDispositivo { get; set; } = string.Empty;

@@ -9,7 +9,7 @@
 	[ResueltoPor] [nvarchar](450) NULL,
 	[FechaResolucion] [datetime2](7) NULL,
 	[SolucionAplicada] [nvarchar](1000) NULL,
-	[DispositivoId] [int] NULL,
+	[DispositivoId] UNIQUEIDENTIFIER NULL,
 	[CerraduraId] [int] NULL,
 	[HotelId] [int] NULL,
  CONSTRAINT [PK_EventosSistema] PRIMARY KEY CLUSTERED 

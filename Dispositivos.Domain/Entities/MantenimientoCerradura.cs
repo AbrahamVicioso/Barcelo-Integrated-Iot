@@ -9,7 +9,7 @@ public partial class MantenimientoCerradura
 {
     public int MantenimientoId { get; set; }
 
-    public int? DispositivoId { get; set; }
+    public Guid? DispositivoId { get; set; }
 
     public int? CerraduraId { get; set; }
 

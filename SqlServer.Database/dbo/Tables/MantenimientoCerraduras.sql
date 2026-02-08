@@ -1,6 +1,6 @@
 ﻿CREATE TABLE [dbo].[MantenimientoCerraduras](
 	[MantenimientoId] [int] IDENTITY(1,1) NOT NULL,
-	[DispositivoId] [int] NULL,
+	[DispositivoId] UNIQUEIDENTIFIER NULL,
 	[CerraduraId] [int] NULL,
 	[TipoMantenimiento] [nvarchar](50) NOT NULL,
 	[FechaProgramada] [datetime2](7) NOT NULL,

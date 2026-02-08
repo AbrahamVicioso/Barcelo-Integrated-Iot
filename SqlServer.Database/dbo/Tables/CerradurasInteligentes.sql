@@ -1,6 +1,6 @@
 ﻿CREATE TABLE [dbo].[CerradurasInteligentes](
 	[CerraduraId] [int] IDENTITY(1,1) NOT NULL,
-	[DispositivoId] [int] NOT NULL,
+	[DispositivoId] UNIQUEIDENTIFIER NOT NULL,
 	[HabitacionId] [int] NOT NULL,
 	[EstadoPuerta] [nvarchar](20) NOT NULL,
 	[UltimaApertura] [datetime2](7) NULL,
