@@ -18,6 +18,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Dispositivos.Application\Dispositivos.Application.csproj" />
+    <ProjectReference Include="..\Dispositivos.Infrastructure\Dispositivos.Infrastructure.csproj" />
     <ProjectReference Include="..\Dispositivos.Persistence\Dispositivos.Persistence.csproj" />
   </ItemGroup>
 

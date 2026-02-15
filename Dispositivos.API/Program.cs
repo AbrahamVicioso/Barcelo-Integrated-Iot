@@ -1,4 +1,5 @@
 using Dispositivos.Application;
+using Dispositivos.Infrastructure;
 using Dispositivos.Persistence;
 using Scalar.AspNetCore;
 
@@ -20,6 +21,9 @@ namespace Dispositivos.API
             // Add Persistence Layer
             var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
             builder.Services.AddPersistenceLayer(connectionString);
+
+            // Add Thingsboard Infrastructure Layer
+            builder.Services.AddThingsboardInfrastructure(builder.Configuration);
 
             var app = builder.Build();
 
