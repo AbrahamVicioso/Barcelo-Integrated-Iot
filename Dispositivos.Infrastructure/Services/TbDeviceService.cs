@@ -73,7 +73,7 @@ public class TbDeviceService : ITbDeviceService
 
         return new TbDeviceResponse
         {
-            Id = thingsboardResponse.Id,
+            Id = thingsboardResponse.Id?.Id ?? string.Empty,
             Name = thingsboardResponse.Name,
             Type = thingsboardResponse.Type,
             CreatedTime = thingsboardResponse.CreatedTime,
@@ -123,7 +123,7 @@ public class TbDeviceService : ITbDeviceService
 
         return new TbDeviceResponse
         {
-            Id = thingsboardResponse.Id,
+            Id = thingsboardResponse.Id?.Id ?? string.Empty,
             Name = thingsboardResponse.Name,
             Type = thingsboardResponse.Type,
             CreatedTime = thingsboardResponse.CreatedTime,
@@ -256,13 +256,13 @@ public class TbDeviceService : ITbDeviceService
 internal class ThingsboardDeviceResponse
 {
     [JsonProperty("id")]
-    public string? Id { get; set; }
+    public ThingsboardEntityId? Id { get; set; }
 
     [JsonProperty("tenantId")]
-    public string? TenantId { get; set; }
+    public ThingsboardEntityId? TenantId { get; set; }
 
     [JsonProperty("customerId")]
-    public string? CustomerId { get; set; }
+    public ThingsboardEntityId? CustomerId { get; set; }
 
     [JsonProperty("name")]
     public string Name { get; set; } = string.Empty;
@@ -274,13 +274,13 @@ internal class ThingsboardDeviceResponse
     public string? Label { get; set; }
 
     [JsonProperty("deviceProfileId")]
-    public string? DeviceProfileId { get; set; }
+    public ThingsboardEntityId? DeviceProfileId { get; set; }
 
     [JsonProperty("firmwareId")]
-    public string? FirmwareId { get; set; }
+    public ThingsboardEntityId? FirmwareId { get; set; }
 
     [JsonProperty("softwareId")]
-    public string? SoftwareId { get; set; }
+    public ThingsboardEntityId? SoftwareId { get; set; }
 
     [JsonProperty("additionalInfo")]
     public Dictionary<string, object>? AdditionalInfo { get; set; }
@@ -293,15 +293,27 @@ internal class ThingsboardDeviceResponse
 }
 
 /// <summary>
+/// Thingsboard entity ID wrapper (internal)
+/// </summary>
+internal class ThingsboardEntityId
+{
+    [JsonProperty("entityType")]
+    public string? EntityType { get; set; }
+
+    [JsonProperty("id")]
+    public string? Id { get; set; }
+}
+
+/// <summary>
 /// Device credentials from Thingsboard (internal)
 /// </summary>
 internal class DeviceCredentials
 {
     [JsonProperty("id")]
-    public string? Id { get; set; }
+    public ThingsboardEntityId? Id { get; set; }
 
     [JsonProperty("deviceId")]
-    public string? DeviceId { get; set; }
+    public ThingsboardEntityId? DeviceId { get; set; }
 
     [JsonProperty("credentialsType")]
     public string? CredentialsType { get; set; }
