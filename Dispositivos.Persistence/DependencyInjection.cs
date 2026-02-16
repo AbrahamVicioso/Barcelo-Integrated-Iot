@@ -19,6 +19,11 @@ public static class DependencyInjection
 
         // Register Repositories
         services.AddScoped<IDispositivoRepository, DispositivoRepository>();
+        services.AddScoped<ICerradurasInteligenteRepository, CerradurasInteligenteRepository>();
+        services.AddScoped<ICredencialesAccesoRepository, CredencialesAccesoRepository>();
+        services.AddScoped<IMantenimientoCerraduraRepository, MantenimientoCerraduraRepository>();
+        services.AddScoped<IRegistrosAccesoRepository, RegistrosAccesoRepository>();
+        services.AddScoped<IRegistrosAuditoriumRepository, RegistrosAuditoriumRepository>();
 
         return services;
     }

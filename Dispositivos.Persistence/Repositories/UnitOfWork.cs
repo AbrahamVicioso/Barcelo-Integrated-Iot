@@ -10,11 +10,28 @@ public class UnitOfWork : IUnitOfWork
     private Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction? _transaction;
 
     public IDispositivoRepository Dispositivos { get; }
+    public ICerradurasInteligenteRepository CerradurasInteligente { get; }
+    public ICredencialesAccesoRepository CredencialesAcceso { get; }
+    public IMantenimientoCerraduraRepository MantenimientoCerradura { get; }
+    public IRegistrosAccesoRepository RegistrosAcceso { get; }
+    public IRegistrosAuditoriumRepository RegistrosAuditorium { get; }
 
-    public UnitOfWork(BarceloIoTDatabaseContext context, IDispositivoRepository dispositivoRepository)
+    public UnitOfWork(
+        BarceloIoTDatabaseContext context, 
+        IDispositivoRepository dispositivoRepository,
+        ICerradurasInteligenteRepository cerradurasInteligenteRepository,
+        ICredencialesAccesoRepository credencialesAccesoRepository,
+        IMantenimientoCerraduraRepository mantenimientoCerraduraRepository,
+        IRegistrosAccesoRepository registrosAccesoRepository,
+        IRegistrosAuditoriumRepository registrosAuditoriumRepository)
     {
         _context = context;
         Dispositivos = dispositivoRepository;
+        CerradurasInteligente = cerradurasInteligenteRepository;
+        CredencialesAcceso = credencialesAccesoRepository;
+        MantenimientoCerradura = mantenimientoCerraduraRepository;
+        RegistrosAcceso = registrosAccesoRepository;
+        RegistrosAuditorium = registrosAuditoriumRepository;
     }
 
     public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
