@@ -28,6 +28,7 @@ public class TbDeviceService : ITbDeviceService
 
     /// <inheritdoc />
     public async Task<TbDeviceResponse> CreateOrUpdateDeviceAsync(
+        string? deviceId,
         string deviceName,
         string deviceType,
         string? label = null,
@@ -38,15 +39,39 @@ public class TbDeviceService : ITbDeviceService
 
         var queryParams = new List<string>();
 
+        if (!string.IsNullOrEmpty(accessToken))
+        {
+            queryParams.Add($"accessToken={accessToken}");
+        }
+
         var queryString = queryParams.Any() ? "?" + string.Join("&", queryParams) : "";
         var url = $"/api/device{queryString}";
 
-        var device = new
+        // Build device object
+        // For NEW devices (no deviceId), don't include ID - Thingsboard will generate one
+        // For UPDATES (deviceId provided), include ID in the request body
+        object device;
+        if (!string.IsNullOrEmpty(deviceId))
         {
-            name = deviceName,
-            type = deviceType,
-            label = label
-        };
+            // Update existing device - include ID in body
+            device = new
+            {
+                id = new { entityType = "DEVICE", id = deviceId },
+                name = deviceName,
+                type = deviceType,
+                label = label
+            };
+        }
+        else
+        {
+            // Create new device - don't include ID, let Thingsboard generate it
+            device = new
+            {
+                name = deviceName,
+                type = deviceType,
+                label = label
+            };
+        }
 
         var request = new HttpRequestMessage(HttpMethod.Post, url)
         {
@@ -204,6 +229,118 @@ public class TbDeviceService : ITbDeviceService
         {
             CredentialsType = credentials.CredentialsType,
             CredentialsId = credentials.CredentialsId
+        };
+    }
+
+    /// <inheritdoc />
+    public async Task<TbDeviceResponse?> GetDeviceByNameAsync(
+        string deviceName,
+        CancellationToken cancellationToken = default)
+    {
+        var token = await GetValidTokenAsync(cancellationToken);
+
+        // Use the device name to search
+        var url = $"/api/device?name={Uri.EscapeDataString(deviceName)}";
+
+        var request = new HttpRequestMessage(HttpMethod.Get, url);
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        var response = await _httpClient.SendAsync(request, cancellationToken);
+
+        if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+        {
+            return null;
+        }
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var errorContent = await response.Content.ReadAsStringAsync(cancellationToken);
+            throw new HttpRequestException(
+                $"Failed to get device by name from Thingsboard. Status: {response.StatusCode}, Error: {errorContent}");
+        }
+
+        var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
+        var thingsboardResponse = JsonConvert.DeserializeObject<ThingsboardDeviceResponse>(responseContent);
+
+        if (thingsboardResponse == null)
+        {
+            return null;
+        }
+
+        return new TbDeviceResponse
+        {
+            Id = thingsboardResponse.Id?.Id ?? string.Empty,
+            Name = thingsboardResponse.Name,
+            Type = thingsboardResponse.Type,
+            CreatedTime = thingsboardResponse.CreatedTime,
+            Credentials = thingsboardResponse.Credentials != null
+                ? new TbCredentials
+                {
+                    CredentialsType = thingsboardResponse.Credentials.CredentialsType,
+                    CredentialsId = thingsboardResponse.Credentials.CredentialsId
+                }
+                : null
+        };
+    }
+
+    /// <inheritdoc />
+    public async Task<TbDeviceResponse> UpdateDeviceAsync(
+        string deviceId,
+        string deviceName,
+        string deviceType,
+        string? label = null,
+        CancellationToken cancellationToken = default)
+    {
+        var token = await GetValidTokenAsync(cancellationToken);
+
+        // Thingsboard uses POST /api/device for both create and update
+        // When ID is in the body as an object, it updates the existing device
+        var url = "/api/device";
+
+        var device = new
+        {
+            id = new { entityType = "DEVICE", id = deviceId },
+            name = deviceName,
+            type = deviceType,
+            label = label
+        };
+
+        var request = new HttpRequestMessage(HttpMethod.Post, url)
+        {
+            Content = new StringContent(
+                JsonConvert.SerializeObject(device),
+                Encoding.UTF8,
+                "application/json")
+        };
+
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        var response = await _httpClient.SendAsync(request, cancellationToken);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var errorContent = await response.Content.ReadAsStringAsync(cancellationToken);
+            throw new HttpRequestException(
+                $"Failed to update device in Thingsboard. Status: {response.StatusCode}, Error: {errorContent}");
+        }
+
+        var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
+        var thingsboardResponse = JsonConvert.DeserializeObject<ThingsboardDeviceResponse>(responseContent)
+                                ?? throw new InvalidOperationException("Failed to deserialize Thingsboard response");
+
+        return new TbDeviceResponse
+        {
+            Id = thingsboardResponse.Id?.Id ?? string.Empty,
+            Name = thingsboardResponse.Name,
+            Type = thingsboardResponse.Type,
+            CreatedTime = thingsboardResponse.CreatedTime,
+            Credentials = thingsboardResponse.Credentials != null
+                ? new TbCredentials
+                {
+                    CredentialsType = thingsboardResponse.Credentials.CredentialsType,
+                    CredentialsId = thingsboardResponse.Credentials.CredentialsId
+                }
+                : null
         };
     }
 

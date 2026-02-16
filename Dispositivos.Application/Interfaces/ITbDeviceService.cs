@@ -10,6 +10,7 @@ public interface ITbDeviceService
     /// <summary>
     /// Creates or updates a device in Thingsboard
     /// </summary>
+    /// <param name="deviceId">Optional device ID to use (for updates or specific IDs)</param>
     /// <param name="deviceName">Device name in Thingsboard</param>
     /// <param name="deviceType">Device type</param>
     /// <param name="label">Device label</param>
@@ -20,6 +21,7 @@ public interface ITbDeviceService
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Thingsboard device response with ID and credentials</returns>
     Task<TbDeviceResponse> CreateOrUpdateDeviceAsync(
+        string? deviceId,
         string deviceName,
         string deviceType,
         string? label = null,
@@ -54,6 +56,32 @@ public interface ITbDeviceService
     /// <returns>Device credentials</returns>
     Task<TbCredentials?> GetDeviceCredentialsAsync(
         string deviceId,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets a device by name from Thingsboard
+    /// </summary>
+    /// <param name="deviceName">Device name</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>Device information or null if not found</returns>
+    Task<TbDeviceResponse?> GetDeviceByNameAsync(
+        string deviceName,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Updates a device in Thingsboard
+    /// </summary>
+    /// <param name="deviceId">Thingsboard device identifier</param>
+    /// <param name="deviceName">Device name</param>
+    /// <param name="deviceType">Device type</param>
+    /// <param name="label">Device label</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>Thingsboard device response</returns>
+    Task<TbDeviceResponse> UpdateDeviceAsync(
+        string deviceId,
+        string deviceName,
+        string deviceType,
+        string? label = null,
         CancellationToken cancellationToken = default);
 }
 

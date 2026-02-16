@@ -39,11 +39,13 @@ public class CreateDispositivoCommandHandler : IRequestHandler<CreateDispositivo
             {
                 try
                 {
+                    // Don't pass deviceId - let Thingsboard generate its own ID
                     var thingsboardResponse = await _tbDeviceService.CreateOrUpdateDeviceAsync(
-                        dispositivo.DispositivoId.ToString(),
+                        null,  // No deviceId - create new device
+                        dispositivo.DispositivoId.ToString(),  // Device name
                         dispositivo.TipoDispositivo,
-                        dispositivo.NumeroSerieDispositivo,
-                        dispositivo.DispositivoId.ToString(),
+                        dispositivo.NumeroSerieDispositivo,   // Label
+                        null,  // Access token
                         cancellationToken);
                     await _unitOfWork.SaveChangesAsync(cancellationToken);
                 }
