@@ -38,6 +38,7 @@ public class DispositivoController : ControllerBase
         var result = await _mediator.Send(new GetDispositivosByHotelIdQuery { HotelId = hotelId });
         return result.IsSuccess ? Ok(result.Data) : BadRequest(result.ErrorMessage);
     }
+      
 
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateDispositivoDto dispositivoDto)

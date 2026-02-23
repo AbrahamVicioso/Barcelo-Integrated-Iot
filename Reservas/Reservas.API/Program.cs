@@ -26,7 +26,7 @@ builder.Services.AddAuthorizationServices();
 // Register Application and Persistence layers
 builder.Services.AddApplicationLayer();
 builder.Services.AddPersistenceLayer();
-builder.Services.AddEmailServices(builder.Configuration);
+//builder.Services.AddEmailServices(builder.Configuration);
 builder.Services.AddInfrastructureLayer(builder.Configuration);
 
 // Configure HttpClient for Usuarios API
