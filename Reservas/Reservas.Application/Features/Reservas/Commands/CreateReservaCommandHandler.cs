@@ -13,7 +13,6 @@ public class CreateReservaCommandHandler : IRequestHandler<CreateReservaCommand,
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
-    private readonly IEmailRepository _emailRepository;
     private readonly IHuespedRepository _huespedRepository;
     private readonly IReservaKafkaProducer _kafkaProducer;
     private readonly ILogger<CreateReservaCommandHandler> _logger;
@@ -21,14 +20,12 @@ public class CreateReservaCommandHandler : IRequestHandler<CreateReservaCommand,
     public CreateReservaCommandHandler(
         IUnitOfWork unitOfWork, 
         IMapper mapper, 
-        IEmailRepository emailRepository, 
         IHuespedRepository huespedRepository,
         IReservaKafkaProducer kafkaProducer,
         ILogger<CreateReservaCommandHandler> logger)
     {
         _unitOfWork = unitOfWork;
         _mapper = mapper;
-        _emailRepository = emailRepository;
         _huespedRepository = huespedRepository;
         _kafkaProducer = kafkaProducer;
         _logger = logger;
