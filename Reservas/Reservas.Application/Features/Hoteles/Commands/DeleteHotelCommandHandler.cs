@@ -31,7 +31,7 @@ public class DeleteHotelCommandHandler : IRequestHandler<DeleteHotelCommand, Res
         }
         catch (Exception ex)
         {
-            return Result<bool>.Failure($"Error al eliminar el hotel: {ex.Message}");
+            return Result<bool>.Failure($"Error al desactivar el hotel: {ex.Message}");
         }
     }
 }

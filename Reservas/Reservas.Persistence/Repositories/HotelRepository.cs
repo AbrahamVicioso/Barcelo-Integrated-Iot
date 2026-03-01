@@ -37,7 +37,9 @@ public class HotelRepository : IHotelRepository
 
     public async Task DeleteAsync(Hotel hotel, CancellationToken cancellationToken = default)
     {
-        _context.Hoteles.Remove(hotel);
+        // Soft delete: marcar el hotel como inactivo en lugar de eliminarlo
+        hotel.EstaActivo = false;
+        _context.Hoteles.Update(hotel);
         await Task.CompletedTask;
     }
 }
