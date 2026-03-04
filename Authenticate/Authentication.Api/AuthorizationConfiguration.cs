@@ -35,7 +35,6 @@ namespace Authentication.Api
 
             services.AddIdentity<User, IdentityRole>(options =>
             {
-                options.Lockout.AllowedForNewUsers = false;
 
                 options.SignIn.RequireConfirmedEmail = false;
                 options.SignIn.RequireConfirmedAccount = false;
@@ -45,9 +44,14 @@ namespace Authentication.Api
                 options.Password.RequireNonAlphanumeric = false;
                 options.Password.RequireUppercase = false;
                 options.Password.RequireLowercase = false;
+
+                options.Lockout.AllowedForNewUsers = true;
             })
             .AddEntityFrameworkStores<AuthenticationDbContext>()
             .AddApiEndpoints();
+
+            // Add RoleManager explicitly
+            services.AddScoped<RoleManager<IdentityRole>>();
 
             services.AddAuthorization();
 
