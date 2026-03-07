@@ -1,4 +1,5 @@
 using Authentication.Api.DTOs;
+using Authentication.Api.Services;
 using Authentication.Domain.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -14,11 +15,13 @@ public class UsersController : ControllerBase
 {
     private readonly UserManager<User> _userManager;
     private readonly RoleManager<IdentityRole> _roleManager;
+    private readonly IKafkaProducerService _kafkaProducerService;
 
-    public UsersController(UserManager<User> userManager, RoleManager<IdentityRole> roleManager)
+    public UsersController(UserManager<User> userManager, RoleManager<IdentityRole> roleManager, IKafkaProducerService kafkaProducerService)
     {
         _userManager = userManager;
         _roleManager = roleManager;
+        _kafkaProducerService = kafkaProducerService;
     }
 
     #region Queries
@@ -182,12 +185,24 @@ public class UsersController : ControllerBase
         };
 
         var result = await _userManager.CreateAsync(user, model.Password);
-        
+
         if (!result.Succeeded)
         {
             var errors = result.Errors.Select(e => e.Description).ToList();
             return BadRequest(new { message = "Error al crear usuario", errors });
         }
+
+        // Publish UserCreatedEvent to Kafka for email notification
+        var userCreatedEvent = new Notification.Domain.Events.UserCreatedEvent
+        {
+            Id = Guid.Parse(user.Id),
+            Email = model.Email,
+            GeneratedPassword = model.Password,
+            UserName = model.UserName,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        await _kafkaProducerService.PublishUserCreatedAsync(userCreatedEvent);
 
         return CreatedAtAction(nameof(GetById), new { id = user.Id }, new UserResponseDto
         {

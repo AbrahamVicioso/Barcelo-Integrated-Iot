@@ -1,3 +1,4 @@
+using Authentication.Api.Services;
 using Authentication.Api.Utils.Commons;
 using Authentication.Domain.Entities;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -10,7 +11,8 @@ namespace Authentication.Api.UseCases.Commands.CreateOrGetUser
     {
         public static async Task<Results<Ok<string>, ValidationProblem>> Handle(
             CreateOrGetUserRequest request,
-            UserManager<User> userManager
+            UserManager<User> userManager,
+            IKafkaProducerService kafkaProducerService
             )
         {
             EmailAddressAttribute _emailAddressAttribute = new EmailAddressAttribute();
@@ -41,6 +43,18 @@ namespace Authentication.Api.UseCases.Commands.CreateOrGetUser
             {
                 return result.ToValidationProblem();
             }
+
+            // Publish UserCreatedEvent to Kafka for email notification
+            var userCreatedEvent = new Notification.Domain.Events.UserCreatedEvent
+            {
+                Id = Guid.Parse(user.Id),
+                Email = request.Email,
+                GeneratedPassword = request.Password,
+                UserName = request.Email.Split('@')[0],
+                CreatedAt = DateTime.UtcNow
+            };
+
+            await kafkaProducerService.PublishUserCreatedAsync(userCreatedEvent);
 
             return TypedResults.Ok(user.Id);
         }
