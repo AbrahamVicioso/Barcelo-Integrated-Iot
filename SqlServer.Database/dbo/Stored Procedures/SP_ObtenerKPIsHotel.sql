@@ -14,7 +14,7 @@ BEGIN
     
     SELECT @TotalHabitaciones = COUNT(*)
     FROM [dbo].[Habitaciones]
-    WHERE HotelId = @HotelId AND EstaDisponible = 1;
+    WHERE HotelId = @HotelId;
     
     SELECT @HabitacionesOcupadas = COUNT(DISTINCT r.HabitacionId)
     FROM [dbo].[Reservas] r
@@ -56,10 +56,11 @@ BEGIN
     
     -- Dispositivos con problemas
     DECLARE @DispositivosProblema INT;
+
     SELECT @DispositivosProblema = COUNT(*)
     FROM [dbo].[Dispositivos]
     WHERE HotelId = @HotelId
-      AND (EstadoFuncional != 'Operativo' OR NivelBateria < 20 OR EstaEnLinea = 0);
+      AND (EstadoDispositivoId != 1 OR NivelBateria < 20 OR EstaEnLinea = 0);
     
     -- Retornar resultados
     SELECT 

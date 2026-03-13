@@ -12,7 +12,7 @@ SELECT
     disp.NivelBateria,
     disp.EstaEnLinea,
     disp.UltimaSincronizacion,
-    disp.EstadoFuncional AS EstadoFuncionalDispositivo,
+    disp.EstadoDispositivoId AS EstadoFuncionalDispositivo,
     cer.EstadoPuerta,
     cer.UltimaApertura,
     cer.ContadorAperturas,

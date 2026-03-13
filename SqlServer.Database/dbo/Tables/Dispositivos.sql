@@ -10,7 +10,7 @@
 	[EstaEnLinea] [bit] NOT NULL,
 	[UltimaSincronizacion] [datetime2](7) NULL,
 	[FechaInstalacion] [datetime2](7) NOT NULL,
-	[EstadoFuncional] [nvarchar](20) NOT NULL,
+	[EstadoDispositivoId] INT NULL,
 	[UltimaActualizacionFirmware] [datetime2](7) NULL,
 	[IPDispositivo] [nvarchar](50) NULL,
 	[FechaCreacion] [datetime2](7) NOT NULL,
@@ -26,7 +26,8 @@
  CONSTRAINT [UQ_Dispositivos_NumeroSerie] UNIQUE NONCLUSTERED 
 (
 	[NumeroSerieDispositivo] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY], 
+    CONSTRAINT [FK_Dispositivos_EstadosDispositivo] FOREIGN KEY ([EstadoDispositivoId]) REFERENCES [EstadosDispositivo] ([EstadoDispositivoId])
 ) ON [PRIMARY]
 GO
 ALTER TABLE [dbo].[Dispositivos]  WITH CHECK ADD  CONSTRAINT [FK_Dispositivos_Hoteles] FOREIGN KEY([HotelId])
@@ -41,7 +42,7 @@ ALTER TABLE [dbo].[Dispositivos] ADD  DEFAULT ((1)) FOR [EstaEnLinea]
 GO
 ALTER TABLE [dbo].[Dispositivos] ADD  DEFAULT (getutcdate()) FOR [FechaInstalacion]
 GO
-ALTER TABLE [dbo].[Dispositivos] ADD  DEFAULT ('Operativo') FOR [EstadoFuncional]
+
 GO
 ALTER TABLE [dbo].[Dispositivos] ADD  DEFAULT (getutcdate()) FOR [FechaCreacion]
 GO
@@ -75,5 +76,5 @@ GO
 CREATE NONCLUSTERED INDEX [IX_Dispositivos_TipoDispositivo] ON [dbo].[Dispositivos]
 (
 	[TipoDispositivo] ASC,
-	[EstadoFuncional] ASC
+	[EstadoDispositivoId] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]

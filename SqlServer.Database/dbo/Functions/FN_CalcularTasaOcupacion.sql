@@ -17,7 +17,7 @@ BEGIN
     
     SELECT @TotalHabitaciones = COUNT(*)
     FROM [dbo].[Habitaciones]
-    WHERE HotelId = @HotelId AND EstaDisponible = 1;
+    WHERE HotelId = @HotelId AND EstadoHabitacionId = 1;
     
     SELECT @HabitacionesOcupadas = COUNT(DISTINCT r.HabitacionId)
     FROM [dbo].[Reservas] r

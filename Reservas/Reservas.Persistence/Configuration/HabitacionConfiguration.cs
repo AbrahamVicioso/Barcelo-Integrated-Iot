@@ -37,13 +37,8 @@ public class HabitacionConfiguration : IEntityTypeConfiguration<Habitacion>
             .HasColumnType("decimal(10, 2)")
             .IsRequired();
 
-        builder.Property(h => h.Estado)
-            .HasMaxLength(20)
-            .HasDefaultValue("Disponible")
-            .IsRequired();
-
-        builder.Property(h => h.EstaDisponible)
-            .HasDefaultValue(true)
+        builder.Property(h => h.EstadoHabitacionId)
+            .HasMaxLength(1)
             .IsRequired();
 
         builder.Property(h => h.Descripcion)

@@ -10,7 +10,7 @@ SELECT
     disp.VersionFirmware,
     disp.NivelBateria,
     disp.EstaEnLinea,
-    disp.EstadoFuncional,
+    disp.EstadoDispositivoId,
     disp.FechaInstalacion,
     disp.UltimaActualizacionFirmware,
     hot.Nombre AS NombreHotel,

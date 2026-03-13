@@ -118,12 +118,17 @@
     <Build Include="dbo\Stored Procedures\SP_SincronizarEstadoDispositivo.sql" />
     <Build Include="Security\Seguridad.sql" />
     <None Include="Scripts\ScriptsIgnoredOnImport.sql" />
+    <Build Include="dbo\Tables\EstadosHabitacion.sql" />
+    <Build Include="dbo\Tables\EstadosDispositivo.sql" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Condition="'$(NetCoreBuild)' == 'true'">
       <Version>1.0.0</Version>
       <PrivateAssets>All</PrivateAssets>
     </PackageReference>
+  </ItemGroup>
+  <ItemGroup>
+    <RefactorLog Include="BarceloIoTDatabase.refactorlog" />
   </ItemGroup>
   <Import Project="$(NETCoreTargetsPath)\Microsoft.Data.Tools.Schema.SqlTasks.targets" Condition="'$(NetCoreBuild)' == 'true'" />
   <Target Name="BeforeBuild">

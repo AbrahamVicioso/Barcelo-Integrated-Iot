@@ -22,9 +22,7 @@ namespace Reservas.Domain.Entities
 
         public decimal PrecioPorNoche { get; set; }
 
-        public string Estado { get; set; } = string.Empty;
-
-        public bool EstaDisponible { get; set; }
+        public int EstadoHabitacionId { get; set; }
 
         public string? Descripcion { get; set; }
 

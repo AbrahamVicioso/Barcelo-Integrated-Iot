@@ -95,7 +95,7 @@ BEGIN
         SELECT 
             @HotelId,
             'DispositivosOperativos' AS NombreMetrica,
-            CAST(SUM(CASE WHEN EstadoFuncional = 'Operativo' AND EstaEnLinea = 1 THEN 1 ELSE 0 END) AS FLOAT) / 
+            CAST(SUM(CASE WHEN EstadoDispositivoId = 1 AND EstaEnLinea = 1 THEN 1 ELSE 0 END) AS FLOAT) / 
             CAST(COUNT(*) AS FLOAT) * 100 AS ValorMetrica,
             @FechaMedicion,
             'Eficiencia' AS Categoria,

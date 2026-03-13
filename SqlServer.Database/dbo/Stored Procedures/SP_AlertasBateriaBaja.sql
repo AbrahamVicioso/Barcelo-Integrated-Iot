@@ -10,7 +10,7 @@ BEGIN
         disp.NumeroSerieDispositivo,
         disp.TipoDispositivo,
         disp.NivelBateria,
-        disp.EstadoFuncional,
+        disp.EstadoDispositivoId,
         hot.Nombre AS NombreHotel,
         CASE 
             WHEN cer.CerraduraId IS NOT NULL THEN hab.NumeroHabitacion
@@ -22,6 +22,6 @@ BEGIN
     LEFT JOIN [dbo].[CerradurasInteligentes] cer ON disp.DispositivoId = cer.DispositivoId
     LEFT JOIN [dbo].[Habitaciones] hab ON cer.HabitacionId = hab.HabitacionId
     WHERE disp.NivelBateria <= @UmbralBateria
-      AND disp.EstadoFuncional = 'Operativo'
+      AND disp.EstadoDispositivoId = 1
     ORDER BY disp.NivelBateria ASC;
 END

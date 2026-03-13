@@ -17,7 +17,7 @@ SELECT
     AVG(CAST(ra.Latencia AS FLOAT)) AS LatenciaPromedioAccesos,
     MAX(ra.FechaHoraAcceso) AS UltimoAcceso,
     disp.NivelBateria,
-    disp.EstadoFuncional
+    disp.EstadoDispositivoId
 FROM [dbo].[CerradurasInteligentes] cer
 INNER JOIN [dbo].[Dispositivos] disp ON cer.DispositivoId = disp.DispositivoId
 INNER JOIN [dbo].[Habitaciones] hab ON cer.HabitacionId = hab.HabitacionId
@@ -27,4 +27,4 @@ GROUP BY
     cer.CerraduraId, disp.NumeroSerieDispositivo, 
     hot.Nombre, hab.NumeroHabitacion,
     cer.ContadorAperturas,
-    disp.NivelBateria, disp.EstadoFuncional;
+    disp.NivelBateria, disp.EstadoDispositivoId;
