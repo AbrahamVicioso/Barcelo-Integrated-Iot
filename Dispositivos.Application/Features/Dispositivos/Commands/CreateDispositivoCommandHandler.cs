@@ -42,7 +42,7 @@ public class CreateDispositivoCommandHandler : IRequestHandler<CreateDispositivo
                     var thingsboardResponse = await _tbDeviceService.CreateOrUpdateDeviceAsync(
                         null,  // No deviceId - create new device
                         dispositivo.DispositivoId.ToString(),  // Device name
-                        dispositivo.TipoDispositivo,
+                        dispositivo.TipoDispositivo?.Nombre,
                         dispositivo.NumeroSerieDispositivo,   // Label
                         null,  // Access token
                         cancellationToken);

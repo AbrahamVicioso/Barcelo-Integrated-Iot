@@ -44,10 +44,10 @@ public class DispositivoRepository : IDispositivoRepository
             .ToListAsync();
     }
 
-    public async Task<IEnumerable<Dispositivo>> GetByTipoDispositivo(string tipoDispositivo)
+    public async Task<IEnumerable<Dispositivo>> GetByTipoDispositivo(int tipoDispositivoId)
     {
         return await _context.Dispositivos
-            .Where(d => d.TipoDispositivo == tipoDispositivo)
+            .Where(d => d.TipoDispositivoId == tipoDispositivoId)
             .AsNoTracking()
             .ToListAsync();
     }

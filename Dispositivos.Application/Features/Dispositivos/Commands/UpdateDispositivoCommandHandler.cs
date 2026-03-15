@@ -53,7 +53,7 @@ public class UpdateDispositivoCommandHandler : IRequestHandler<UpdateDispositivo
                     await _tbDeviceService.UpdateDeviceAsync(
                         dispositivo.DispositivoId.ToString(),
                         dispositivo.DispositivoId.ToString(),
-                        dispositivo.TipoDispositivo,
+                        dispositivo.TipoDispositivo?.Nombre,
                         dispositivo.NumeroSerieDispositivo,
                         cancellationToken);
                 }
@@ -75,7 +75,7 @@ public class UpdateDispositivoCommandHandler : IRequestHandler<UpdateDispositivo
                                 await _tbDeviceService.UpdateDeviceAsync(
                                     existingDevice.Id,
                                     dispositivo.DispositivoId.ToString(),
-                                    dispositivo.TipoDispositivo,
+                                    dispositivo.TipoDispositivo?.Nombre,
                                     dispositivo.NumeroSerieDispositivo,
                                     cancellationToken);
                             }
@@ -85,7 +85,7 @@ public class UpdateDispositivoCommandHandler : IRequestHandler<UpdateDispositivo
                                 await _tbDeviceService.CreateOrUpdateDeviceAsync(
                                     null,
                                     dispositivo.DispositivoId.ToString(),
-                                    dispositivo.TipoDispositivo,
+                                    dispositivo.TipoDispositivo?.Nombre,
                                     dispositivo.NumeroSerieDispositivo,
                                     dispositivo.DispositivoId.ToString(),
                                     cancellationToken);
@@ -111,7 +111,7 @@ public class UpdateDispositivoCommandHandler : IRequestHandler<UpdateDispositivo
                                 await _tbDeviceService.UpdateDeviceAsync(
                                     existingDevice.Id,
                                     dispositivo.DispositivoId.ToString(),
-                                    dispositivo.TipoDispositivo,
+                                    dispositivo.TipoDispositivo?.Nombre,
                                     dispositivo.NumeroSerieDispositivo,
                                     cancellationToken);
                             }
