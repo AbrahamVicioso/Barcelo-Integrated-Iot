@@ -121,8 +121,10 @@
     <PostDeploy Include="Scripts\Script.PostDeployment.sql" />
     <None Include="Scripts\Seed_EstadosDispositivo.sql" />
     <None Include="Scripts\Seed_EstadosHabitacion.sql" />
+    <None Include="Scripts\Seed_TiposDispositivo.sql" />
     <Build Include="dbo\Tables\EstadosHabitacion.sql" />
     <Build Include="dbo\Tables\EstadosDispositivo.sql" />
+    <Build Include="dbo\Tables\TiposDispositivo.sql" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Condition="'$(NetCoreBuild)' == 'true'">

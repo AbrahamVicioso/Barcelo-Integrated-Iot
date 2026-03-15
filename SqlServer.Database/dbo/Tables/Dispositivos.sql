@@ -3,7 +3,7 @@
 	[HotelId] [int] NOT NULL,
 	[NumeroSerieDispositivo] [nvarchar](100) NOT NULL,
 	[DireccionMAC] [nvarchar](50) NOT NULL,
-	[TipoDispositivo] [nvarchar](50) NOT NULL,
+	[TipoDispositivoId] INT NOT NULL,
 	[Modelo] [nvarchar](100) NULL,
 	[VersionFirmware] [nvarchar](20) NOT NULL,
 	[NivelBateria] [int] NOT NULL,
@@ -27,7 +27,8 @@
 (
 	[NumeroSerieDispositivo] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY], 
-    CONSTRAINT [FK_Dispositivos_EstadosDispositivo] FOREIGN KEY ([EstadoDispositivoId]) REFERENCES [EstadosDispositivo] ([EstadoDispositivoId])
+    CONSTRAINT [FK_Dispositivos_EstadosDispositivo] FOREIGN KEY ([EstadoDispositivoId]) REFERENCES [EstadosDispositivo] ([EstadoDispositivoId]),
+    CONSTRAINT [FK_Dispositivos_TiposDispositivo]   FOREIGN KEY ([TipoDispositivoId])   REFERENCES [TiposDispositivo]   ([TipoDispositivoId])
 ) ON [PRIMARY]
 GO
 ALTER TABLE [dbo].[Dispositivos]  WITH CHECK ADD  CONSTRAINT [FK_Dispositivos_Hoteles] FOREIGN KEY([HotelId])
@@ -75,6 +76,6 @@ GO
 /****** Object:  Index [IX_Dispositivos_TipoDispositivo]    Script Date: 12/9/2025 8:27:24 AM ******/
 CREATE NONCLUSTERED INDEX [IX_Dispositivos_TipoDispositivo] ON [dbo].[Dispositivos]
 (
-	[TipoDispositivo] ASC,
+	[TipoDispositivoId] ASC,
 	[EstadoDispositivoId] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]

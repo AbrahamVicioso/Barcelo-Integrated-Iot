@@ -20,6 +20,7 @@ public class DispositivoRepository : IDispositivoRepository
             .Include(d => d.CerradurasInteligentes)
             .Include(d => d.MantenimientoCerraduras)
             .Include(d => d.EstadoDispositivo)
+            .Include(d => d.TipoDispositivo)
             .AsNoTracking()
             .ToListAsync();
     }
@@ -30,6 +31,7 @@ public class DispositivoRepository : IDispositivoRepository
             .Include(d => d.CerradurasInteligentes)
             .Include(d => d.MantenimientoCerraduras)
             .Include(d => d.EstadoDispositivo)
+            .Include(d => d.TipoDispositivo)
             .AsNoTracking()
             .FirstOrDefaultAsync(d => d.DispositivoId == id);
     }

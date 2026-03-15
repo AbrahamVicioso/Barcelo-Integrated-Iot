@@ -7,7 +7,8 @@ public class DispositivoDto
     public string? NombreHotel { get; set; }
     public string NumeroSerieDispositivo { get; set; } = string.Empty;
     public string DireccionMac { get; set; } = string.Empty;
-    public string TipoDispositivo { get; set; } = string.Empty;
+    public int TipoDispositivoId { get; set; }
+    public string? NombreTipo { get; set; }
     public string Modelo { get; set; } = string.Empty;
     public string VersionFirmware { get; set; } = string.Empty;
     public int NivelBateria { get; set; }

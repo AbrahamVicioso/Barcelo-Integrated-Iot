@@ -25,6 +25,7 @@ public static class DependencyInjection
         services.AddScoped<IRegistrosAccesoRepository, RegistrosAccesoRepository>();
         services.AddScoped<IRegistrosAuditoriumRepository, RegistrosAuditoriumRepository>();
         services.AddScoped<IEstadoDispositivoRepository, EstadoDispositivoRepository>();
+        services.AddScoped<ITipoDispositivoRepository, TipoDispositivoRepository>();
 
         return services;
     }

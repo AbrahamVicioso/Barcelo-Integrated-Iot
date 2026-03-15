@@ -2,6 +2,7 @@ using AutoMapper;
 using Dispositivos.Application.DTOs;
 using Dispositivos.Application.Features.Dispositivos.Commands;
 using Dispositivos.Application.Features.EstadosDispositivo.Commands;
+using Dispositivos.Application.Features.TiposDispositivo.Commands;
 using Dispositivos.Domain.Entities;
 
 namespace Dispositivos.Application.Mappings;
@@ -12,19 +13,27 @@ public class MappingProfile : Profile
     {
         // Dispositivo mappings
         CreateMap<Dispositivo, DispositivoDto>()
-            .ForMember(dest => dest.DescripcionEstado, opt => opt.MapFrom(src => src.EstadoDispositivo != null ? src.EstadoDispositivo.Descripcion : null));
+            .ForMember(dest => dest.DescripcionEstado, opt => opt.MapFrom(src => src.EstadoDispositivo != null ? src.EstadoDispositivo.Descripcion : null))
+            .ForMember(dest => dest.NombreTipo,        opt => opt.MapFrom(src => src.TipoDispositivo   != null ? src.TipoDispositivo.Nombre         : null));
 
         CreateMap<CreateDispositivoDto, Dispositivo>()
-            .ForMember(dest => dest.DispositivoId, opt => opt.Ignore())
-            .ForMember(dest => dest.FechaCreacion, opt => opt.Ignore())
-            .ForMember(dest => dest.EstadoDispositivo, opt => opt.Ignore());
+            .ForMember(dest => dest.DispositivoId,   opt => opt.Ignore())
+            .ForMember(dest => dest.FechaCreacion,   opt => opt.Ignore())
+            .ForMember(dest => dest.EstadoDispositivo, opt => opt.Ignore())
+            .ForMember(dest => dest.TipoDispositivo,   opt => opt.Ignore());
 
         CreateMap<UpdateDispositivoDto, Dispositivo>()
-            .ForMember(dest => dest.DispositivoId, opt => opt.Ignore())
-            .ForMember(dest => dest.FechaCreacion, opt => opt.Ignore())
+            .ForMember(dest => dest.DispositivoId,          opt => opt.Ignore())
+            .ForMember(dest => dest.FechaCreacion,          opt => opt.Ignore())
             .ForMember(dest => dest.CerradurasInteligentes, opt => opt.Ignore())
             .ForMember(dest => dest.MantenimientoCerraduras, opt => opt.Ignore())
-            .ForMember(dest => dest.EstadoDispositivo, opt => opt.Ignore());
+            .ForMember(dest => dest.EstadoDispositivo,       opt => opt.Ignore())
+            .ForMember(dest => dest.TipoDispositivo,         opt => opt.Ignore());
+
+        // TipoDispositivo mappings
+        CreateMap<TipoDispositivo, TipoDispositivoDto>();
+        CreateMap<CreateTipoDispositivoDto, TipoDispositivo>();
+        CreateMap<UpdateTipoDispositivoCommand, TipoDispositivo>();
 
         // EstadoDispositivo mappings
         CreateMap<EstadoDispositivo, EstadoDispositivoDto>();

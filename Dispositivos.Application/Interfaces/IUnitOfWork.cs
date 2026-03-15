@@ -9,6 +9,7 @@ public interface IUnitOfWork : IDisposable
     IRegistrosAccesoRepository RegistrosAcceso { get; }
     IRegistrosAuditoriumRepository RegistrosAuditorium { get; }
     IEstadoDispositivoRepository EstadosDispositivo { get; }
+    ITipoDispositivoRepository TiposDispositivo { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
     Task BeginTransactionAsync(CancellationToken cancellationToken = default);

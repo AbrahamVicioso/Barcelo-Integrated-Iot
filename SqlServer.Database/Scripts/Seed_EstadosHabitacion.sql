@@ -5,8 +5,6 @@
 
 IF NOT EXISTS (SELECT 1 FROM [dbo].[EstadosHabitacion])
 BEGIN
-    SET IDENTITY_INSERT [dbo].[EstadosHabitacion] OFF;
-
     INSERT INTO [dbo].[EstadosHabitacion] ([EstadoHabitacionId], [Descripcion]) VALUES
         (1, N'Disponible'),
         (2, N'Ocupada'),

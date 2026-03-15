@@ -15,7 +15,9 @@ public partial class Dispositivo
 
     public string DireccionMac { get; set; }
 
-    public string TipoDispositivo { get; set; }
+    public int TipoDispositivoId { get; set; }
+
+    public virtual TipoDispositivo? TipoDispositivo { get; set; }
 
     public string Modelo { get; set; }
 

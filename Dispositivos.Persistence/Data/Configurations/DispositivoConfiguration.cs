@@ -17,7 +17,7 @@ namespace Dispositivos.Persistence.Data.Configurations
 
             entity.HasIndex(e => e.NumeroSerieDispositivo, "IX_Dispositivos_NumeroSerie");
 
-            entity.HasIndex(e => new { e.TipoDispositivo, e.EstadoDispositivoId }, "IX_Dispositivos_TipoDispositivo");
+            entity.HasIndex(e => new { e.TipoDispositivoId, e.EstadoDispositivoId }, "IX_Dispositivos_TipoDispositivo");
 
             entity.HasIndex(e => e.DireccionMac, "UQ_Dispositivos_MAC").IsUnique();
 
@@ -46,9 +46,14 @@ namespace Dispositivos.Persistence.Data.Configurations
             entity.Property(e => e.NumeroSerieDispositivo)
                 .IsRequired()
                 .HasMaxLength(100);
-            entity.Property(e => e.TipoDispositivo)
+            entity.Property(e => e.TipoDispositivoId)
                 .IsRequired()
-                .HasMaxLength(50);
+                .HasDefaultValue(1);
+
+            entity.HasOne(e => e.TipoDispositivo)
+                .WithMany(t => t.Dispositivos)
+                .HasForeignKey(e => e.TipoDispositivoId)
+                .OnDelete(Microsoft.EntityFrameworkCore.DeleteBehavior.Restrict);
             entity.Property(e => e.VersionFirmware)
                 .IsRequired()
                 .HasMaxLength(20);

@@ -29,6 +29,8 @@ public partial class BarceloIoTDatabaseContext : DbContext
 
     public virtual DbSet<EstadoDispositivo> EstadosDispositivo { get; set; }
 
+    public virtual DbSet<TipoDispositivo> TiposDispositivo { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.UseCollation("SQL_Latin1_General_CP1_CI_AS");
@@ -40,6 +42,7 @@ public partial class BarceloIoTDatabaseContext : DbContext
         modelBuilder.ApplyConfiguration(new Configurations.RegistrosAccesoConfiguration());
         modelBuilder.ApplyConfiguration(new Configurations.RegistrosAuditoriumConfiguration());
         modelBuilder.ApplyConfiguration(new Configurations.EstadoDispositivoConfiguration());
+        modelBuilder.ApplyConfiguration(new Configurations.TipoDispositivoConfiguration());
         OnModelCreatingPartial(modelBuilder);
     }
 

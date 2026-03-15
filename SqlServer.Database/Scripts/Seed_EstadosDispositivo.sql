@@ -5,8 +5,6 @@
 
 IF NOT EXISTS (SELECT 1 FROM [dbo].[EstadosDispositivo])
 BEGIN
-    SET IDENTITY_INSERT [dbo].[EstadosDispositivo] OFF;
-
     INSERT INTO [dbo].[EstadosDispositivo] ([EstadoDispositivoId], [Descripcion]) VALUES
         (1, N'Operativo'),
         (2, N'Mantenimiento'),

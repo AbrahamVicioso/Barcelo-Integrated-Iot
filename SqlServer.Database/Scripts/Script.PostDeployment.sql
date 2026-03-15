@@ -5,5 +5,6 @@
     al hacer deploy del proyecto de base de datos.
 */
 
+:r .\Seed_TiposDispositivo.sql
 :r .\Seed_EstadosDispositivo.sql
 :r .\Seed_EstadosHabitacion.sql

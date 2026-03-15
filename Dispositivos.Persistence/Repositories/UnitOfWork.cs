@@ -16,6 +16,7 @@ public class UnitOfWork : IUnitOfWork
     public IRegistrosAccesoRepository RegistrosAcceso { get; }
     public IRegistrosAuditoriumRepository RegistrosAuditorium { get; }
     public IEstadoDispositivoRepository EstadosDispositivo { get; }
+    public ITipoDispositivoRepository TiposDispositivo { get; }
 
     public UnitOfWork(
         BarceloIoTDatabaseContext context,
@@ -25,7 +26,8 @@ public class UnitOfWork : IUnitOfWork
         IMantenimientoCerraduraRepository mantenimientoCerraduraRepository,
         IRegistrosAccesoRepository registrosAccesoRepository,
         IRegistrosAuditoriumRepository registrosAuditoriumRepository,
-        IEstadoDispositivoRepository estadoDispositivoRepository)
+        IEstadoDispositivoRepository estadoDispositivoRepository,
+        ITipoDispositivoRepository tipoDispositivoRepository)
     {
         _context = context;
         Dispositivos = dispositivoRepository;
@@ -35,6 +37,7 @@ public class UnitOfWork : IUnitOfWork
         RegistrosAcceso = registrosAccesoRepository;
         RegistrosAuditorium = registrosAuditoriumRepository;
         EstadosDispositivo = estadoDispositivoRepository;
+        TiposDispositivo   = tipoDispositivoRepository;
     }
 
     public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)

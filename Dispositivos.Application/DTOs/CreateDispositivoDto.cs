@@ -5,7 +5,7 @@ public class CreateDispositivoDto
     public int HotelId { get; set; }
     public string NumeroSerieDispositivo { get; set; } = string.Empty;
     public string DireccionMac { get; set; } = string.Empty;
-    public string TipoDispositivo { get; set; } = string.Empty;
+    public int TipoDispositivoId { get; set; } = 1;
     public string Modelo { get; set; } = string.Empty;
     public string VersionFirmware { get; set; } = string.Empty;
     public int NivelBateria { get; set; }

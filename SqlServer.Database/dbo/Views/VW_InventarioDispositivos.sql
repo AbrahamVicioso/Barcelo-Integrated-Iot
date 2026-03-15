@@ -5,7 +5,7 @@ SELECT
     disp.DispositivoId,
     disp.NumeroSerieDispositivo,
     disp.DireccionMAC,
-    disp.TipoDispositivo,
+    tip.Nombre AS TipoDispositivo,
     disp.Modelo,
     disp.VersionFirmware,
     disp.NivelBateria,
@@ -25,7 +25,8 @@ SELECT
         WHEN DATEDIFF(DAY, disp.UltimaActualizacionFirmware, GETUTCDATE()) > 180 THEN 'Desactualizado'
         ELSE 'Actualizado'
     END AS EstadoFirmware
-FROM [dbo].[Dispositivos] disp
-INNER JOIN [dbo].[Hoteles] hot ON disp.HotelId = hot.HotelId
-LEFT JOIN [dbo].[CerradurasInteligentes] cer ON disp.DispositivoId = cer.DispositivoId
-LEFT JOIN [dbo].[Habitaciones] hab ON cer.HabitacionId = hab.HabitacionId;
+FROM [dbo].[Dispositivos]     disp
+INNER JOIN [dbo].[TiposDispositivo]  tip  ON disp.TipoDispositivoId = tip.TipoDispositivoId
+INNER JOIN [dbo].[Hoteles]           hot  ON disp.HotelId           = hot.HotelId
+LEFT  JOIN [dbo].[CerradurasInteligentes] cer ON disp.DispositivoId = cer.DispositivoId
+LEFT  JOIN [dbo].[Habitaciones]      hab  ON cer.HabitacionId       = hab.HabitacionId;

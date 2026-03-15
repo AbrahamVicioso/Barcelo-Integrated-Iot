@@ -8,7 +8,7 @@ BEGIN
     SELECT 
         disp.DispositivoId,
         disp.NumeroSerieDispositivo,
-        disp.TipoDispositivo,
+        tip.Nombre AS TipoDispositivo,
         disp.NivelBateria,
         disp.EstadoDispositivoId,
         hot.Nombre AS NombreHotel,
@@ -17,10 +17,11 @@ BEGIN
             ELSE 'N/A'
         END AS Ubicacion,
         disp.UltimaSincronizacion
-    FROM [dbo].[Dispositivos] disp
-    INNER JOIN [dbo].[Hoteles] hot ON disp.HotelId = hot.HotelId
-    LEFT JOIN [dbo].[CerradurasInteligentes] cer ON disp.DispositivoId = cer.DispositivoId
-    LEFT JOIN [dbo].[Habitaciones] hab ON cer.HabitacionId = hab.HabitacionId
+    FROM [dbo].[Dispositivos]          disp
+    INNER JOIN [dbo].[TiposDispositivo]      tip  ON disp.TipoDispositivoId = tip.TipoDispositivoId
+    INNER JOIN [dbo].[Hoteles]               hot  ON disp.HotelId           = hot.HotelId
+    LEFT  JOIN [dbo].[CerradurasInteligentes] cer ON disp.DispositivoId     = cer.DispositivoId
+    LEFT  JOIN [dbo].[Habitaciones]          hab  ON cer.HabitacionId       = hab.HabitacionId
     WHERE disp.NivelBateria <= @UmbralBateria
       AND disp.EstadoDispositivoId = 1
     ORDER BY disp.NivelBateria ASC;

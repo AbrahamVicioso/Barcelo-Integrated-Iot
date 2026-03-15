@@ -6,7 +6,7 @@ SELECT
     disp.DispositivoId,
     disp.NumeroSerieDispositivo,
     disp.DireccionMAC,
-    disp.TipoDispositivo,
+    tip.Nombre AS TipoDispositivo,
     disp.Modelo,
     disp.VersionFirmware,
     disp.NivelBateria,
@@ -31,6 +31,7 @@ SELECT
         ELSE 'Online'
     END AS EstadoConexion
 FROM [dbo].[CerradurasInteligentes] cer
-INNER JOIN [dbo].[Dispositivos] disp ON cer.DispositivoId = disp.DispositivoId
-INNER JOIN [dbo].[Habitaciones] hab ON cer.HabitacionId = hab.HabitacionId
-INNER JOIN [dbo].[Hoteles] hot ON hab.HotelId = hot.HotelId;
+INNER JOIN [dbo].[Dispositivos]    disp ON cer.DispositivoId    = disp.DispositivoId
+INNER JOIN [dbo].[TiposDispositivo] tip  ON disp.TipoDispositivoId = tip.TipoDispositivoId
+INNER JOIN [dbo].[Habitaciones]    hab  ON cer.HabitacionId       = hab.HabitacionId
+INNER JOIN [dbo].[Hoteles]         hot  ON hab.HotelId            = hot.HotelId;
