@@ -15,15 +15,17 @@ public class UnitOfWork : IUnitOfWork
     public IMantenimientoCerraduraRepository MantenimientoCerradura { get; }
     public IRegistrosAccesoRepository RegistrosAcceso { get; }
     public IRegistrosAuditoriumRepository RegistrosAuditorium { get; }
+    public IEstadoDispositivoRepository EstadosDispositivo { get; }
 
     public UnitOfWork(
-        BarceloIoTDatabaseContext context, 
+        BarceloIoTDatabaseContext context,
         IDispositivoRepository dispositivoRepository,
         ICerradurasInteligenteRepository cerradurasInteligenteRepository,
         ICredencialesAccesoRepository credencialesAccesoRepository,
         IMantenimientoCerraduraRepository mantenimientoCerraduraRepository,
         IRegistrosAccesoRepository registrosAccesoRepository,
-        IRegistrosAuditoriumRepository registrosAuditoriumRepository)
+        IRegistrosAuditoriumRepository registrosAuditoriumRepository,
+        IEstadoDispositivoRepository estadoDispositivoRepository)
     {
         _context = context;
         Dispositivos = dispositivoRepository;
@@ -32,6 +34,7 @@ public class UnitOfWork : IUnitOfWork
         MantenimientoCerradura = mantenimientoCerraduraRepository;
         RegistrosAcceso = registrosAccesoRepository;
         RegistrosAuditorium = registrosAuditoriumRepository;
+        EstadosDispositivo = estadoDispositivoRepository;
     }
 
     public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)

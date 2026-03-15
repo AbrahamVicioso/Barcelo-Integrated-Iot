@@ -118,6 +118,9 @@
     <Build Include="dbo\Stored Procedures\SP_SincronizarEstadoDispositivo.sql" />
     <Build Include="Security\Seguridad.sql" />
     <None Include="Scripts\ScriptsIgnoredOnImport.sql" />
+    <PostDeploy Include="Scripts\Script.PostDeployment.sql" />
+    <None Include="Scripts\Seed_EstadosDispositivo.sql" />
+    <None Include="Scripts\Seed_EstadosHabitacion.sql" />
     <Build Include="dbo\Tables\EstadosHabitacion.sql" />
     <Build Include="dbo\Tables\EstadosDispositivo.sql" />
   </ItemGroup>

@@ -38,8 +38,8 @@ public class HabitacionConfiguration : IEntityTypeConfiguration<Habitacion>
             .IsRequired();
 
         builder.Property(h => h.EstadoHabitacionId)
-            .HasMaxLength(1)
-            .IsRequired();
+            .IsRequired()
+            .HasDefaultValue(1);
 
         builder.Property(h => h.Descripcion)
             .HasMaxLength(1000);
@@ -60,8 +60,14 @@ public class HabitacionConfiguration : IEntityTypeConfiguration<Habitacion>
             .HasForeignKey(h => h.HotelId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        // Foreign key to EstadoHabitacion
+        builder.HasOne(h => h.EstadoHabitacion)
+            .WithMany(e => e.Habitaciones)
+            .HasForeignKey(h => h.EstadoHabitacionId)
+            .OnDelete(DeleteBehavior.Restrict);
+
         // Indexes
-        builder.HasIndex(h => h.Estado);
+        builder.HasIndex(h => h.EstadoHabitacionId);
         builder.HasIndex(h => h.HotelId);
     }
 }

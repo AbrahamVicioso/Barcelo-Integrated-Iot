@@ -24,6 +24,7 @@ public static class DependencyInjection
         services.AddScoped<IMantenimientoCerraduraRepository, MantenimientoCerraduraRepository>();
         services.AddScoped<IRegistrosAccesoRepository, RegistrosAccesoRepository>();
         services.AddScoped<IRegistrosAuditoriumRepository, RegistrosAuditoriumRepository>();
+        services.AddScoped<IEstadoDispositivoRepository, EstadoDispositivoRepository>();
 
         return services;
     }

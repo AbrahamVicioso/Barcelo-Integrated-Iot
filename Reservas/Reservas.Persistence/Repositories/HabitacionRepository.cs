@@ -18,6 +18,7 @@ public class HabitacionRepository : IHabitacionRepository
     {
         return await _context.Habitaciones
             .Include(h => h.Hotel)
+            .Include(h => h.EstadoHabitacion)
             .ToListAsync();
     }
 
@@ -25,6 +26,7 @@ public class HabitacionRepository : IHabitacionRepository
     {
         return await _context.Habitaciones
             .Include(h => h.Hotel)
+            .Include(h => h.EstadoHabitacion)
             .FirstOrDefaultAsync(h => h.HabitacionId == id);
     }
 
@@ -33,6 +35,7 @@ public class HabitacionRepository : IHabitacionRepository
         return await _context.Habitaciones
             .Where(h => h.HotelId == hotelId)
             .Include(h => h.Hotel)
+            .Include(h => h.EstadoHabitacion)
             .ToListAsync();
     }
 

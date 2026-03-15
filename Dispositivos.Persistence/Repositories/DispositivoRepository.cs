@@ -19,6 +19,7 @@ public class DispositivoRepository : IDispositivoRepository
         return await _context.Dispositivos
             .Include(d => d.CerradurasInteligentes)
             .Include(d => d.MantenimientoCerraduras)
+            .Include(d => d.EstadoDispositivo)
             .AsNoTracking()
             .ToListAsync();
     }
@@ -28,6 +29,7 @@ public class DispositivoRepository : IDispositivoRepository
         return await _context.Dispositivos
             .Include(d => d.CerradurasInteligentes)
             .Include(d => d.MantenimientoCerraduras)
+            .Include(d => d.EstadoDispositivo)
             .AsNoTracking()
             .FirstOrDefaultAsync(d => d.DispositivoId == id);
     }

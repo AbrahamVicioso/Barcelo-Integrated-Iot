@@ -1,13 +1,14 @@
 using Dispositivos.Application;
 using Dispositivos.Infrastructure;
 using Dispositivos.Persistence;
+using Dispositivos.Persistence.Data;
 using Scalar.AspNetCore;
 
 namespace Dispositivos.API
 {
     public class Program
     {
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
 
@@ -42,6 +43,12 @@ namespace Dispositivos.API
             {
                 app.MapOpenApi();
                 app.MapScalarApiReference();
+            }
+
+            using (var scope = app.Services.CreateScope())
+            {
+                var context = scope.ServiceProvider.GetRequiredService<BarceloIoTDatabaseContext>();
+                await DbSeeder.SeedAsync(context);
             }
 
            // app.UseHttpsRedirection();

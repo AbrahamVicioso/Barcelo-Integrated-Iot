@@ -30,7 +30,9 @@ namespace Reservas.Domain.Entities
 
         public DateTime? FechaActualizacion { get; set; }
 
-        // Navigation property
+        // Navigation properties
         public Hotel? Hotel { get; set; }
+
+        public EstadoHabitacion? EstadoHabitacion { get; set; }
     }
 }

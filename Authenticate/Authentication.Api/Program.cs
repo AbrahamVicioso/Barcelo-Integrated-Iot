@@ -1,6 +1,9 @@
 ﻿using Authentication.Api;
+using Authentication.Api.Data;
 using Authentication.Api.Services;
+using Authentication.Domain.Entities;
 using Grpc.AspNetCore;
+using Microsoft.AspNetCore.Identity;
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -53,5 +56,12 @@ app.MapGrpcService<UserLookupService>();
 //    var context = services.GetRequiredService<AuthenticationDbContext>();
 //    await context.Database.EnsureCreatedAsync();
 //}
+
+using (var scope = app.Services.CreateScope())
+{
+    var userManager  = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
+    var roleManager  = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+    await DbSeeder.SeedAsync(userManager, roleManager);
+}
 
 app.Run();

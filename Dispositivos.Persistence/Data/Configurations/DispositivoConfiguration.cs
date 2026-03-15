@@ -17,7 +17,7 @@ namespace Dispositivos.Persistence.Data.Configurations
 
             entity.HasIndex(e => e.NumeroSerieDispositivo, "IX_Dispositivos_NumeroSerie");
 
-            entity.HasIndex(e => new { e.TipoDispositivo, e.EstadoFuncional }, "IX_Dispositivos_TipoDispositivo");
+            entity.HasIndex(e => new { e.TipoDispositivo, e.EstadoDispositivoId }, "IX_Dispositivos_TipoDispositivo");
 
             entity.HasIndex(e => e.DireccionMac, "UQ_Dispositivos_MAC").IsUnique();
 
@@ -28,10 +28,14 @@ namespace Dispositivos.Persistence.Data.Configurations
                 .HasMaxLength(50)
                 .HasColumnName("DireccionMAC");
             entity.Property(e => e.EstaEnLinea).HasDefaultValue(true);
-            entity.Property(e => e.EstadoFuncional)
+            entity.Property(e => e.EstadoDispositivoId)
                 .IsRequired()
-                .HasMaxLength(20)
-                .HasDefaultValue("Operativo");
+                .HasDefaultValue(1);
+
+            entity.HasOne(e => e.EstadoDispositivo)
+                .WithMany(s => s.Dispositivos)
+                .HasForeignKey(e => e.EstadoDispositivoId)
+                .OnDelete(Microsoft.EntityFrameworkCore.DeleteBehavior.Restrict);
             entity.Property(e => e.FechaCreacion).HasDefaultValueSql("(getutcdate())");
             entity.Property(e => e.FechaInstalacion).HasDefaultValueSql("(getutcdate())");
             entity.Property(e => e.Ipdispositivo)

@@ -8,7 +8,6 @@ public class CreateHabitacionDto
     public int Piso { get; set; }
     public int CapacidadMaxima { get; set; } = 2;
     public decimal PrecioPorNoche { get; set; }
-    public string Estado { get; set; } = "Disponible";
-    public bool EstaDisponible { get; set; } = true;
+    public int EstadoHabitacionId { get; set; } = 1;
     public string? Descripcion { get; set; }
 }

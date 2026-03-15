@@ -7,6 +7,7 @@ public interface IUnitOfWork : IDisposable
     IReservaActividadRepository ReservasActividades { get; }
     IHotelRepository Hoteles { get; }
     IHabitacionRepository Habitaciones { get; }
+    IEstadoHabitacionRepository EstadosHabitacion { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
     Task BeginTransactionAsync(CancellationToken cancellationToken = default);

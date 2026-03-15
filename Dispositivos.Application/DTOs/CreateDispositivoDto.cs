@@ -12,7 +12,7 @@ public class CreateDispositivoDto
     public bool EstaEnLinea { get; set; }
     public DateTime? UltimaSincronizacion { get; set; }
     public DateTime FechaInstalacion { get; set; }
-    public string EstadoFuncional { get; set; } = string.Empty;
+    public int EstadoDispositivoId { get; set; } = 1;
     public DateTime? UltimaActualizacionFirmware { get; set; }
     public string Ipdispositivo { get; set; } = string.Empty;
 }

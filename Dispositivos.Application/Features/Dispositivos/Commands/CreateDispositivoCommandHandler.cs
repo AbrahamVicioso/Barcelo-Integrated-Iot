@@ -32,7 +32,6 @@ public class CreateDispositivoCommandHandler : IRequestHandler<CreateDispositivo
 
             // Create device in local database first
             await _unitOfWork.Dispositivos.AddAsync(dispositivo, cancellationToken);
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
 
             // If Thingsboard integration is enabled, create device in Thingsboard
             if (!string.IsNullOrEmpty(request.Dispositivo.NumeroSerieDispositivo))

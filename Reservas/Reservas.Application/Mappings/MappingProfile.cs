@@ -1,6 +1,7 @@
 using AutoMapper;
 using Reservas.Application.DTOs;
 using Reservas.Application.Features.ActividadesRecreativas.Commands;
+using Reservas.Application.Features.EstadosHabitacion.Commands;
 using Reservas.Application.Features.Habitaciones.Commands;
 using Reservas.Application.Features.Hoteles.Commands;
 using Reservas.Application.Features.Reservas.Commands;
@@ -43,14 +44,22 @@ public class MappingProfile : Profile
             .ForMember(dest => dest.FechaCreacion, opt => opt.Ignore());
 
         // Habitacion mappings
-        CreateMap<Habitacion, HabitacionDto>();
+        CreateMap<Habitacion, HabitacionDto>()
+            .ForMember(dest => dest.DescripcionEstado, opt => opt.MapFrom(src => src.EstadoHabitacion != null ? src.EstadoHabitacion.Descripcion : null));
         CreateMap<CreateHabitacionDto, Habitacion>()
             .ForMember(dest => dest.HabitacionId, opt => opt.Ignore())
-            .ForMember(dest => dest.FechaCreacion, opt => opt.Ignore());
+            .ForMember(dest => dest.FechaCreacion, opt => opt.Ignore())
+            .ForMember(dest => dest.EstadoHabitacion, opt => opt.Ignore());
 
         CreateMap<UpdateHabitacionCommand, Habitacion>()
             .ForMember(dest => dest.FechaCreacion, opt => opt.Ignore())
-            .ForMember(dest => dest.Hotel, opt => opt.Ignore());
+            .ForMember(dest => dest.Hotel, opt => opt.Ignore())
+            .ForMember(dest => dest.EstadoHabitacion, opt => opt.Ignore());
+
+        // EstadoHabitacion mappings
+        CreateMap<EstadoHabitacion, EstadoHabitacionDto>();
+        CreateMap<CreateEstadoHabitacionDto, EstadoHabitacion>();
+        CreateMap<UpdateEstadoHabitacionCommand, EstadoHabitacion>();
         //testing
         CreateMap<CreateActividadRecreativaCommand,ActividadesRecreativas>()
             .ForMember(dest => dest.ActividadId, opt => opt.Ignore())

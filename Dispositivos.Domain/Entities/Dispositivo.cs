@@ -29,7 +29,9 @@ public partial class Dispositivo
 
     public DateTime FechaInstalacion { get; set; }
 
-    public string EstadoFuncional { get; set; }
+    public int EstadoDispositivoId { get; set; }
+
+    public virtual EstadoDispositivo? EstadoDispositivo { get; set; }
 
     public DateTime? UltimaActualizacionFirmware { get; set; }
 

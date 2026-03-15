@@ -9,7 +9,6 @@ public class UpdateHabitacionDto
     public int Piso { get; set; }
     public int CapacidadMaxima { get; set; }
     public decimal PrecioPorNoche { get; set; }
-    public string Estado { get; set; } = string.Empty;
-    public bool EstaDisponible { get; set; }
+    public int EstadoHabitacionId { get; set; }
     public string? Descripcion { get; set; }
 }
