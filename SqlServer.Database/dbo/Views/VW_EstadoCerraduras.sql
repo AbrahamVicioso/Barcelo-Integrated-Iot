@@ -18,7 +18,7 @@ SELECT
     cer.ContadorAperturas,
     hot.Nombre AS NombreHotel,
     hab.NumeroHabitacion,
-    hab.TipoHabitacion,
+    tiph.Nombre AS TipoHabitacion,
     CASE 
         WHEN disp.NivelBateria < 20 THEN 'Critico'
         WHEN disp.NivelBateria < 40 THEN 'Bajo'
@@ -34,4 +34,5 @@ FROM [dbo].[CerradurasInteligentes] cer
 INNER JOIN [dbo].[Dispositivos]    disp ON cer.DispositivoId    = disp.DispositivoId
 INNER JOIN [dbo].[TiposDispositivo] tip  ON disp.TipoDispositivoId = tip.TipoDispositivoId
 INNER JOIN [dbo].[Habitaciones]    hab  ON cer.HabitacionId       = hab.HabitacionId
+INNER JOIN [dbo].[TiposHabitacion] tiph ON hab.TipoHabitacionId  = tiph.TipoHabitacionId
 INNER JOIN [dbo].[Hoteles]         hot  ON hab.HotelId            = hot.HotelId;

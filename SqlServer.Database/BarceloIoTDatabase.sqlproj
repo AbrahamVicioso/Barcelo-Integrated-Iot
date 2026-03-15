@@ -125,6 +125,8 @@
     <Build Include="dbo\Tables\EstadosHabitacion.sql" />
     <Build Include="dbo\Tables\EstadosDispositivo.sql" />
     <Build Include="dbo\Tables\TiposDispositivo.sql" />
+    <Build Include="dbo\Tables\TiposHabitacion.sql" />
+    <None Include="Scripts\Seed_TiposHabitacion.sql" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Condition="'$(NetCoreBuild)' == 'true'">

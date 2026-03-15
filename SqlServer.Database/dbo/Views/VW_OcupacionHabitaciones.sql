@@ -10,7 +10,7 @@ SELECT
     hot.Nombre AS NombreHotel,
     h.HabitacionId,
     h.NumeroHabitacion,
-    h.TipoHabitacion,
+    tip.Nombre AS TipoHabitacion,
     h.EstadoHabitacionId,
     r.ReservaId,
     r.NumeroReserva,
@@ -23,6 +23,7 @@ SELECT
         ELSE 0
     END AS EstaOcupada
 FROM [dbo].[Habitaciones] h
+INNER JOIN [dbo].[TiposHabitacion] tip ON h.TipoHabitacionId = tip.TipoHabitacionId
 INNER JOIN [dbo].[Hoteles] hot ON h.HotelId = hot.HotelId
 LEFT JOIN [dbo].[Reservas] r ON h.HabitacionId = r.HabitacionId 
     AND r.Estado IN ('Confirmada', 'CheckInRealizado')

@@ -9,7 +9,7 @@ public class UpdateHabitacionCommand : IRequest<Result<HabitacionDto>>
     public int HabitacionId { get; set; }
     public int HotelId { get; set; }
     public string NumeroHabitacion { get; set; } = string.Empty;
-    public string TipoHabitacion { get; set; } = string.Empty;
+    public int TipoHabitacionId { get; set; }
     public int Piso { get; set; }
     public int CapacidadMaxima { get; set; }
     public decimal PrecioPorNoche { get; set; }

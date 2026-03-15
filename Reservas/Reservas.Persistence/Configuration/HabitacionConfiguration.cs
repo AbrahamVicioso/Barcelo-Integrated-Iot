@@ -22,8 +22,7 @@ public class HabitacionConfiguration : IEntityTypeConfiguration<Habitacion>
             .HasMaxLength(20)
             .IsRequired();
 
-        builder.Property(h => h.TipoHabitacion)
-            .HasMaxLength(50)
+        builder.Property(h => h.TipoHabitacionId)
             .IsRequired();
 
         builder.Property(h => h.Piso)
@@ -64,6 +63,12 @@ public class HabitacionConfiguration : IEntityTypeConfiguration<Habitacion>
         builder.HasOne(h => h.EstadoHabitacion)
             .WithMany(e => e.Habitaciones)
             .HasForeignKey(h => h.EstadoHabitacionId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // Foreign key to TipoHabitacion
+        builder.HasOne(h => h.TipoHabitacion)
+            .WithMany(t => t.Habitaciones)
+            .HasForeignKey(h => h.TipoHabitacionId)
             .OnDelete(DeleteBehavior.Restrict);
 
         // Indexes

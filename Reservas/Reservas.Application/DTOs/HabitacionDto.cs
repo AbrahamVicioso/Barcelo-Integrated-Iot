@@ -6,7 +6,8 @@ public class HabitacionDto
     public int HotelId { get; set; }
     public string? NombreHotel { get; set; }
     public string NumeroHabitacion { get; set; } = string.Empty;
-    public string TipoHabitacion { get; set; } = string.Empty;
+    public int TipoHabitacionId { get; set; }
+    public string? NombreTipo { get; set; }
     public int Piso { get; set; }
     public int CapacidadMaxima { get; set; }
     public decimal PrecioPorNoche { get; set; }

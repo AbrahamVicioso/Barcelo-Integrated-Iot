@@ -2,6 +2,7 @@ using AutoMapper;
 using Reservas.Application.DTOs;
 using Reservas.Application.Features.ActividadesRecreativas.Commands;
 using Reservas.Application.Features.EstadosHabitacion.Commands;
+using Reservas.Application.Features.TiposHabitacion.Commands;
 using Reservas.Application.Features.Habitaciones.Commands;
 using Reservas.Application.Features.Hoteles.Commands;
 using Reservas.Application.Features.Reservas.Commands;
@@ -45,21 +46,29 @@ public class MappingProfile : Profile
 
         // Habitacion mappings
         CreateMap<Habitacion, HabitacionDto>()
-            .ForMember(dest => dest.DescripcionEstado, opt => opt.MapFrom(src => src.EstadoHabitacion != null ? src.EstadoHabitacion.Descripcion : null));
+            .ForMember(dest => dest.DescripcionEstado, opt => opt.MapFrom(src => src.EstadoHabitacion != null ? src.EstadoHabitacion.Descripcion : null))
+            .ForMember(dest => dest.NombreTipo, opt => opt.MapFrom(src => src.TipoHabitacion != null ? src.TipoHabitacion.Nombre : null));
         CreateMap<CreateHabitacionDto, Habitacion>()
             .ForMember(dest => dest.HabitacionId, opt => opt.Ignore())
             .ForMember(dest => dest.FechaCreacion, opt => opt.Ignore())
-            .ForMember(dest => dest.EstadoHabitacion, opt => opt.Ignore());
+            .ForMember(dest => dest.EstadoHabitacion, opt => opt.Ignore())
+            .ForMember(dest => dest.TipoHabitacion, opt => opt.Ignore());
 
         CreateMap<UpdateHabitacionCommand, Habitacion>()
             .ForMember(dest => dest.FechaCreacion, opt => opt.Ignore())
             .ForMember(dest => dest.Hotel, opt => opt.Ignore())
-            .ForMember(dest => dest.EstadoHabitacion, opt => opt.Ignore());
+            .ForMember(dest => dest.EstadoHabitacion, opt => opt.Ignore())
+            .ForMember(dest => dest.TipoHabitacion, opt => opt.Ignore());
 
         // EstadoHabitacion mappings
         CreateMap<EstadoHabitacion, EstadoHabitacionDto>();
         CreateMap<CreateEstadoHabitacionDto, EstadoHabitacion>();
         CreateMap<UpdateEstadoHabitacionCommand, EstadoHabitacion>();
+
+        // TipoHabitacion mappings
+        CreateMap<TipoHabitacion, TipoHabitacionDto>();
+        CreateMap<CreateTipoHabitacionDto, TipoHabitacion>();
+        CreateMap<UpdateTipoHabitacionCommand, TipoHabitacion>();
         //testing
         CreateMap<CreateActividadRecreativaCommand,ActividadesRecreativas>()
             .ForMember(dest => dest.ActividadId, opt => opt.Ignore())

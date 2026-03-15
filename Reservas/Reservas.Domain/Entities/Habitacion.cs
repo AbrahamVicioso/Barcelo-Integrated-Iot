@@ -14,7 +14,7 @@ namespace Reservas.Domain.Entities
 
         public string NumeroHabitacion { get; set; } = string.Empty;
 
-        public string TipoHabitacion { get; set; } = string.Empty;
+        public int TipoHabitacionId { get; set; }
 
         public int Piso { get; set; }
 
@@ -34,5 +34,7 @@ namespace Reservas.Domain.Entities
         public Hotel? Hotel { get; set; }
 
         public EstadoHabitacion? EstadoHabitacion { get; set; }
+
+        public TipoHabitacion? TipoHabitacion { get; set; }
     }
 }
