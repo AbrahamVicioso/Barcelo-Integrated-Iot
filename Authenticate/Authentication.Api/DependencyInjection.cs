@@ -6,6 +6,7 @@ using Authentication.Domain.Entities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Notification.Domain.Interfaces;
 
 namespace Authentication.Api
 {
@@ -20,11 +21,17 @@ namespace Authentication.Api
 
             services.AddScoped<IJwtGenerator, JwtGenerator>();
 
-            // Configure Kafka Producer
+            // Configure Kafka Producer (user-created events)
             var kafkaConfig = new KafkaProducerConfig();
             configuration.GetSection("KafkaProducer").Bind(kafkaConfig);
             services.AddSingleton(kafkaConfig);
             services.AddSingleton<IKafkaProducerService, KafkaProducerService>();
+
+            // Register Audit Kafka Producer
+            var auditConfig = new AuditKafkaProducerConfig();
+            configuration.GetSection("AuditProducer").Bind(auditConfig);
+            services.AddSingleton(auditConfig);
+            services.AddSingleton<IAuditProducer, AuditKafkaProducer>();
 
             return services;
         }

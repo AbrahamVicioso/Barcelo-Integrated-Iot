@@ -31,6 +31,11 @@
         "Path": "Dispositivos.API\\Dispositivos.API.csproj",
         "Action": "Start",
         "DebugTarget": "http"
+      },
+      {
+        "Path": "Audit.Worker\\Audit.Worker.csproj",
+        "Action": "Start",
+        "DebugTarget": "Audit.Worker"
       }
     ]
   }

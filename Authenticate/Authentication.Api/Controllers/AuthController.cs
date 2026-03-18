@@ -11,6 +11,8 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
+using Notification.Domain.Events;
+using Notification.Domain.Interfaces;
 
 namespace Authentication.Api.Controllers
 {
@@ -21,6 +23,7 @@ namespace Authentication.Api.Controllers
         private readonly UserManager<User> userManager;
         private readonly IUserStore<User> userStore;
         private readonly IKafkaProducerService kafkaProducerService;
+        private readonly IAuditProducer auditProducer;
         private readonly SignInManager<User> signInManager;
         private readonly IJwtGenerator jwtGenerator;
 
@@ -28,12 +31,14 @@ namespace Authentication.Api.Controllers
             UserManager<User> userManager,
             IUserStore<User> userStore,
             IKafkaProducerService kafkaProducerService,
+            IAuditProducer auditProducer,
             SignInManager<User> signInManager,
             IJwtGenerator jwtGenerator)
         {
             this.userManager = userManager;
             this.userStore = userStore;
             this.kafkaProducerService = kafkaProducerService;
+            this.auditProducer = auditProducer;
             this.signInManager = signInManager;
             this.jwtGenerator = jwtGenerator;
         }
@@ -41,13 +46,41 @@ namespace Authentication.Api.Controllers
         [HttpPost]
         public async Task<Results<Ok<AccessTokenResponse>, EmptyHttpResult, ProblemHttpResult>> Login(LoginRequest loginRequest)
         {
-            return await LoginUserHandler.Handle(loginRequest, signInManager,userManager,jwtGenerator);
+            var result = await LoginUserHandler.Handle(loginRequest, signInManager, userManager, jwtGenerator);
+
+            var isSuccess = result.Result is Ok<AccessTokenResponse>;
+            await auditProducer.PublishAsync(new AuditEvent
+            {
+                Servicio = "Authenticate.API",
+                UsuarioId = loginRequest.Email,
+                Accion = "LOGIN",
+                TipoEntidad = "Usuario",
+                DireccionIp = HttpContext.Connection.RemoteIpAddress?.ToString() ?? string.Empty,
+                AgenteUsuario = Request.Headers["User-Agent"].ToString(),
+                Resultado = isSuccess ? "Exitoso" : "Fallido"
+            });
+
+            return result;
         }
 
         [HttpPost]
         public async Task<Results<Ok, ValidationProblem>> Register(RegisterRequest registerRequest)
         {
-            return await RegisterUserHandler.Handle(registerRequest, userManager, userStore);
+            var result = await RegisterUserHandler.Handle(registerRequest, userManager, userStore);
+
+            var isSuccess = result.Result is Ok;
+            await auditProducer.PublishAsync(new AuditEvent
+            {
+                Servicio = "Authenticate.API",
+                UsuarioId = registerRequest.Email,
+                Accion = "REGISTER",
+                TipoEntidad = "Usuario",
+                DireccionIp = HttpContext.Connection.RemoteIpAddress?.ToString() ?? string.Empty,
+                AgenteUsuario = Request.Headers["User-Agent"].ToString(),
+                Resultado = isSuccess ? "Exitoso" : "Fallido"
+            });
+
+            return result;
         }
 
         [HttpPost]

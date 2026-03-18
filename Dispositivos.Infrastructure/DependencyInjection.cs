@@ -4,6 +4,7 @@ using Dispositivos.Infrastructure.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using Notification.Domain.Interfaces;
 
 namespace Dispositivos.Infrastructure;
 
@@ -39,6 +40,12 @@ public static class DependencyInjection
         configuration.GetSection("KafkaConsumer:UnlockDoor").Bind(unlockDoorConfig);
         services.AddSingleton(unlockDoorConfig);
         services.AddHostedService<UnlockDoorKafkaConsumer>();
+
+        // Register Audit Kafka Producer
+        var auditConfig = new AuditKafkaProducerConfig();
+        configuration.GetSection("AuditProducer").Bind(auditConfig);
+        services.AddSingleton(auditConfig);
+        services.AddSingleton<IAuditProducer, AuditKafkaProducer>();
 
         return services;
     }

@@ -42,6 +42,9 @@ public class UnlockDoorKafkaConsumer : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        await WaitForKafkaAsync(stoppingToken);
+        if (stoppingToken.IsCancellationRequested) return;
+
         var consumerConfig = new ConsumerConfig
         {
             BootstrapServers = _config.BootstrapServers,
@@ -75,9 +78,15 @@ public class UnlockDoorKafkaConsumer : BackgroundService
                     if (result != null)
                         await ProcessMessageAsync(result.Message.Value, stoppingToken);
                 }
+                catch (ConsumeException ex) when (ex.Error.Code == ErrorCode.UnknownTopicOrPart)
+                {
+                    _logger.LogWarning("Topic '{Topic}' aún no disponible, reintentando en 5s...", _config.Topic);
+                    await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
+                }
                 catch (ConsumeException ex)
                 {
                     _logger.LogError(ex, "Error consuming message from Kafka");
+                    await Task.Delay(TimeSpan.FromSeconds(2), stoppingToken);
                 }
             }
         }
@@ -92,6 +101,28 @@ public class UnlockDoorKafkaConsumer : BackgroundService
         finally
         {
             _consumer.Close();
+        }
+    }
+
+    private async Task WaitForKafkaAsync(CancellationToken stoppingToken)
+    {
+        var delay = TimeSpan.FromSeconds(5);
+        while (!stoppingToken.IsCancellationRequested)
+        {
+            try
+            {
+                using var adminClient = new AdminClientBuilder(
+                    new AdminClientConfig { BootstrapServers = _config.BootstrapServers }).Build();
+                adminClient.GetMetadata(TimeSpan.FromSeconds(5));
+                _logger.LogInformation("Kafka disponible en {Servers}", _config.BootstrapServers);
+                return;
+            }
+            catch
+            {
+                _logger.LogWarning("Kafka no disponible en {Servers}, reintentando en {Delay}s...",
+                    _config.BootstrapServers, delay.TotalSeconds);
+                await Task.Delay(delay, stoppingToken);
+            }
         }
     }
 

@@ -15,6 +15,7 @@ namespace Dispositivos.API
             // Add services to the container.
             builder.Services.AddControllers();
             builder.Services.AddOpenApi();
+            builder.Services.AddHttpContextAccessor();
 
             // Add Application Layer
             builder.Services.AddApplicationLayer();
