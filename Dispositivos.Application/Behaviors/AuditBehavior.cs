@@ -1,3 +1,4 @@
+using System.Text.Json;
 using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
@@ -47,27 +48,30 @@ public class AuditBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TR
         }
         catch (Exception ex)
         {
-            await PublishAuditAsync(commandName, false, ex.Message, cancellationToken);
+            await PublishAuditAsync(commandName, false, ex.Message, cancellationToken, request);
             throw;
         }
 
-        await PublishAuditAsync(commandName, isSuccess, errorMessage, cancellationToken);
+        await PublishAuditAsync(commandName, isSuccess, errorMessage, cancellationToken, request);
         return response;
     }
 
-    private async Task PublishAuditAsync(string commandName, bool isSuccess, string? errorMessage, CancellationToken ct)
+    private async Task PublishAuditAsync(string commandName, bool isSuccess, string? errorMessage, CancellationToken ct, TRequest? request = default)
     {
         try
         {
             var (accion, tipoEntidad) = ParseCommandName(commandName);
             var ctx = _httpContextAccessor.HttpContext;
+            var userId = ctx?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
             var auditEvent = new AuditEvent
             {
                 Servicio = ServiceName,
-                UsuarioId = ctx?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "system",
+                UsuarioId = string.IsNullOrWhiteSpace(userId) ? null : userId,
                 Accion = accion,
                 TipoEntidad = tipoEntidad,
+                EntidadId = request is not null ? ExtractEntidadId(request) : null,
+                ValorNuevo = request is not null ? JsonSerializer.Serialize(request) : null,
                 DireccionIp = ctx?.Connection?.RemoteIpAddress?.ToString() ?? string.Empty,
                 AgenteUsuario = ctx?.Request?.Headers["User-Agent"].ToString(),
                 Resultado = isSuccess ? "Exitoso" : "Fallido",
@@ -81,6 +85,17 @@ public class AuditBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TR
         {
             _logger.LogWarning(ex, "Error publicando evento de auditoría para {Command}", commandName);
         }
+    }
+
+    private static int? ExtractEntidadId(TRequest request)
+    {
+        var idProp = request.GetType()
+            .GetProperties()
+            .FirstOrDefault(p =>
+                p.Name.EndsWith("Id", StringComparison.OrdinalIgnoreCase) &&
+                (p.PropertyType == typeof(int) || p.PropertyType == typeof(int?)));
+
+        return idProp?.GetValue(request) as int?;
     }
 
     private static bool GetIsSuccess(TResponse response, out string? errorMessage)

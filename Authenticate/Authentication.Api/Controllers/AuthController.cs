@@ -49,15 +49,17 @@ namespace Authentication.Api.Controllers
             var result = await LoginUserHandler.Handle(loginRequest, signInManager, userManager, jwtGenerator);
 
             var isSuccess = result.Result is Ok<AccessTokenResponse>;
+            var user = isSuccess ? await userManager.FindByEmailAsync(loginRequest.Email) : null;
             await auditProducer.PublishAsync(new AuditEvent
             {
                 Servicio = "Authenticate.API",
-                UsuarioId = loginRequest.Email,
+                UsuarioId = user?.Id,
                 Accion = "LOGIN",
                 TipoEntidad = "Usuario",
                 DireccionIp = HttpContext.Connection.RemoteIpAddress?.ToString() ?? string.Empty,
                 AgenteUsuario = Request.Headers["User-Agent"].ToString(),
-                Resultado = isSuccess ? "Exitoso" : "Fallido"
+                Resultado = isSuccess ? "Exitoso" : "Fallido",
+                ValorNuevo = loginRequest.Email
             });
 
             return result;
@@ -69,15 +71,17 @@ namespace Authentication.Api.Controllers
             var result = await RegisterUserHandler.Handle(registerRequest, userManager, userStore);
 
             var isSuccess = result.Result is Ok;
+            var user = isSuccess ? await userManager.FindByEmailAsync(registerRequest.Email) : null;
             await auditProducer.PublishAsync(new AuditEvent
             {
                 Servicio = "Authenticate.API",
-                UsuarioId = registerRequest.Email,
+                UsuarioId = user?.Id,
                 Accion = "REGISTER",
                 TipoEntidad = "Usuario",
                 DireccionIp = HttpContext.Connection.RemoteIpAddress?.ToString() ?? string.Empty,
                 AgenteUsuario = Request.Headers["User-Agent"].ToString(),
-                Resultado = isSuccess ? "Exitoso" : "Fallido"
+                Resultado = isSuccess ? "Exitoso" : "Fallido",
+                ValorNuevo = registerRequest.Email
             });
 
             return result;

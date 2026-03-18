@@ -7,7 +7,7 @@ namespace Notification.Domain.Events
         /// <summary>Which API published this event (e.g. "Reservas.API")</summary>
         public string Servicio { get; set; } = string.Empty;
 
-        public string UsuarioId { get; set; } = string.Empty;
+        public string? UsuarioId { get; set; }
 
         /// <summary>CREATE | UPDATE | DELETE | LOGIN | REGISTER | UNLOCK_DOOR | ACCESS | MAINTENANCE</summary>
         public string Accion { get; set; } = string.Empty;
@@ -15,7 +15,7 @@ namespace Notification.Domain.Events
         /// <summary>Domain entity name (e.g. "Reserva", "Huesped", "Dispositivo")</summary>
         public string TipoEntidad { get; set; } = string.Empty;
 
-        public string? EntidadId { get; set; }
+        public int? EntidadId { get; set; }
 
         public string? ValorAnterior { get; set; }
 
