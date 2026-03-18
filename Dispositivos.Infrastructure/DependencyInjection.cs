@@ -34,6 +34,12 @@ public static class DependencyInjection
             client.DefaultRequestHeaders.Add("Accept", "application/json");
         });
 
+        // Register Kafka consumer for unlock-door events
+        var unlockDoorConfig = new UnlockDoorKafkaConsumerConfig();
+        configuration.GetSection("KafkaConsumer:UnlockDoor").Bind(unlockDoorConfig);
+        services.AddSingleton(unlockDoorConfig);
+        services.AddHostedService<UnlockDoorKafkaConsumer>();
+
         return services;
     }
 }

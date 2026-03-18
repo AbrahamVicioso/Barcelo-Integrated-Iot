@@ -83,6 +83,17 @@ public interface ITbDeviceService
         string deviceType,
         string? label = null,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Sets shared attributes on a device in Thingsboard
+    /// </summary>
+    /// <param name="deviceId">Thingsboard device identifier</param>
+    /// <param name="attributes">Key-value pairs of attributes to set</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    Task SetSharedAttributesAsync(
+        string deviceId,
+        Dictionary<string, object> attributes,
+        CancellationToken cancellationToken = default);
 }
 
 /// <summary>

@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cat /mnt/c/Users/abrah/Desktop/Barcelo-Integrated-Iot/Reservas/appsettings.json 2>/dev/null || cat /mnt/c/Users/abrah/Desktop/Barcelo-Integrated-Iot/Reservas/Reservas.API/appsettings.json 2>/dev/null || find /mnt/c/Users/abrah/Desktop/Barcelo-Integrated-Iot/Reservas -name \"appsettings*.json\" | head -5)",
+      "Bash(dotnet build Dispositivos.API/Dispositivos.API.csproj 2>&1 | tail -30)",
+      "Bash(dotnet build Reservas/Reservas.API/Reservas.API.csproj 2>&1 | tail -30)",
+      "Bash(\"/mnt/c/Program Files/dotnet/dotnet.exe\" build /mnt/c/Users/abrah/Desktop/Barcelo-Integrated-Iot/Dispositivos.API/Dispositivos.API.csproj 2>&1 | tail -40)",
+      "Bash(\"/mnt/c/Program Files/dotnet/dotnet.exe\" build Dispositivos.API/Dispositivos.API.csproj 2>&1 | tail -40)",
+      "Bash(\"/mnt/c/Program Files/dotnet/dotnet.exe\" build Dispositivos.API/Dispositivos.API.csproj 2>&1 | tail -20)",
+      "Bash(\"/mnt/c/Program Files/dotnet/dotnet.exe\" build Dispositivos.Infrastructure/Dispositivos.Infrastructure.csproj 2>&1 | grep -E \"error|Error|BUILD|warning CS\" | grep -v \"NU1903\" | head -20)",
+      "Bash(\"/mnt/c/Program Files/dotnet/dotnet.exe\" build Reservas/Reservas.Application/Reservas.Application.csproj 2>&1 | grep -E \"error|BUILD\" | head -10)",
+      "Bash(\"/mnt/c/Program Files/dotnet/dotnet.exe\" build Reservas/Reservas.Infrastructure/Reservas.Infrastructure.csproj 2>&1 | grep -E \"error|BUILD\" | head -10)",
+      "Bash(\"/mnt/c/Program Files/dotnet/dotnet.exe\" build Reservas/Reservas.API/Reservas.API.csproj 2>&1 | grep -E \"^.*error|BUILD\" | grep -v \"NU1903\" | head -15)"
+    ]
+  }
+}

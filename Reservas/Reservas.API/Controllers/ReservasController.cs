@@ -88,4 +88,11 @@ public class ReservasController : ControllerBase
         var result = await _mediator.Send(new DeleteReservaCommand { ReservaId = id });
         return result.IsSuccess ? NoContent() : BadRequest(result.ErrorMessage);
     }
+
+    [HttpPost("{id}/unlock-door")]
+    public async Task<IActionResult> UnlockDoor(int id)
+    {
+        var result = await _mediator.Send(new UnlockDoorCommand { ReservaId = id });
+        return result.IsSuccess ? Ok(result.Data) : BadRequest(result.ErrorMessage);
+    }
 }

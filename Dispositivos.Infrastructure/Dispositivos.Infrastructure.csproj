@@ -7,6 +7,8 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Confluent.Kafka" Version="2.3.0" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="9.0.3" />
     <PackageReference Include="Microsoft.Extensions.Http" Version="9.0.3" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.3" />
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.3" />
@@ -17,6 +19,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Dispositivos.Application\Dispositivos.Application.csproj" />
     <ProjectReference Include="..\Dispositivos.Domain\Dispositivos.Domain.csproj" />
+    <ProjectReference Include="..\Notification.Domain\Notification.Domain.csproj" />
   </ItemGroup>
 
 </Project>

@@ -239,8 +239,8 @@ public class TbDeviceService : ITbDeviceService
     {
         var token = await GetValidTokenAsync(cancellationToken);
 
-        // Use the device name to search
-        var url = $"/api/device?name={Uri.EscapeDataString(deviceName)}";
+        // ThingsBoard tenant endpoint to find a device by exact name
+        var url = $"/api/tenant/devices?deviceName={Uri.EscapeDataString(deviceName)}";
 
         var request = new HttpRequestMessage(HttpMethod.Get, url);
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
@@ -342,6 +342,36 @@ public class TbDeviceService : ITbDeviceService
                 }
                 : null
         };
+    }
+
+    /// <inheritdoc />
+    public async Task SetSharedAttributesAsync(
+        string deviceId,
+        Dictionary<string, object> attributes,
+        CancellationToken cancellationToken = default)
+    {
+        var token = await GetValidTokenAsync(cancellationToken);
+
+        var url = $"/api/plugins/telemetry/DEVICE/{deviceId}/SHARED_SCOPE";
+
+        var request = new HttpRequestMessage(HttpMethod.Post, url)
+        {
+            Content = new StringContent(
+                JsonConvert.SerializeObject(attributes),
+                Encoding.UTF8,
+                "application/json")
+        };
+
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        var response = await _httpClient.SendAsync(request, cancellationToken);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var errorContent = await response.Content.ReadAsStringAsync(cancellationToken);
+            throw new HttpRequestException(
+                $"Failed to set shared attributes on device {deviceId} in Thingsboard. Status: {response.StatusCode}, Error: {errorContent}");
+        }
     }
 
     private async Task<string> GetValidTokenAsync(CancellationToken cancellationToken)

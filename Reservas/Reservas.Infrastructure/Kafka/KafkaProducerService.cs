@@ -10,12 +10,14 @@ namespace Reservas.Infrastructure.Kafka
     {
         private readonly IProducer<string, string> _producer;
         private readonly string _topic;
+        private readonly string _unlockDoorTopic;
         private readonly ILogger<ReservaKafkaProducer> _logger;
         private bool _disposed;
 
         public ReservaKafkaProducer(KafkaProducerConfig config, ILogger<ReservaKafkaProducer> logger)
         {
             _topic = config.Topic;
+            _unlockDoorTopic = config.UnlockDoorTopic;
             _logger = logger;
 
             var producerConfig = new ProducerConfig
@@ -56,6 +58,31 @@ namespace Reservas.Infrastructure.Kafka
             }
         }
 
+        public async Task PublishUnlockDoorAsync(UnlockDoorEvent unlockDoorEvent, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var message = new Message<string, string>
+                {
+                    Key = unlockDoorEvent.NumeroReserva,
+                    Value = JsonSerializer.Serialize(unlockDoorEvent, new JsonSerializerOptions
+                    {
+                        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                    })
+                };
+
+                var result = await _producer.ProduceAsync(_unlockDoorTopic, message, cancellationToken);
+
+                _logger.LogInformation("Published UnlockDoorEvent for reserva {NumeroReserva} habitacion {HabitacionId} to partition {Partition} at offset {Offset}",
+                    unlockDoorEvent.NumeroReserva, unlockDoorEvent.HabitacionId, result.Partition.Value, result.Offset.Value);
+            }
+            catch (ProduceException<string, string> ex)
+            {
+                _logger.LogError(ex, "Failed to publish UnlockDoorEvent for reserva {NumeroReserva}", unlockDoorEvent.NumeroReserva);
+                throw;
+            }
+        }
+
         public void Dispose()
         {
             if (_disposed)
@@ -72,7 +99,8 @@ namespace Reservas.Infrastructure.Kafka
     public class KafkaProducerConfig
     {
         public string BootstrapServers { get; set; } = string.Empty;
-        public string Topic { get; set; } = "notifications";
+        public string Topic { get; set; } = "reservas";
+        public string UnlockDoorTopic { get; set; } = "dispositivos.unlock-door";
         public string? ClientId { get; set; }
     }
 }
