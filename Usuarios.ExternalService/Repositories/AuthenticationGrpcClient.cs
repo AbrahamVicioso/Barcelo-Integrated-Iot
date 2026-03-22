@@ -1,6 +1,7 @@
 using Authentication.Api.Protos;
 using Grpc.Net.Client;
 using Microsoft.Extensions.Logging;
+using System.Text.Json;
 using Usuarios.Domain.Interfaces;
 
 namespace Usuarios.ExternalService.Repositories
@@ -8,11 +9,18 @@ namespace Usuarios.ExternalService.Repositories
     public class AuthenticationGrpcClient : IAuthenticationApiClient
     {
         private readonly UserLookup.UserLookupClient _client;
+        private readonly HttpClient _httpClient;
         private readonly ILogger<AuthenticationGrpcClient> _logger;
 
-        public AuthenticationGrpcClient(GrpcChannel channel, ILogger<AuthenticationGrpcClient> logger)
+        private static readonly JsonSerializerOptions _jsonOptions = new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true
+        };
+
+        public AuthenticationGrpcClient(GrpcChannel channel, HttpClient httpClient, ILogger<AuthenticationGrpcClient> logger)
         {
             _client = new UserLookup.UserLookupClient(channel);
+            _httpClient = httpClient;
             _logger = logger;
         }
 
@@ -45,10 +53,41 @@ namespace Usuarios.ExternalService.Repositories
             }
         }
 
+        public async Task<string?> GetEmailByUserIdAsync(string userId)
+        {
+            _logger.LogInformation("Looking up email for user ID: {UserId}", userId);
+
+            try
+            {
+                var response = await _httpClient.GetAsync($"users/{userId}");
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    _logger.LogWarning("User not found for ID: {UserId}, status: {Status}", userId, response.StatusCode);
+                    return null;
+                }
+
+                var content = await response.Content.ReadAsStringAsync();
+                var user = JsonSerializer.Deserialize<UserResponse>(content, _jsonOptions);
+
+                _logger.LogInformation("Found email for user ID: {UserId}", userId);
+                return user?.Email;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error looking up email for user ID: {UserId}", userId);
+                throw;
+            }
+        }
+
         public async Task<Guid> CreateUserAsync(string email, string password)
         {
-            // This method can be implemented if needed, but for now we'll focus on GetUserIdByEmail
             throw new NotImplementedException("Use GetUserIdByEmailAsync for guest creation");
+        }
+
+        private class UserResponse
+        {
+            public string Email { get; set; } = string.Empty;
         }
     }
 }

@@ -9,11 +9,13 @@ public class GetHuespedeByIdQueryHandler : IRequestHandler<GetHuespedeByIdQuery,
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
+    private readonly IAuthenticationApiClient _authenticationApiClient;
 
-    public GetHuespedeByIdQueryHandler(IUnitOfWork unitOfWork, IMapper mapper)
+    public GetHuespedeByIdQueryHandler(IUnitOfWork unitOfWork, IMapper mapper, IAuthenticationApiClient authenticationApiClient)
     {
         _unitOfWork = unitOfWork;
         _mapper = mapper;
+        _authenticationApiClient = authenticationApiClient;
     }
 
     public async Task<HuespedeDto> Handle(GetHuespedeByIdQuery request, CancellationToken cancellationToken)
@@ -25,6 +27,7 @@ public class GetHuespedeByIdQueryHandler : IRequestHandler<GetHuespedeByIdQuery,
         }
 
         var huespedeDto = _mapper.Map<HuespedeDto>(huespede);
+        huespedeDto.CorreoElectronico = await _authenticationApiClient.GetEmailByUserIdAsync(huespede.UsuarioId);
         return huespedeDto;
     }
 }

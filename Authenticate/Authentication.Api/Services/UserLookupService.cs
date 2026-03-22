@@ -51,5 +51,41 @@ namespace Authentication.Api.Services
                 UserId = user.Id
             };
         }
+
+        public override async Task<Authentication.Api.Protos.GetEmailByUserIdResponse> GetEmailByUserId(
+            Authentication.Api.Protos.GetEmailByUserIdRequest request,
+            ServerCallContext context)
+        {
+            _logger.LogInformation("Looking up email for user ID: {UserId}", request.UserId);
+
+            if (string.IsNullOrEmpty(request.UserId))
+            {
+                return new Authentication.Api.Protos.GetEmailByUserIdResponse
+                {
+                    Found = false,
+                    Email = string.Empty
+                };
+            }
+
+            var user = await _userManager.FindByIdAsync(request.UserId);
+
+            if (user == null)
+            {
+                _logger.LogWarning("User not found for ID: {UserId}", request.UserId);
+                return new Authentication.Api.Protos.GetEmailByUserIdResponse
+                {
+                    Found = false,
+                    Email = string.Empty
+                };
+            }
+
+            _logger.LogInformation("Found email for user ID: {UserId}", request.UserId);
+
+            return new Authentication.Api.Protos.GetEmailByUserIdResponse
+            {
+                Found = true,
+                Email = user.Email ?? string.Empty
+            };
+        }
     }
 }

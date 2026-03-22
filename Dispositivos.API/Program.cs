@@ -28,15 +28,14 @@ namespace Dispositivos.API
             builder.Services.AddThingsboardInfrastructure(builder.Configuration);
 
             builder.Services.AddCors(options =>
-{
-    options.AddPolicy("AllowFrontend",
-        policy =>
-        {
-            policy.WithOrigins("http://localhost:5019")
-                  .AllowAnyHeader()
-                  .AllowAnyMethod();
-        });
-});
+            {
+                options.AddPolicy("AllowAll", policy =>
+                {
+                    policy.AllowAnyOrigin()
+                          .AllowAnyHeader()
+                          .AllowAnyMethod();
+                });
+            });
 
             var app = builder.Build();
 
@@ -52,9 +51,7 @@ namespace Dispositivos.API
                 await DbSeeder.SeedAsync(context);
             }
 
-           // app.UseHttpsRedirection();
-            app.UseRouting();
-            app.UseCors("AllowFrontend");
+            app.UseCors("AllowAll");
             app.UseAuthorization();
             app.MapControllers();
             app.Run();

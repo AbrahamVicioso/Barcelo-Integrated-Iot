@@ -5,7 +5,7 @@ using Reservas.Application.Common;
 using Reservas.Application.DTOs;
 using Reservas.Application.Interfaces;
 using Reservas.Domain.Entities;
-using static Reservas.Domain.Entites.EstadoReserva;
+using Reservas.Domain.Entites;
 
 namespace Reservas.Application.Features.Reservas.Commands;
 
@@ -39,13 +39,13 @@ public class PerformCheckInCommandHandler : IRequestHandler<PerformCheckInComman
                 return Result<CheckInDto>.Failure("No se encontró ninguna reserva con el número proporcionado.");
 
             // Verificar que la reserva esté en estado válido para check-in
-            if (reserva.EstadoReservaId == Activa)
+            if (reserva.EstadoReservaId == EstadoReserva.Activa)
                 return Result<CheckInDto>.Failure("Esta reserva ya tiene un check-in registrado.");
 
-            if (reserva.EstadoReservaId == CheckOut)
+            if (reserva.EstadoReservaId == EstadoReserva.CheckOut)
                 return Result<CheckInDto>.Failure("No se puede realizar check-in para una reserva que ya tiene checkout.");
 
-            if (reserva.EstadoReservaId == Cancelada)
+            if (reserva.EstadoReservaId == EstadoReserva.Cancelada)
                 return Result<CheckInDto>.Failure("No se puede realizar check-in para una reserva cancelada.");
 
             // Verificar que no exista ya un check-in para esta reserva
@@ -79,7 +79,7 @@ public class PerformCheckInCommandHandler : IRequestHandler<PerformCheckInComman
             await _unitOfWork.CheckIns.AddAsync(checkIn, cancellationToken);
 
             // Activar la reserva
-            reserva.EstadoReservaId = Activa;
+            reserva.EstadoReservaId = EstadoReserva.Activa;
             reserva.CheckInRealizado = DateTime.UtcNow;
             await _unitOfWork.Reservas.UpdateAsync(reserva, cancellationToken);
 

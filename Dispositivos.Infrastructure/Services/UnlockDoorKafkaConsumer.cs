@@ -42,6 +42,8 @@ public class UnlockDoorKafkaConsumer : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        await Task.Yield(); // release startup thread immediately so the API can start
+
         await WaitForKafkaAsync(stoppingToken);
         if (stoppingToken.IsCancellationRequested) return;
 

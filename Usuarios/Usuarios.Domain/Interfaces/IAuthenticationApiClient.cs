@@ -10,5 +10,6 @@ namespace Usuarios.Domain.Interfaces
     {
         Task<Guid> CreateUserAsync(string email, string password);
         Task<Guid?> GetUserIdByEmailAsync(string email);
+        Task<string?> GetEmailByUserIdAsync(string userId);
     }
 }

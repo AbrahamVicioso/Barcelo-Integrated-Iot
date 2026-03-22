@@ -33,6 +33,8 @@ public partial class BarceloReservasContext : DbContext
 
     public virtual DbSet<CheckIn> CheckIns { get; set; }
 
+    public virtual DbSet<CheckOut> CheckOuts { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
 

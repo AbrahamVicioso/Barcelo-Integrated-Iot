@@ -24,15 +24,18 @@ public static class DbSeeder
 
     private static async Task SeedAdminUserAsync(UserManager<User> userManager)
     {
-        const string username = "admin";
-        const string email    = "admin@barcelo.com";
-        const string password = "admin1";  // Min. 6 caracteres requeridos por Identity
+        
+        const string username = "admin@barcelo.com";
+        const string email 
+          = "admin@barcelo.com";
+        const string password = "Admin1234.";  // Min. 6 caracteres requeridos por Identity
 
         if (await userManager.FindByNameAsync(username) is not null)
             return;
 
         var admin = new User
         {
+
             UserName = username,
             Email    = email,
             EmailConfirmed = true,

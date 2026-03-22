@@ -4,6 +4,7 @@ public class HuespedeDto
 {
     public int HuespedId { get; set; }
     public string UsuarioId { get; set; } = string.Empty;
+    public string? CorreoElectronico { get; set; }
     public string NombreCompleto { get; set; } = string.Empty;
     public string TipoDocumento { get; set; } = string.Empty;
     public string NumeroDocumento { get; set; } = string.Empty;

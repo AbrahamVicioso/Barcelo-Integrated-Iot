@@ -4,7 +4,8 @@ using Microsoft.Extensions.Logging;
 using Reservas.Application.Common;
 using Reservas.Application.DTOs;
 using Reservas.Application.Interfaces;
-using static Reservas.Domain.Entites.EstadoReserva;
+using Reservas.Domain.Entities;
+using Reservas.Domain.Entites;
 
 namespace Reservas.Application.Features.Reservas.Commands;
 
@@ -33,14 +34,23 @@ public class PerformCheckOutCommandHandler : IRequestHandler<PerformCheckOutComm
             if (reserva == null)
                 return Result<ReservaDto>.Failure($"No se encontró la reserva con ID {request.ReservaId}.");
 
-            if (reserva.EstadoReservaId != Activa)
+            if (reserva.EstadoReservaId != EstadoReserva.Activa)
                 return Result<ReservaDto>.Failure("Solo se puede realizar checkout de una reserva activa (con check-in completado).");
 
-            reserva.EstadoReservaId = CheckOut;
-            reserva.CheckOutRealizado = DateTime.UtcNow;
-            reserva.FechaActualizacion = DateTime.UtcNow;
+            var fechaCheckOut = DateTime.UtcNow;
+
+            reserva.EstadoReservaId = EstadoReserva.CheckOut;
+            reserva.CheckOutRealizado = fechaCheckOut;
+            reserva.FechaActualizacion = fechaCheckOut;
+
+            var checkOut = new Domain.Entities.CheckOut
+            {
+                ReservaId = reserva.ReservaId,
+                FechaCheckOut = fechaCheckOut
+            };
 
             await _unitOfWork.Reservas.UpdateAsync(reserva, cancellationToken);
+            await _unitOfWork.CheckOuts.AddAsync(checkOut, cancellationToken);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
             _logger.LogInformation(
