@@ -4,8 +4,6 @@ using Microsoft.Extensions.DependencyInjection;
 using System.Reflection;
 using AutoMapper;
 using Reservas.Application.Behaviors;
-using Reservas.Application.Interfaces;
-using Reservas.Application.Services;
 
 namespace Reservas.Application;
 
@@ -26,9 +24,7 @@ public static class DependencyInjection
         // Register FluentValidation
         services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
 
-        // Register HTTP services
-        services.AddHttpClient<IUsuariosApiService, UsuariosApiService>();
-
+        // Nota: IUsuariosApiService se registra en Infrastructure (gRPC)
         return services;
     }
 }

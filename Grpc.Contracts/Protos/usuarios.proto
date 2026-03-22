@@ -1,0 +1,39 @@
+syntax = "proto3";
+
+option csharp_namespace = "Grpc.Contracts.Usuarios";
+
+package usuarios;
+
+// Servicio de consulta de huéspedes para comunicación inter-servicio
+service Huesped {
+  // Obtiene un huésped por su ID de usuario (UsuarioId de Identity)
+  rpc GetHuespedByUserId (GetHuespedByUserIdRequest) returns (HuespedeResponse);
+  // Obtiene un huésped por su ID de huésped
+  rpc GetHuespedById (GetHuespedByIdRequest) returns (HuespedeResponse);
+}
+
+message GetHuespedByUserIdRequest {
+  string usuario_id = 1;
+}
+
+message GetHuespedByIdRequest {
+  int32 huesped_id = 1;
+}
+
+message HuespedeResponse {
+  bool found = 1;
+  int32 huesped_id = 2;
+  string usuario_id = 3;
+  string nombre_completo = 4;
+  string tipo_documento = 5;
+  string numero_documento = 6;
+  string nacionalidad = 7;
+  string fecha_nacimiento = 8;
+  string contacto_emergencia = 9;
+  string telefono_emergencia = 10;
+  bool es_vip = 11;
+  string fecha_registro = 12;
+  string preferencias_alimentarias = 13;
+  string notas_especiales = 14;
+  string correo_electronico = 15;
+}

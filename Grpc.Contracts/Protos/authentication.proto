@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+option csharp_namespace = "Grpc.Contracts.Authentication";
+
+package authentication;
+
+// Servicio de lookup de usuarios para comunicación inter-servicio
+service UserLookup {
+  // Obtiene el ID de usuario dado un email
+  rpc GetUserIdByEmail (GetUserIdByEmailRequest) returns (GetUserIdByEmailResponse);
+  // Obtiene el email dado un ID de usuario
+  rpc GetEmailByUserId (GetEmailByUserIdRequest) returns (GetEmailByUserIdResponse);
+}
+
+message GetUserIdByEmailRequest {
+  string email = 1;
+}
+
+message GetUserIdByEmailResponse {
+  string user_id = 1;
+  bool found = 2;
+}
+
+message GetEmailByUserIdRequest {
+  string user_id = 1;
+}
+
+message GetEmailByUserIdResponse {
+  string email = 1;
+  bool found = 2;
+}

@@ -5,6 +5,7 @@ using Notification.Domain.Interfaces;
 using Scalar.AspNetCore;
 using Usuarios.Application.Behaviors;
 using Usuarios.Application.Mappings;
+using Usuarios.API.GrpcServices;
 using Usuarios.API.Services;
 using Usuarios.Domain.Interfaces;
 using Usuarios.Persistence.Data;
@@ -18,7 +19,19 @@ namespace Usuarios.API
     {
         public static void Main(string[] args)
         {
+            // Habilitar HTTP/2 sin cifrado (h2c) para clientes gRPC internos
+            AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
+
             var builder = WebApplication.CreateBuilder(args);
+
+            // Forzar soporte de HTTP/2 cleartext (h2c) en Kestrel para gRPC sin TLS
+            builder.WebHost.ConfigureKestrel(options =>
+            {
+                options.ConfigureEndpointDefaults(listenOptions =>
+                {
+                    listenOptions.Protocols = Microsoft.AspNetCore.Server.Kestrel.Core.HttpProtocols.Http1AndHttp2;
+                });
+            });
 
             // Add DbContext
             builder.Services.AddDbContext<BarceloIoTSystemContext>(options =>
@@ -51,8 +64,9 @@ namespace Usuarios.API
             builder.Services.AddScoped<IPersonalRepository, PersonalRepository>();
             builder.Services.AddScoped<IPermisosPersonalRepository, PermisosPersonalRepository>();
 
-            // Add Controllers
+            // Add Controllers + gRPC
             builder.Services.AddControllers();
+            builder.Services.AddGrpc();
 
             // Add CORS
             builder.Services.AddCors(options =>
@@ -71,7 +85,6 @@ namespace Usuarios.API
 
             var app = builder.Build();
 
-            // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
             {
                 app.MapOpenApi();
@@ -80,11 +93,17 @@ namespace Usuarios.API
 
             app.UseHttpsRedirection();
 
+            app.UseRouting();
+
             app.UseCors("AllowAll");
 
             app.UseAuthorization();
 
+            // REST endpoints
             app.MapControllers();
+
+            // gRPC endpoints
+            app.MapGrpcService<HuespedeGrpcService>();
 
             app.Run();
         }

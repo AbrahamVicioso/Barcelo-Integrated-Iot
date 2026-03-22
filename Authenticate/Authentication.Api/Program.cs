@@ -4,9 +4,24 @@ using Authentication.Api.Services;
 using Authentication.Domain.Entities;
 using Grpc.AspNetCore;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Puerto 5117: HTTP/1.1 para REST
+// Puerto 5118: HTTP/2 exclusivo para gRPC
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.ListenLocalhost(5117, listenOptions =>
+    {
+        listenOptions.Protocols = HttpProtocols.Http1;
+    });
+    options.ListenLocalhost(5118, listenOptions =>
+    {
+        listenOptions.Protocols = HttpProtocols.Http2;
+    });
+});
 
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();

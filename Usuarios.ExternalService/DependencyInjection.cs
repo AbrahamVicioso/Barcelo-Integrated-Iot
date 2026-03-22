@@ -1,10 +1,9 @@
 using Grpc.Net.Client;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Usuarios.ExternalService.Repositories;
-using Usuarios.ExternalService.Utils;
 using Usuarios.Domain.Interfaces;
+using Usuarios.ExternalService.Repositories;
 
 namespace Usuarios.ExternalService
 {
@@ -12,17 +11,15 @@ namespace Usuarios.ExternalService
     {
         public static IServiceCollection AddExternalServices(this IServiceCollection services, IConfiguration configuration)
         {
-            // Configure the gRPC channel
-            var grpcUrl = configuration["AuthenticationService:GrpcUrl"]
+            // Lee GrpcUrl primero; si no existe, cae en BaseUrl (compatibilidad)
+            var grpcUrl = configuration["ExternalServices:Authentication:GrpcUrl"]
+                ?? configuration["ExternalServices:Authentication:BaseUrl"]
                 ?? "http://localhost:5117";
-
-            // Required for gRPC over plain HTTP (h2c) without TLS
-            AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
 
             services.AddSingleton<GrpcChannel>(sp =>
             {
                 var logger = sp.GetRequiredService<ILogger<GrpcChannel>>();
-                logger.LogInformation("Creating gRPC channel to: {Url}", grpcUrl);
+                logger.LogInformation("Canal gRPC → Authentication.Api: {Url}", grpcUrl);
 
                 return GrpcChannel.ForAddress(grpcUrl, new GrpcChannelOptions
                 {
@@ -33,22 +30,11 @@ namespace Usuarios.ExternalService
                 });
             });
 
-            // Configure HttpClient for REST calls to Authentication API
-            var authOptions = new AuthenticationApiOptions();
-            configuration.GetSection(AuthenticationApiOptions.SectionName).Bind(authOptions);
-            var restBaseUrl = authOptions.BaseUrl ?? "http://localhost:5019";
-
-            services.AddHttpClient<AuthenticationGrpcClient>(client =>
+            services.AddScoped<IAuthenticationApiClient>(sp =>
             {
-                client.BaseAddress = new Uri(restBaseUrl.TrimEnd('/') + "/");
-            });
-
-            services.AddScoped<IAuthenticationApiClient>(provider =>
-            {
-                var channel = provider.GetRequiredService<GrpcChannel>();
-                var httpClient = provider.GetRequiredService<IHttpClientFactory>().CreateClient(nameof(AuthenticationGrpcClient));
-                var logger = provider.GetRequiredService<ILogger<AuthenticationGrpcClient>>();
-                return new AuthenticationGrpcClient(channel, httpClient, logger);
+                var channel = sp.GetRequiredService<GrpcChannel>();
+                var logger = sp.GetRequiredService<ILogger<AuthenticationGrpcClient>>();
+                return new AuthenticationGrpcClient(channel, logger);
             });
 
             return services;

@@ -1,7 +1,6 @@
-using Authentication.Api.Protos;
+using Grpc.Contracts.Authentication;
 using Grpc.Net.Client;
 using Microsoft.Extensions.Logging;
-using System.Text.Json;
 using Usuarios.Domain.Interfaces;
 
 namespace Usuarios.ExternalService.Repositories
@@ -9,85 +8,65 @@ namespace Usuarios.ExternalService.Repositories
     public class AuthenticationGrpcClient : IAuthenticationApiClient
     {
         private readonly UserLookup.UserLookupClient _client;
-        private readonly HttpClient _httpClient;
         private readonly ILogger<AuthenticationGrpcClient> _logger;
 
-        private static readonly JsonSerializerOptions _jsonOptions = new JsonSerializerOptions
-        {
-            PropertyNameCaseInsensitive = true
-        };
-
-        public AuthenticationGrpcClient(GrpcChannel channel, HttpClient httpClient, ILogger<AuthenticationGrpcClient> logger)
+        public AuthenticationGrpcClient(GrpcChannel channel, ILogger<AuthenticationGrpcClient> logger)
         {
             _client = new UserLookup.UserLookupClient(channel);
-            _httpClient = httpClient;
             _logger = logger;
         }
 
         public async Task<Guid?> GetUserIdByEmailAsync(string email)
         {
-            _logger.LogInformation("Looking up user ID for email: {Email}", email);
+            _logger.LogInformation("gRPC: Buscando userId para email: {Email}", email);
 
             try
             {
-                var request = new GetUserIdByEmailRequest
-                {
-                    Email = email
-                };
-
-                var response = await _client.GetUserIdByEmailAsync(request);
+                var response = await _client.GetUserIdByEmailAsync(new GetUserIdByEmailRequest { Email = email });
 
                 if (response.Found && !string.IsNullOrEmpty(response.UserId))
                 {
-                    _logger.LogInformation("Found user ID: {UserId} for email: {Email}", response.UserId, email);
+                    _logger.LogInformation("gRPC: UserId encontrado para email: {Email}", email);
                     return Guid.Parse(response.UserId);
                 }
 
-                _logger.LogWarning("User not found for email: {Email}", email);
+                _logger.LogWarning("gRPC: Usuario no encontrado para email: {Email}", email);
                 return null;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error looking up user ID for email: {Email}", email);
+                _logger.LogError(ex, "gRPC: Error al buscar userId para email: {Email}", email);
                 throw;
             }
         }
 
         public async Task<string?> GetEmailByUserIdAsync(string userId)
         {
-            _logger.LogInformation("Looking up email for user ID: {UserId}", userId);
+            _logger.LogInformation("gRPC: Buscando email para userId: {UserId}", userId);
 
             try
             {
-                var response = await _httpClient.GetAsync($"users/{userId}");
+                var response = await _client.GetEmailByUserIdAsync(new GetEmailByUserIdRequest { UserId = userId });
 
-                if (!response.IsSuccessStatusCode)
+                if (response.Found)
                 {
-                    _logger.LogWarning("User not found for ID: {UserId}, status: {Status}", userId, response.StatusCode);
-                    return null;
+                    _logger.LogInformation("gRPC: Email encontrado para userId: {UserId}", userId);
+                    return response.Email;
                 }
 
-                var content = await response.Content.ReadAsStringAsync();
-                var user = JsonSerializer.Deserialize<UserResponse>(content, _jsonOptions);
-
-                _logger.LogInformation("Found email for user ID: {UserId}", userId);
-                return user?.Email;
+                _logger.LogWarning("gRPC: Usuario no encontrado para ID: {UserId}", userId);
+                return null;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error looking up email for user ID: {UserId}", userId);
-                throw;
+                _logger.LogError(ex, "gRPC: Error al buscar email para userId: {UserId}", userId);
+                return null;
             }
         }
 
-        public async Task<Guid> CreateUserAsync(string email, string password)
+        public Task<Guid> CreateUserAsync(string email, string password)
         {
             throw new NotImplementedException("Use GetUserIdByEmailAsync for guest creation");
-        }
-
-        private class UserResponse
-        {
-            public string Email { get; set; } = string.Empty;
         }
     }
 }

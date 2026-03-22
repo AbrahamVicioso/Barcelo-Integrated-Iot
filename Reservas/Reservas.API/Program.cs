@@ -1,11 +1,8 @@
-﻿
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using Reservas.API;
 using Reservas.Application;
-using Reservas.Application.Interfaces;
-using Reservas.Application.Services;
 using Reservas.Email;
 using Reservas.Infrastructure;
 using Reservas.Persistence;
@@ -13,13 +10,15 @@ using Reservas.Persistence.Data;
 using Scalar.AspNetCore;
 using System.Security.Claims;
 
+// Habilitar HTTP/2 sin cifrado (h2c) para clientes gRPC internos
+AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
 builder.Services.AddControllers();
 builder.Services.AddHttpContextAccessor();
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
 builder.Services.AddAuthorizationServices();
@@ -28,12 +27,6 @@ builder.Services.AddAuthorizationServices();
 builder.Services.AddApplicationLayer();
 builder.Services.AddPersistenceLayer();
 builder.Services.AddInfrastructureLayer(builder.Configuration);
-
-// Configure HttpClient for Usuarios API
-builder.Services.AddHttpClient<IUsuariosApiService, UsuariosApiService>(client =>
-{
-    client.BaseAddress = new Uri(builder.Configuration["Apis:Usuarios:BaseUrl"] ?? "http://localhost:5284/");
-});
 
 builder.Services.AddCors(options =>
 {
@@ -45,11 +38,9 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
-
     app.MapScalarApiReference();
 }
 
