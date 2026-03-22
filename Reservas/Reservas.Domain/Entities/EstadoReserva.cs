@@ -6,9 +6,8 @@ public class EstadoReserva
 {
     public const int Pendiente = 1;
     public const int Activa = 2;
-    public const int CheckIn = 3;
-    public const int CheckOut = 4;
-    public const int Cancelada = 5;
+    public const int CheckOut = 3;
+    public const int Cancelada = 4;
 
     public int EstadoReservaId { get; set; }
 

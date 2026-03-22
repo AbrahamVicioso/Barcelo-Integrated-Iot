@@ -1,4 +1,4 @@
-﻿-- SP: Obtener KPIs del hotel
+-- SP: Obtener KPIs del hotel
 CREATE PROCEDURE [dbo].[SP_ObtenerKPIsHotel]
     @HotelId INT,
     @FechaInicio DATETIME2,
@@ -6,28 +6,29 @@ CREATE PROCEDURE [dbo].[SP_ObtenerKPIsHotel]
 AS
 BEGIN
     SET NOCOUNT ON;
-    
-    -- Tasa de ocupaciÃ³n
+
+    -- Tasa de ocupación
     DECLARE @TasaOcupacion DECIMAL(10,2);
     DECLARE @TotalHabitaciones INT;
     DECLARE @HabitacionesOcupadas INT;
-    
+
     SELECT @TotalHabitaciones = COUNT(*)
     FROM [dbo].[Habitaciones]
     WHERE HotelId = @HotelId;
-    
+
+    -- EstadoReservaId = 2 (Activa) significa que el huésped hizo check-in
     SELECT @HabitacionesOcupadas = COUNT(DISTINCT r.HabitacionId)
     FROM [dbo].[Reservas] r
     INNER JOIN [dbo].[Habitaciones] h ON r.HabitacionId = h.HabitacionId
     WHERE h.HotelId = @HotelId
-      AND r.Estado = 'CheckInRealizado'
+      AND r.EstadoReservaId = 2
       AND GETUTCDATE() BETWEEN r.FechaCheckIn AND r.FechaCheckOut;
-    
-    SET @TasaOcupacion = CASE 
+
+    SET @TasaOcupacion = CASE
         WHEN @TotalHabitaciones > 0 THEN (@HabitacionesOcupadas * 100.0) / @TotalHabitaciones
         ELSE 0
     END;
-    
+
     -- Total de accesos
     DECLARE @TotalAccesos INT;
     SELECT @TotalAccesos = COUNT(*)
@@ -36,7 +37,7 @@ BEGIN
     INNER JOIN [dbo].[Habitaciones] hab ON cer.HabitacionId = hab.HabitacionId
     WHERE hab.HotelId = @HotelId
       AND ra.FechaHoraAcceso BETWEEN @FechaInicio AND @FechaFin;
-    
+
     -- Actividades reservadas
     DECLARE @ActividadesReservadas INT;
     SELECT @ActividadesReservadas = COUNT(*)
@@ -44,7 +45,7 @@ BEGIN
     INNER JOIN [dbo].[ActividadesRecreativas] act ON ra.ActividadId = act.ActividadId
     WHERE act.HotelId = @HotelId
       AND ra.FechaReserva BETWEEN CAST(@FechaInicio AS DATE) AND CAST(@FechaFin AS DATE);
-    
+
     -- Alertas de seguridad
     DECLARE @AlertasSeguridad INT;
     SELECT @AlertasSeguridad = COUNT(*)
@@ -53,17 +54,16 @@ BEGIN
       AND Severidad IN ('Error', 'Critico')
       AND FechaOcurrencia BETWEEN @FechaInicio AND @FechaFin
       AND EstaResuelto = 0;
-    
+
     -- Dispositivos con problemas
     DECLARE @DispositivosProblema INT;
-
     SELECT @DispositivosProblema = COUNT(*)
     FROM [dbo].[Dispositivos]
     WHERE HotelId = @HotelId
       AND (EstadoDispositivoId != 1 OR NivelBateria < 20 OR EstaEnLinea = 0);
-    
+
     -- Retornar resultados
-    SELECT 
+    SELECT
         @TasaOcupacion AS TasaOcupacion,
         @TotalAccesos AS TotalAccesos,
         @ActividadesReservadas AS ActividadesReservadas,

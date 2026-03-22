@@ -34,15 +34,15 @@ namespace Reservas.Persistence.Migrations
                 nullable: false,
                 defaultValue: 1);
 
-            // 4. Populate the new FK column from the old Estado string
+            // 3. Populate the new FK column from the old Estado string
             migrationBuilder.Sql(@"
                 UPDATE [dbo].[Reservas]
                 SET EstadoReservaId = CASE Estado
                     WHEN 'Pendiente' THEN 1
                     WHEN 'Activa'    THEN 2
-                    WHEN 'CheckIn'   THEN 3
-                    WHEN 'CheckOut'  THEN 4
-                    WHEN 'Cancelada' THEN 5
+                    WHEN 'CheckIn'   THEN 2
+                    WHEN 'CheckOut'  THEN 3
+                    WHEN 'Cancelada' THEN 4
                     ELSE 1
                 END
             ");
@@ -106,9 +106,8 @@ namespace Reservas.Persistence.Migrations
                 SET Estado = CASE EstadoReservaId
                     WHEN 1 THEN 'Pendiente'
                     WHEN 2 THEN 'Activa'
-                    WHEN 3 THEN 'CheckIn'
-                    WHEN 4 THEN 'CheckOut'
-                    WHEN 5 THEN 'Cancelada'
+                    WHEN 3 THEN 'CheckOut'
+                    WHEN 4 THEN 'Cancelada'
                     ELSE 'Pendiente'
                 END
             ");

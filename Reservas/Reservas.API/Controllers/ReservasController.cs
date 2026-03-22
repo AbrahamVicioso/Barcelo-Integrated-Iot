@@ -103,6 +103,13 @@ public class ReservasController : ControllerBase
         return result.IsSuccess ? Ok(result.Data) : BadRequest(result.ErrorMessage);
     }
 
+    [HttpPost("{id}/checkout")]
+    public async Task<IActionResult> PerformCheckOut(int id)
+    {
+        var result = await _mediator.Send(new PerformCheckOutCommand { ReservaId = id });
+        return result.IsSuccess ? Ok(result.Data) : BadRequest(result.ErrorMessage);
+    }
+
     [HttpGet("estados")]
     public async Task<IActionResult> GetEstados()
     {

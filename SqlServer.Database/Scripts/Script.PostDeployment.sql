@@ -9,3 +9,4 @@
 :r .\Seed_EstadosDispositivo.sql
 :r .\Seed_EstadosHabitacion.sql
 :r .\Seed_TiposHabitacion.sql
+:r .\Seed_EstadosReserva.sql

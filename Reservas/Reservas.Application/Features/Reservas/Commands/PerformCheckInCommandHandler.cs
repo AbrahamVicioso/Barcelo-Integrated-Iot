@@ -39,14 +39,14 @@ public class PerformCheckInCommandHandler : IRequestHandler<PerformCheckInComman
                 return Result<CheckInDto>.Failure("No se encontró ninguna reserva con el número proporcionado.");
 
             // Verificar que la reserva esté en estado válido para check-in
-            if (reserva.EstadoReservaId == CheckIn || reserva.EstadoReservaId == Activa)
+            if (reserva.EstadoReservaId == Activa)
                 return Result<CheckInDto>.Failure("Esta reserva ya tiene un check-in registrado.");
 
-            if (reserva.EstadoReservaId == Cancelada || reserva.EstadoReservaId == CheckOut)
-            {
-                var nombreEstado = reserva.EstadoReservaId == Cancelada ? "Cancelada" : "CheckOut";
-                return Result<CheckInDto>.Failure($"No se puede realizar check-in para una reserva en estado '{nombreEstado}'.");
-            }
+            if (reserva.EstadoReservaId == CheckOut)
+                return Result<CheckInDto>.Failure("No se puede realizar check-in para una reserva que ya tiene checkout.");
+
+            if (reserva.EstadoReservaId == Cancelada)
+                return Result<CheckInDto>.Failure("No se puede realizar check-in para una reserva cancelada.");
 
             // Verificar que no exista ya un check-in para esta reserva
             var checkInExistente = await _unitOfWork.CheckIns.ExisteCheckInParaReservaAsync(reserva.ReservaId, cancellationToken);

@@ -115,7 +115,6 @@ namespace Reservas.Persistence.Migrations
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<int>("EstadoReservaId")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("int")
                         .HasDefaultValue(1);
 

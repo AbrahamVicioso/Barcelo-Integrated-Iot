@@ -8,8 +8,7 @@ BEGIN
     INSERT INTO [dbo].[EstadosReserva] ([EstadoReservaId], [Nombre], [Descripcion]) VALUES
         (1, N'Pendiente', N'Reserva creada, pendiente de check-in'),
         (2, N'Activa',    N'Check-in realizado, huésped en el hotel'),
-        (3, N'CheckIn',   N'Proceso de check-in en curso'),
-        (4, N'CheckOut',  N'Check-out realizado, reserva finalizada'),
-        (5, N'Cancelada', N'Reserva cancelada');
+        (3, N'CheckOut',  N'Check-out realizado, reserva finalizada'),
+        (4, N'Cancelada', N'Reserva cancelada');
 END
 GO
