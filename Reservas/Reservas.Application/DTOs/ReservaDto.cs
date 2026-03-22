@@ -12,7 +12,8 @@ public class ReservaDto
     public int NumeroNinos { get; set; }
     public decimal MontoTotal { get; set; }
     public decimal MontoPagado { get; set; }
-    public string Estado { get; set; } = string.Empty;
+    public int EstadoReservaId { get; set; }
+    public string? EstadoNombre { get; set; }
     public DateTime FechaCreacion { get; set; }
     public DateTime? FechaActualizacion { get; set; }
     public DateTime? CheckInRealizado { get; set; }

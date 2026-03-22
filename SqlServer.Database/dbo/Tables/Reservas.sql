@@ -9,7 +9,7 @@
 	[NumeroNinos] [int] NOT NULL,
 	[MontoTotal] [decimal](10, 2) NOT NULL,
 	[MontoPagado] [decimal](10, 2) NOT NULL,
-	[Estado] [nvarchar](30) NOT NULL,
+	[EstadoReservaId] [int] NOT NULL,
 	[FechaCreacion] [datetime2](7) NOT NULL,
 	[FechaActualizacion] [datetime2](7) NULL,
 	[CheckInRealizado] [datetime2](7) NULL,
@@ -44,7 +44,12 @@ ALTER TABLE [dbo].[Reservas] ADD  DEFAULT ((0)) FOR [NumeroNinos]
 GO
 ALTER TABLE [dbo].[Reservas] ADD  DEFAULT ((0)) FOR [MontoPagado]
 GO
-ALTER TABLE [dbo].[Reservas] ADD  DEFAULT ('Pendiente') FOR [Estado]
+ALTER TABLE [dbo].[Reservas] ADD  DEFAULT (1) FOR [EstadoReservaId]
+GO
+ALTER TABLE [dbo].[Reservas]  WITH CHECK ADD  CONSTRAINT [FK_Reservas_EstadosReserva] FOREIGN KEY([EstadoReservaId])
+REFERENCES [dbo].[EstadosReserva] ([EstadoReservaId])
+GO
+ALTER TABLE [dbo].[Reservas] CHECK CONSTRAINT [FK_Reservas_EstadosReserva]
 GO
 ALTER TABLE [dbo].[Reservas] ADD  DEFAULT (getutcdate()) FOR [FechaCreacion]
 GO
@@ -56,7 +61,7 @@ GO
 /****** Object:  Index [IX_Reservas_Estado_Fechas]    Script Date: 12/9/2025 8:27:24 AM ******/
 CREATE NONCLUSTERED INDEX [IX_Reservas_Estado_Fechas] ON [dbo].[Reservas]
 (
-	[Estado] ASC,
+	[EstadoReservaId] ASC,
 	[FechaCheckIn] ASC,
 	[FechaCheckOut] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]

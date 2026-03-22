@@ -5,6 +5,7 @@ using Reservas.Application.Common;
 using Reservas.Application.DTOs;
 using Reservas.Application.Interfaces;
 using Reservas.Domain.Entites;
+using static Reservas.Domain.Entites.EstadoReserva;
 using Notification.Domain.Events;
 
 namespace Reservas.Application.Features.Reservas.Commands;
@@ -46,7 +47,7 @@ public class CreateReservaCommandHandler : IRequestHandler<CreateReservaCommand,
 
             // Generate unique reservation number
             reserva.NumeroReserva = $"RES-{DateTime.UtcNow:yyyyMMddHHmmss}-{Guid.NewGuid().ToString("N")[..8].ToUpper()}";
-            reserva.Estado = "Pendiente";
+            reserva.EstadoReservaId = Pendiente;
             reserva.FechaCreacion = DateTime.UtcNow;
 
             await _unitOfWork.Reservas.AddAsync(reserva, cancellationToken);

@@ -28,11 +28,6 @@ public class UpdateReservaCommandHandler : IRequestHandler<UpdateReservaCommand,
                 return Result<ReservaDto>.Failure($"Reserva con ID {request.ReservaId} no encontrada.");
             }
 
-            if (reserva.Estado != request.Estado)
-            {
-                
-            }
-
             _mapper.Map(request, reserva);
             reserva.FechaActualizacion = DateTime.UtcNow;
 

@@ -13,7 +13,15 @@
       "Bash(\"/mnt/c/Program Files/dotnet/dotnet.exe\" build Reservas/Reservas.API/Reservas.API.csproj 2>&1 | grep -E \"^.*error|BUILD\" | grep -v \"NU1903\" | head -15)",
       "Bash(cat /mnt/c/Users/abrah/Desktop/Barcelo-Integrated-Iot/Reservas/Reservas.Domain/Entites/Reserva.cs 2>/dev/null || find /mnt/c/Users/abrah/Desktop/Barcelo-Integrated-Iot/Reservas/Reservas.Domain -name \"*.cs\" | grep -v bin | xargs ls)",
       "Bash(\"/mnt/c/Program Files/dotnet/dotnet.exe\" sln Barcelo-Integrated-Iot.sln add Audit.Worker/Audit.Worker.csproj 2>&1)",
-      "Bash(\"/mnt/c/Program Files/dotnet/dotnet.exe\" build Audit.Worker/Audit.Worker.csproj 2>&1 | grep -E \"error CS|BUILD|Errores\" | grep -v \"NU1903\")"
-    ]
+      "Bash(\"/mnt/c/Program Files/dotnet/dotnet.exe\" build Audit.Worker/Audit.Worker.csproj 2>&1 | grep -E \"error CS|BUILD|Errores\" | grep -v \"NU1903\")",
+      "Bash(find /mnt/c/Users/abrah/Desktop/Barcelo-Integrated-Iot/Reservas -name \"IUnitOfWork.cs\" -o -name \"IReservaRepository.cs\" | xargs cat)",
+      "Bash(find /mnt/c/Users/abrah/Desktop/Barcelo-Integrated-Iot/Reservas -name \"UnitOfWork.cs\" | xargs cat)",
+      "Bash(find /mnt/c/Users/abrah/Desktop/Barcelo-Integrated-Iot/Reservas -name \"IUsuariosApiService.cs\" -o -name \"UsuariosApiService.cs\" | xargs cat)",
+      "Bash(find /mnt/c/Users/abrah/Desktop/Barcelo-Integrated-Iot/Reservas -name \"HuespedeDto.cs\" | xargs cat)",
+      "Bash(find /mnt/c/Users/abrah/Desktop/Barcelo-Integrated-Iot/Reservas -name \"GenericRepository.cs\" -o -name \"IGenericRepository.cs\" | xargs cat)",
+      "Bash(cd /mnt/c/Users/abrah/Desktop/Barcelo-Integrated-Iot/Reservas && dotnet ef migrations add AddCheckInTable --project Reservas.Persistence --startup-project Reservas.API 2>&1)",
+      "Bash(find /mnt/c/Users/abrah/Desktop/Barcelo-Integrated-Iot -name \"*.sqlproj\" -o -name \"*.sql\" 2>/dev/null | grep -v obj | grep -v bin | head -30)"
+    ],
+    "defaultMode": "bypassPermissions"
   }
 }

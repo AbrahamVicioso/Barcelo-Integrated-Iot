@@ -17,13 +17,17 @@ public class MappingProfile : Profile
     public MappingProfile()
     {
         // Reserva mappings
-        CreateMap<Reserva, ReservaDto>();
-        CreateMap<CreateReservaCommand,Reserva >();
+        CreateMap<Reserva, ReservaDto>()
+            .ForMember(dest => dest.EstadoNombre, opt => opt.MapFrom(src => src.EstadoReserva != null ? src.EstadoReserva.Nombre : null));
+        CreateMap<CreateReservaCommand, Reserva>()
+            .ForMember(dest => dest.EstadoReserva, opt => opt.Ignore())
+            .ForMember(dest => dest.EstadoReservaId, opt => opt.Ignore());
         CreateMap<Hotel, HotelesDto>();
         CreateMap<CreateReservaDto, Reserva>()
             .ForMember(dest => dest.ReservaId, opt => opt.Ignore())
             .ForMember(dest => dest.NumeroReserva, opt => opt.Ignore())
-            .ForMember(dest => dest.Estado, opt => opt.Ignore())
+            .ForMember(dest => dest.EstadoReservaId, opt => opt.Ignore())
+            .ForMember(dest => dest.EstadoReserva, opt => opt.Ignore())
             .ForMember(dest => dest.FechaCreacion, opt => opt.Ignore())
             .ForMember(dest => dest.FechaActualizacion, opt => opt.Ignore())
             .ForMember(dest => dest.CheckInRealizado, opt => opt.Ignore())
@@ -33,7 +37,8 @@ public class MappingProfile : Profile
             .ForMember(dest => dest.HuespedId, opt => opt.Ignore())
             .ForMember(dest => dest.NumeroReserva, opt => opt.Ignore())
             .ForMember(dest => dest.FechaCreacion, opt => opt.Ignore())
-            .ForMember(dest => dest.CreadoPor, opt => opt.Ignore());
+            .ForMember(dest => dest.CreadoPor, opt => opt.Ignore())
+            .ForMember(dest => dest.EstadoReserva, opt => opt.Ignore());
 
         // Hotel mappings
         CreateMap<CreateHotelDto, Hotel>()

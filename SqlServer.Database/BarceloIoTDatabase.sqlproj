@@ -76,6 +76,7 @@
     <Build Include="dbo\Tables\ReservasActividades.sql" />
     <Build Include="dbo\Tables\Huespedes.sql" />
     <Build Include="dbo\Tables\Reservas.sql" />
+    <Build Include="dbo\Tables\CheckIns.sql" />
     <Build Include="dbo\Tables\CredencialesAcceso.sql" />
     <Build Include="dbo\Tables\Users.sql" />
     <Build Include="dbo\Tables\ConfiguracionSistema.sql" />
@@ -127,6 +128,8 @@
     <Build Include="dbo\Tables\TiposDispositivo.sql" />
     <Build Include="dbo\Tables\TiposHabitacion.sql" />
     <None Include="Scripts\Seed_TiposHabitacion.sql" />
+    <Build Include="dbo\Tables\EstadosReserva.sql" />
+    <None Include="Scripts\Seed_EstadosReserva.sql" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Condition="'$(NetCoreBuild)' == 'true'">

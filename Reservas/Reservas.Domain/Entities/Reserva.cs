@@ -27,7 +27,9 @@ public partial class Reserva
 
     public decimal MontoPagado { get; set; }
 
-    public string Estado { get; set; }
+    public int EstadoReservaId { get; set; }
+
+    public virtual EstadoReserva EstadoReserva { get; set; }
 
     public DateTime FechaCreacion { get; set; }
 

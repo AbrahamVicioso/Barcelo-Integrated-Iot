@@ -27,7 +27,11 @@ public partial class BarceloReservasContext : DbContext
 
     public virtual DbSet<TipoHabitacion> TiposHabitacion { get; set; }
 
+    public virtual DbSet<EstadoReserva> EstadosReserva { get; set; }
+
     public virtual DbSet<ActividadesRecreativas> ReservasActividades { get; set; }
+
+    public virtual DbSet<CheckIn> CheckIns { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

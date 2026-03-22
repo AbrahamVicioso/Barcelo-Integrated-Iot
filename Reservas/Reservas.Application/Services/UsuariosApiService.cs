@@ -55,4 +55,39 @@ public class UsuariosApiService : IUsuariosApiService
             throw new Exception($"Error al obtener el huésped desde la API de Usuarios: {ex.Message}", ex);
         }
     }
+
+    public async Task<HuespedeDto?> GetHuespedByIdAsync(int huespedId, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            _logger.LogInformation("Obteniendo huésped por ID: {HuespedId}", huespedId);
+
+            var response = await _httpClient.GetAsync($"/Huesped/{huespedId}", cancellationToken);
+
+            if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+            {
+                _logger.LogWarning("Huésped no encontrado con ID: {HuespedId}", huespedId);
+                return null;
+            }
+
+            response.EnsureSuccessStatusCode();
+
+            var jsonResponse = await response.Content.ReadAsStringAsync(cancellationToken);
+            var huesped = JsonSerializer.Deserialize<HuespedeDto>(jsonResponse, _jsonOptions);
+
+            if (huesped == null)
+            {
+                _logger.LogWarning("No se pudo deserializar el huésped con ID: {HuespedId}", huespedId);
+                return null;
+            }
+
+            _logger.LogInformation("Huésped encontrado: {HuespedId}", huesped.HuespedId);
+            return huesped;
+        }
+        catch (HttpRequestException ex)
+        {
+            _logger.LogError(ex, "Error al consumir la API de Usuarios para obtener huésped con ID: {HuespedId}", huespedId);
+            throw new Exception($"Error al obtener el huésped desde la API de Usuarios: {ex.Message}", ex);
+        }
+    }
 }
