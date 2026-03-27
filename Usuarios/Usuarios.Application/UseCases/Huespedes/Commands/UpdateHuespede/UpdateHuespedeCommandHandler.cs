@@ -9,19 +9,30 @@ public class UpdateHuespedeCommandHandler : IRequestHandler<UpdateHuespedeComman
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
+    private readonly IAuthenticationApiClient _authenticationApiClient;
 
-    public UpdateHuespedeCommandHandler(IUnitOfWork unitOfWork, IMapper mapper)
+    public UpdateHuespedeCommandHandler(
+        IUnitOfWork unitOfWork,
+        IMapper mapper,
+        IAuthenticationApiClient authenticationApiClient)
     {
         _unitOfWork = unitOfWork;
         _mapper = mapper;
+        _authenticationApiClient = authenticationApiClient;
     }
 
     public async Task<HuespedeDto> Handle(UpdateHuespedeCommand request, CancellationToken cancellationToken)
     {
-        var huespede = await _unitOfWork.Huespedes.GetByIdAsync(request.Huespede.HuespedId);
+        var usuarioId = await _authenticationApiClient.GetUserIdByEmailAsync(request.Huespede.CorreoElectronico);
+        if (usuarioId == null)
+        {
+            throw new Exception("No se encontró un usuario con ese correo electrónico");
+        }
+
+        var huespede = await _unitOfWork.Huespedes.GetByUsuarioIdAsync(usuarioId.ToString()!);
         if (huespede == null)
         {
-           throw new Exception("Huésped no encontrado");
+            throw new Exception("Huésped no encontrado para ese correo electrónico");
         }
 
         huespede.NombreCompleto = request.Huespede.NombreCompleto;

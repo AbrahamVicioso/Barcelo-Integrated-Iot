@@ -12,8 +12,10 @@ public class MappingProfile : Profile
     {
         // Huespede Mappings
         CreateMap<Huespede, HuespedeDto>();
-        CreateMap<CreateHuespedeDto, Huespede>();
-        CreateMap<UpdateHuespedeDto, Huespede>();
+        CreateMap<CreateHuespedeDto, Huespede>()
+            .ForMember(dest => dest.UsuarioId, opt => opt.Ignore());
+        CreateMap<UpdateHuespedeDto, Huespede>()
+            .ForMember(dest => dest.UsuarioId, opt => opt.Ignore());
 
         // Personal Mappings
         CreateMap<Personal, PersonalDto>();

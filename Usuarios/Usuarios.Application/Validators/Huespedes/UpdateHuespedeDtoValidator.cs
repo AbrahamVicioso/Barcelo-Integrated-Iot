@@ -7,8 +7,9 @@ public class UpdateHuespedeDtoValidator : AbstractValidator<UpdateHuespedeDto>
 {
     public UpdateHuespedeDtoValidator()
     {
-        RuleFor(x => x.HuespedId)
-            .GreaterThan(0).WithMessage("El HuespedId debe ser mayor a 0");
+        RuleFor(x => x.CorreoElectronico)
+            .NotEmpty().WithMessage("El correo electrónico es requerido")
+            .EmailAddress().WithMessage("El correo electrónico no tiene un formato válido");
 
         RuleFor(x => x.NombreCompleto)
             .NotEmpty().WithMessage("El nombre completo es requerido")

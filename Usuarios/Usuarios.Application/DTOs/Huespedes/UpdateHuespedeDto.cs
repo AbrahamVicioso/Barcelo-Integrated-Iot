@@ -2,7 +2,7 @@ namespace Usuarios.Application.DTOs.Huespedes;
 
 public class UpdateHuespedeDto
 {
-    public int HuespedId { get; set; }
+    public string CorreoElectronico { get; set; } = string.Empty;
     public string NombreCompleto { get; set; } = string.Empty;
     public string? ContactoEmergencia { get; set; }
     public string? TelefonoEmergencia { get; set; }

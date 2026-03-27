@@ -24,11 +24,16 @@ public class CreateHuespedeCommandHandler : IRequestHandler<CreateHuespedeComman
 
     public async Task<HuespedeDto> Handle(CreateHuespedeCommand request, CancellationToken cancellationToken)
     {
-        var existingByUsuario = await _unitOfWork.Huespedes.GetByUsuarioIdAsync(request.Huespede.UsuarioId);
+        var usuarioId = await _authenticationApiClient.GetUserIdByEmailAsync(request.Huespede.CorreoElectronico);
+        if (usuarioId == null)
+        {
+            throw new Exception("No se encontró un usuario con ese correo electrónico");
+        }
 
+        var existingByUsuario = await _unitOfWork.Huespedes.GetByUsuarioIdAsync(usuarioId.ToString()!);
         if (existingByUsuario != null)
         {
-            throw new Exception("Ya existe un huésped con ese UsuarioId");
+            throw new Exception("Ya existe un huésped asociado a ese correo electrónico");
         }
 
         var existingByDocumento = await _unitOfWork.Huespedes.GetByDocumentoAsync(
@@ -40,7 +45,7 @@ public class CreateHuespedeCommandHandler : IRequestHandler<CreateHuespedeComman
         }
 
         var huespede = _mapper.Map<Huespede>(request.Huespede);
-        
+        huespede.UsuarioId = usuarioId.ToString()!;
         huespede.FechaRegistro = DateTime.UtcNow;
 
         var createdHuespede = await _unitOfWork.Huespedes.AddAsync(huespede);

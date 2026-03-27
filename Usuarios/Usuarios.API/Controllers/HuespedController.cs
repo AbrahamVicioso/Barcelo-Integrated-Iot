@@ -57,12 +57,9 @@ public class HuespedController : ControllerBase
         return CreatedAtAction(nameof(GetById), new { id = result.HuespedId }, result);
     }
 
-    [HttpPut("{id}")]
-    public async Task<IActionResult> Update(int id, [FromBody] UpdateHuespedeDto dto)
+    [HttpPut]
+    public async Task<IActionResult> Update([FromBody] UpdateHuespedeDto dto)
     {
-        if (id != dto.HuespedId)
-            return BadRequest("El ID no coincide");
-
         var result = await _mediator.Send(new UpdateHuespedeCommand(dto));
         return Ok(result);
     }

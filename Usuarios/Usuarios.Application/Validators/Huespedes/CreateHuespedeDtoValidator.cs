@@ -7,8 +7,9 @@ public class CreateHuespedeDtoValidator : AbstractValidator<CreateHuespedeDto>
 {
     public CreateHuespedeDtoValidator()
     {
-        RuleFor(x => x.UsuarioId)
-            .NotEmpty().WithMessage("El UsuarioId es requerido");
+        RuleFor(x => x.CorreoElectronico)
+            .NotEmpty().WithMessage("El correo electrónico es requerido")
+            .EmailAddress().WithMessage("El correo electrónico no tiene un formato válido");
 
         RuleFor(x => x.NombreCompleto)
             .NotEmpty().WithMessage("El nombre completo es requerido")

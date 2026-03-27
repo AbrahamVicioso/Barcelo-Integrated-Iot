@@ -2,7 +2,7 @@ namespace Usuarios.Application.DTOs.Huespedes;
 
 public class CreateHuespedeDto
 {
-    public string UsuarioId { get; set; } = string.Empty;
+    public string CorreoElectronico { get; set; } = string.Empty;
     public string NombreCompleto { get; set; } = string.Empty;
     public string TipoDocumento { get; set; } = string.Empty;
     public string NumeroDocumento { get; set; } = string.Empty;
@@ -13,5 +13,4 @@ public class CreateHuespedeDto
     public bool EsVip { get; set; }
     public string? PreferenciasAlimentarias { get; set; }
     public string? NotasEspeciales { get; set; }
-    public string? correoElectronico { get; set; }
 }
