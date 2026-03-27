@@ -1,4 +1,5 @@
 using MediatR;
+using Usuarios.Application.Exceptions;
 using Usuarios.Domain.Interfaces;
 
 namespace Usuarios.Application.UseCases.PermisosPersonal.Commands.DeletePermiso;
@@ -17,7 +18,7 @@ public class DeletePermisoCommandHandler : IRequestHandler<DeletePermisoCommand,
         var permiso = await _unitOfWork.PermisosPersonal.GetByIdAsync(request.PermisoId);
         if (permiso == null)
         {
-            throw new Exception("Permiso no encontrado");
+            throw new NotFoundException("Permiso no encontrado");
         }
 
         await _unitOfWork.PermisosPersonal.DeleteAsync(permiso);

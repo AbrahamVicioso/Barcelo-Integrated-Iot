@@ -1,6 +1,7 @@
 using AutoMapper;
 using MediatR;
 using Usuarios.Application.DTOs.Personal;
+using Usuarios.Application.Exceptions;
 using Usuarios.Domain.Interfaces;
 
 namespace Usuarios.Application.UseCases.Personal.Commands.CreatePersonal;
@@ -21,13 +22,13 @@ public class CreatePersonalCommandHandler : IRequestHandler<CreatePersonalComman
         var existingByUsuario = await _unitOfWork.Personal.GetByUsuarioIdAsync(request.Personal.UsuarioId);
         if (existingByUsuario != null)
         {
-            throw new Exception("Ya existe personal con ese UsuarioId");
+            throw new ConflictException("Ya existe personal con ese UsuarioId");
         }
 
         var existingByNumeroEmpleado = await _unitOfWork.Personal.GetByNumeroEmpleadoAsync(request.Personal.NumeroEmpleado);
         if (existingByNumeroEmpleado != null)
         {
-            throw new Exception("Ya existe personal con ese número de empleado");
+            throw new ConflictException("Ya existe personal con ese número de empleado");
         }
 
         if (request.Personal.Supervisor.HasValue)
@@ -35,7 +36,7 @@ public class CreatePersonalCommandHandler : IRequestHandler<CreatePersonalComman
             var supervisor = await _unitOfWork.Personal.GetByIdAsync(request.Personal.Supervisor.Value);
             if (supervisor == null)
             {
-                throw new Exception("El supervisor especificado no existe");
+                throw new NotFoundException("El supervisor especificado no existe");
             }
         }
 

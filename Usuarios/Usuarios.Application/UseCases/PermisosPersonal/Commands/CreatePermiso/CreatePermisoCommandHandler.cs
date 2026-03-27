@@ -1,6 +1,7 @@
 using AutoMapper;
 using MediatR;
 using Usuarios.Application.DTOs.PermisosPersonal;
+using Usuarios.Application.Exceptions;
 using Usuarios.Domain.Interfaces;
 
 namespace Usuarios.Application.UseCases.PermisosPersonal.Commands.CreatePermiso;
@@ -21,17 +22,17 @@ public class CreatePermisoCommandHandler : IRequestHandler<CreatePermisoCommand,
         var personal = await _unitOfWork.Personal.GetByIdAsync(request.Permiso.PersonalId);
         if (personal == null)
         {
-            throw new Exception("El personal especificado no existe");
+            throw new NotFoundException("El personal especificado no existe");
         }
 
         if (!personal.EstaActivo)
         {
-            throw new Exception("No se pueden otorgar permisos a personal inactivo");
+            throw new BusinessException("No se pueden otorgar permisos a personal inactivo");
         }
 
         if (request.Permiso.EsTemporal && !request.Permiso.FechaExpiracion.HasValue)
         {
-            throw new Exception("Los permisos temporales deben tener fecha de expiración");
+            throw new BusinessException("Los permisos temporales deben tener fecha de expiración");
         }
 
         var permiso = _mapper.Map<Domain.Entities.PermisosPersonal>(request.Permiso);

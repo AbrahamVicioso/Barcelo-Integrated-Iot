@@ -1,6 +1,7 @@
 using AutoMapper;
 using MediatR;
 using Usuarios.Application.DTOs.PermisosPersonal;
+using Usuarios.Application.Exceptions;
 using Usuarios.Domain.Interfaces;
 
 namespace Usuarios.Application.UseCases.PermisosPersonal.Queries.GetPermisoById;
@@ -21,7 +22,7 @@ public class GetPermisoByIdQueryHandler : IRequestHandler<GetPermisoByIdQuery, P
         var permiso = await _unitOfWork.PermisosPersonal.GetByIdAsync(request.PermisoId);
         if (permiso == null)
         {
-            throw new Exception("Permiso no encontrado");
+            throw new NotFoundException("Permiso no encontrado");
         }
 
         var permisoDto = _mapper.Map<PermisosPersonalDto>(permiso);

@@ -1,4 +1,5 @@
 using MediatR;
+using Usuarios.Application.Exceptions;
 using Usuarios.Domain.Interfaces;
 
 namespace Usuarios.Application.UseCases.Huespedes.Commands.DeleteHuespede;
@@ -17,7 +18,7 @@ public class DeleteHuespedeCommandHandler : IRequestHandler<DeleteHuespedeComman
         var huespede = await _unitOfWork.Huespedes.GetByIdAsync(request.HuespedId);
         if (huespede == null)
         {
-            throw new Exception("Huésped no encontrado");
+            throw new NotFoundException("Huésped no encontrado");
         }
 
         await _unitOfWork.Huespedes.DeleteAsync(huespede);

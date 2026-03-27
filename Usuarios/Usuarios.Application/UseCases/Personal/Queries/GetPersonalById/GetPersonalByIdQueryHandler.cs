@@ -1,6 +1,7 @@
 using AutoMapper;
 using MediatR;
 using Usuarios.Application.DTOs.Personal;
+using Usuarios.Application.Exceptions;
 using Usuarios.Domain.Interfaces;
 
 namespace Usuarios.Application.UseCases.Personal.Queries.GetPersonalById;
@@ -21,7 +22,7 @@ public class GetPersonalByIdQueryHandler : IRequestHandler<GetPersonalByIdQuery,
         var personal = await _unitOfWork.Personal.GetByIdAsync(request.PersonalId);
         if (personal == null)
         {
-            throw new Exception("Personal no encontrado");
+            throw new NotFoundException("Personal no encontrado");
         }
 
         var personalDto = _mapper.Map<PersonalDto>(personal);

@@ -1,6 +1,7 @@
 using AutoMapper;
 using MediatR;
 using Usuarios.Application.DTOs.PermisosPersonal;
+using Usuarios.Application.Exceptions;
 using Usuarios.Domain.Interfaces;
 
 namespace Usuarios.Application.UseCases.PermisosPersonal.Commands.UpdatePermiso;
@@ -21,7 +22,7 @@ public class UpdatePermisoCommandHandler : IRequestHandler<UpdatePermisoCommand,
         var permiso = await _unitOfWork.PermisosPersonal.GetByIdAsync(request.Permiso.PermisoId);
         if (permiso == null)
         {
-            throw new Exception("Permiso no encontrado");
+            throw new NotFoundException("Permiso no encontrado");
         }
 
         permiso.FechaExpiracion = request.Permiso.FechaExpiracion;

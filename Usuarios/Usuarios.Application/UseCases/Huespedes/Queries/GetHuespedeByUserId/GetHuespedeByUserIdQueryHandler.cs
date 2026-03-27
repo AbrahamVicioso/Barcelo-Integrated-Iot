@@ -1,6 +1,7 @@
 using AutoMapper;
 using MediatR;
 using Usuarios.Application.DTOs.Huespedes;
+using Usuarios.Application.Exceptions;
 using Usuarios.Domain.Interfaces;
 
 namespace Usuarios.Application.UseCases.Huespedes.Queries.GetHuespedeByUserId;
@@ -23,7 +24,7 @@ public class GetHuespedeByUserIdQueryHandler : IRequestHandler<GetHuespedeByUser
         var huespede = await _unitOfWork.Huespedes.GetByUsuarioIdAsync(request.UsuarioId);
         if (huespede == null)
         {
-            throw new Exception("Huésped no encontrado para el usuario especificado");
+            throw new NotFoundException("Huésped no encontrado para el usuario especificado");
         }
 
         var huespedeDto = _mapper.Map<HuespedeDto>(huespede);

@@ -1,6 +1,7 @@
 using AutoMapper;
 using MediatR;
 using Usuarios.Application.DTOs.Huespedes;
+using Usuarios.Application.Exceptions;
 using Usuarios.Domain.Interfaces;
 
 namespace Usuarios.Application.UseCases.Huespedes.Commands.UpdateHuespede;
@@ -23,16 +24,23 @@ public class UpdateHuespedeCommandHandler : IRequestHandler<UpdateHuespedeComman
 
     public async Task<HuespedeDto> Handle(UpdateHuespedeCommand request, CancellationToken cancellationToken)
     {
-        var usuarioId = await _authenticationApiClient.GetUserIdByEmailAsync(request.Huespede.CorreoElectronico);
-        if (usuarioId == null)
-        {
-            throw new Exception("No se encontró un usuario con ese correo electrónico");
-        }
-
-        var huespede = await _unitOfWork.Huespedes.GetByUsuarioIdAsync(usuarioId.ToString()!);
+        var huespede = await _unitOfWork.Huespedes.GetByIdAsync(request.Huespede.HuespedId);
         if (huespede == null)
+            throw new NotFoundException("Huésped no encontrado");
+
+        var nuevoUsuarioId = await _authenticationApiClient.GetUserIdByEmailAsync(request.Huespede.CorreoElectronico);
+        if (nuevoUsuarioId == null)
+            throw new NotFoundException("No se encontró un usuario con ese correo electrónico");
+
+        var nuevoUsuarioIdStr = nuevoUsuarioId.ToString()!;
+
+        if (huespede.UsuarioId != nuevoUsuarioIdStr)
         {
-            throw new Exception("Huésped no encontrado para ese correo electrónico");
+            var existente = await _unitOfWork.Huespedes.GetByUsuarioIdAsync(nuevoUsuarioIdStr);
+            if (existente != null)
+                throw new ConflictException("Ese correo electrónico ya está asociado a otro huésped");
+
+            huespede.UsuarioId = nuevoUsuarioIdStr;
         }
 
         huespede.NombreCompleto = request.Huespede.NombreCompleto;

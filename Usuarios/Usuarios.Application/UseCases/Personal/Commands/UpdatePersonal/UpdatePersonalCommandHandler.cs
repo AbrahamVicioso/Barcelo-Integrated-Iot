@@ -1,6 +1,7 @@
 using AutoMapper;
 using MediatR;
 using Usuarios.Application.DTOs.Personal;
+using Usuarios.Application.Exceptions;
 using Usuarios.Domain.Interfaces;
 
 namespace Usuarios.Application.UseCases.Personal.Commands.UpdatePersonal;
@@ -21,7 +22,7 @@ public class UpdatePersonalCommandHandler : IRequestHandler<UpdatePersonalComman
         var personal = await _unitOfWork.Personal.GetByIdAsync(request.Personal.PersonalId);
         if (personal == null)
         {
-            throw new Exception("Personal no encontrado");
+            throw new NotFoundException("Personal no encontrado");
         }
 
         if (request.Personal.Supervisor.HasValue)
@@ -29,12 +30,12 @@ public class UpdatePersonalCommandHandler : IRequestHandler<UpdatePersonalComman
             var supervisor = await _unitOfWork.Personal.GetByIdAsync(request.Personal.Supervisor.Value);
             if (supervisor == null)
             {
-                throw new Exception("El supervisor especificado no existe");
+                throw new NotFoundException("El supervisor especificado no existe");
             }
 
             if (request.Personal.Supervisor.Value == request.Personal.PersonalId)
             {
-                throw new Exception("El personal no puede ser su propio supervisor");
+                throw new BusinessException("El personal no puede ser su propio supervisor");
             }
         }
 

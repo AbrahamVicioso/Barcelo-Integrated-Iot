@@ -1,5 +1,6 @@
 using FluentValidation;
 using MediatR;
+using Usuarios.API.Middleware;
 using Microsoft.EntityFrameworkCore;
 using Notification.Domain.Interfaces;
 using Scalar.AspNetCore;
@@ -100,6 +101,8 @@ namespace Usuarios.API
                 app.MapOpenApi();
                 app.MapScalarApiReference();
             }
+
+            app.UseMiddleware<ExceptionHandlingMiddleware>();
 
             app.UseRouting();
 
