@@ -59,11 +59,17 @@ dotnet restore
 # Linux / WSL
 bash docker/generate-dev-cert.sh
 
+# macOS (usa LibreSSL nativo, no requiere Homebrew)
+bash docker/generate-dev-cert-macos.sh
+
 # Windows PowerShell
 .\docker\generate-dev-cert.ps1
 ```
 
 Genera `docker/certs/barcelo-dev.pfx` usado por los servicios gRPC para TLS.
+
+> **macOS:** el script usa un archivo de configuración temporal para definir los SANs, ya que LibreSSL (OpenSSL nativo de macOS) no soporta la flag `-addext`.
+> Si prefieres usar la versión de Homebrew (`brew install openssl`), puedes ejecutar directamente `bash docker/generate-dev-cert.sh`.
 
 ### 3. Inicializar ThingsBoard (solo la primera vez)
 
