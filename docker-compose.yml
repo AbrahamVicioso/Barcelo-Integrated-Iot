@@ -299,6 +299,8 @@ services:
       KafkaConsumer__ReservaCreada__BootstrapServers: kafka:29092
       KafkaConsumer__ReservaCreada__GroupId: notification-reserva-creada-group
       KafkaConsumer__ReservaCreada__Topic: reservas
+      EmailSettings__ConnectionString: ${AZURE_COMMUNICATION_CONNECTION_STRING:?EmailSettings__ConnectionString is required. Set AZURE_COMMUNICATION_CONNECTION_STRING in your .env file}
+      EmailSettings__Username: ${AZURE_COMMUNICATION_SENDER_ADDRESS:?EmailSettings__Username is required. Set AZURE_COMMUNICATION_SENDER_ADDRESS in your .env file}
     networks:
       - barcelo-net
     depends_on:
