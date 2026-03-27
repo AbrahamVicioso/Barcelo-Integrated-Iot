@@ -1,0 +1,80 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "ApiGateway",
+      "type": "shell",
+      "command": "dotnet watch run",
+      "options": {
+        "cwd": "${workspaceFolder}/ApiGateway"
+      },
+      "isBackground": true
+    },
+    {
+      "label": "Authentication.Api",
+      "type": "shell",
+      "command": "dotnet watch run",
+      "options": {
+        "cwd": "${workspaceFolder}/Authenticate/Authentication.Api"
+      },
+      "isBackground": true
+    },
+    {
+      "label": "Dispositivos.API",
+      "type": "shell",
+      "command": "dotnet watch run",
+      "options": {
+        "cwd": "${workspaceFolder}/Dispositivos.API"
+      },
+      "isBackground": true
+    },
+    {
+      "label": "Reservas.API",
+      "type": "shell",
+      "command": "dotnet watch run",
+      "options": {
+        "cwd": "${workspaceFolder}/Reservas/Reservas.API"
+      },
+      "isBackground": true
+    },
+    {
+      "label": "Usuarios.API",
+      "type": "shell",
+      "command": "dotnet watch run",
+      "options": {
+        "cwd": "${workspaceFolder}/Usuarios/Usuarios.API"
+      },
+      "isBackground": true
+    },
+    {
+      "label": "Notification.Worker",
+      "type": "shell",
+      "command": "dotnet watch run",
+      "options": {
+        "cwd": "${workspaceFolder}/Notification.Worker"
+      },
+      "isBackground": true
+    },
+    {
+      "label": "Audit.Worker",
+      "type": "shell",
+      "command": "dotnet watch run",
+      "options": {
+        "cwd": "${workspaceFolder}/Audit.Worker"
+      },
+      "isBackground": true
+    },
+    {
+      "label": "Run All Services",
+      "dependsOn": [
+        "ApiGateway",
+        "Authentication.Api",
+        "Dispositivos.API",
+        "Reservas.API",
+        "Usuarios.API",
+        "Notification.Worker",
+        "Audit.Worker"
+      ]
+    }
+  ]
+}

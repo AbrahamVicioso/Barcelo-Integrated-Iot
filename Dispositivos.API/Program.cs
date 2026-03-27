@@ -39,7 +39,7 @@ namespace Dispositivos.API
 
             var app = builder.Build();
 
-            if (app.Environment.IsDevelopment())
+            if (app.Environment.IsDevelopment() || app.Environment.IsEnvironment("Docker"))
             {
                 app.MapOpenApi();
                 app.MapScalarApiReference();
@@ -48,6 +48,7 @@ namespace Dispositivos.API
             using (var scope = app.Services.CreateScope())
             {
                 var context = scope.ServiceProvider.GetRequiredService<BarceloIoTDatabaseContext>();
+                await context.Database.EnsureCreatedAsync();
                 await DbSeeder.SeedAsync(context);
             }
 

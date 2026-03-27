@@ -1,0 +1,9 @@
+**/bin/
+**/obj/
+**/.vs/
+**/.git/
+**/.gitignore
+docker/certs/
+*.user
+*.suo
+.DS_Store

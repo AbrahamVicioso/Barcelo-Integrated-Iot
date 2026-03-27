@@ -16,11 +16,27 @@ namespace Usuarios.ExternalService
                 ?? configuration["ExternalServices:Authentication:BaseUrl"]
                 ?? "http://localhost:5117";
 
+            var skipCertValidation = configuration.GetValue<bool>("ExternalServices:Authentication:SkipCertValidation");
+
             services.AddSingleton<GrpcChannel>(sp =>
             {
                 var logger = sp.GetRequiredService<ILogger<GrpcChannel>>();
                 logger.LogInformation("Canal gRPC → Authentication.Api: {Url}", grpcUrl);
 
+                if (grpcUrl.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+                {
+                    var httpHandler = new HttpClientHandler();
+                    if (skipCertValidation)
+                        httpHandler.ServerCertificateCustomValidationCallback =
+                            HttpClientHandler.DangerousAcceptAnyServerCertificateValidator;
+
+                    return GrpcChannel.ForAddress(grpcUrl, new GrpcChannelOptions
+                    {
+                        HttpHandler = httpHandler
+                    });
+                }
+
+                // h2c para desarrollo local (sin TLS)
                 return GrpcChannel.ForAddress(grpcUrl, new GrpcChannelOptions
                 {
                     HttpHandler = new SocketsHttpHandler

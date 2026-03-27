@@ -38,13 +38,11 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-if (app.Environment.IsDevelopment())
+if (app.Environment.IsDevelopment() || app.Environment.IsEnvironment("Docker"))
 {
     app.MapOpenApi();
     app.MapScalarApiReference();
 }
-
-app.UseHttpsRedirection();
 
 app.UseRouting();
 

@@ -10,16 +10,22 @@ using Scalar.AspNetCore;
 var builder = WebApplication.CreateBuilder(args);
 
 // Puerto 5117: HTTP/1.1 para REST
-// Puerto 5118: HTTP/2 exclusivo para gRPC
+// Puerto 5118: HTTP/2 para gRPC (HTTPS cuando hay cert configurado, h2c en dev local)
 builder.WebHost.ConfigureKestrel(options =>
 {
-    options.ListenLocalhost(5117, listenOptions =>
+    var certPath = builder.Configuration["Kestrel:Certificates:Default:Path"];
+    var certPassword = builder.Configuration["Kestrel:Certificates:Default:Password"];
+
+    options.ListenAnyIP(5117, listenOptions =>
     {
         listenOptions.Protocols = HttpProtocols.Http1;
     });
-    options.ListenLocalhost(5118, listenOptions =>
+
+    options.ListenAnyIP(5118, listenOptions =>
     {
         listenOptions.Protocols = HttpProtocols.Http2;
+        if (!string.IsNullOrEmpty(certPath))
+            listenOptions.UseHttps(certPath, certPassword);
     });
 });
 
@@ -45,7 +51,7 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-if (app.Environment.IsDevelopment())
+if (app.Environment.IsDevelopment() || app.Environment.IsEnvironment("Docker"))
 {
     app.MapOpenApi();
     app.MapScalarApiReference();
@@ -64,16 +70,11 @@ app.MapControllers();
 // Map gRPC service
 app.MapGrpcService<UserLookupService>();
 
-// AUTO GENERATE DB (FOR DEMO PURPOSES ONLY)
-//using (var scope = app.Services.CreateScope())
-//{
-//    var services = scope.ServiceProvider;
-//    var context = services.GetRequiredService<AuthenticationDbContext>();
-//    await context.Database.EnsureCreatedAsync();
-//}
-
 using (var scope = app.Services.CreateScope())
 {
+    var context      = scope.ServiceProvider.GetRequiredService<AuthenticationDbContext>();
+    await context.Database.EnsureCreatedAsync();
+
     var userManager  = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
     var roleManager  = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
     await DbSeeder.SeedAsync(userManager, roleManager);

@@ -1,0 +1,329 @@
+name: barcelo-iot
+
+networks:
+  barcelo-net:
+    driver: bridge
+
+volumes:
+  sqlserver-data:
+  nuget-cache:
+  postgres-data:
+    name: tb-postgres-data
+    driver: local
+  kafka-data:
+    name: tb-ce-kafka-data
+    driver: local
+  # obj/ y bin/ en filesystem Linux (mucho más rápido que NTFS en WSL2)
+  auth-obj:
+  usuarios-obj:
+  reservas-obj:
+  dispositivos-obj:
+  gateway-obj:
+  notification-obj:
+  audit-obj:
+
+# ── Anchors ──────────────────────────────────────────────────────────────────
+x-dotnet-sdk: &dotnet-sdk
+  image: mcr.microsoft.com/dotnet/sdk:9.0
+
+x-dotnet-env: &dotnet-env
+  DOTNET_USE_POLLING_FILE_WATCHER: "true"
+  ASPNETCORE_ENVIRONMENT: Docker
+  DOTNET_ENVIRONMENT: Docker
+  DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+  DOTNET_NOLOGO: "1"
+
+x-db-conn: &db-conn
+  ConnectionStrings__DefaultConnection: "Data source=sqlserver;Database=BarceloIoTDatabase;User Id=sa;Password=Testing1234;TrustServerCertificate=True"
+
+x-jwt: &jwt
+  Jwt__Issuer: barcelo
+  Jwt__Audience: BarceloIoT
+  Jwt__Key: u9Z3fBq7M!8@R2L#A4xCkWmP0EJvH5Ys
+
+services:
+  # ── Infraestructura ──────────────────────────────────────────────────────────
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: barcelo-sqlserver
+    environment:
+      SA_PASSWORD: "Testing1234"
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: Developer
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver-data:/var/opt/mssql
+    networks:
+      - barcelo-net
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'Testing1234' -Q 'SELECT 1 FROM sys.databases WHERE name=''BarceloIoTDatabase''' -b -No 2>/dev/null | grep -q 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 90s
+
+  kafka:
+    image: apache/kafka:4.2.0-rc3
+    hostname: kafka
+    container_name: kafka
+    user: root
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_NODE_ID: 1
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:29093
+      KAFKA_LISTENERS: PLAINTEXT://kafka:29092,CONTROLLER://kafka:29093,PLAINTEXT_HOST://0.0.0.0:9092
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LOG_DIRS: /tmp/kraft-combined-logs
+      CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    networks:
+      - barcelo-net
+
+  postgres:
+    restart: always
+    image: "postgres:16"
+    container_name: barcelo-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: thingsboard
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - barcelo-net
+
+  thingsboard-ce:
+    restart: always
+    image: "thingsboard/tb-node:4.3.0.1"
+    container_name: barcelo-thingsboard
+    ports:
+      - "8080:8080"
+      - "7070:7070"
+      - "1883:1883"
+      - "8883:8883"
+      - "5683-5688:5683-5688/udp"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "10"
+    environment:
+      TB_SERVICE_ID: tb-ce-node
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/thingsboard
+      TB_QUEUE_TYPE: kafka
+      TB_KAFKA_SERVERS: kafka:29092
+    networks:
+      - barcelo-net
+    depends_on:
+      - postgres
+      - kafka
+
+  # ── APIs ──────────────────────────────────────────────────────────────────────
+  auth-api:
+    <<: *dotnet-sdk
+    container_name: barcelo-auth
+    working_dir: /app/Authenticate/Authentication.Api
+    command: dotnet watch run --no-launch-profile
+    volumes:
+      - .:/app
+      - ${NUGET_PACKAGES:-nuget-cache}:/root/.nuget/packages
+      - ./docker/certs:/https:ro
+      - auth-obj:/app/Authenticate/Authentication.Api/obj
+    ports:
+      - "5117:5117"
+      - "5118:5118"
+    environment:
+      <<: [*dotnet-env, *db-conn, *jwt]
+      KafkaProducer__BootstrapServers: kafka:29092
+      KafkaProducer__Topic: users
+      KafkaProducer__ClientId: authentication-api
+      AuditProducer__BootstrapServers: kafka:29092
+      AuditProducer__Topic: audit.events
+      AuditProducer__ClientId: authenticate-audit
+    networks:
+      - barcelo-net
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+
+  usuarios-api:
+    <<: *dotnet-sdk
+    container_name: barcelo-usuarios
+    working_dir: /app/Usuarios/Usuarios.API
+    command: dotnet watch run --no-launch-profile
+    volumes:
+      - .:/app
+      - ${NUGET_PACKAGES:-nuget-cache}:/root/.nuget/packages
+      - ./docker/certs:/https:ro
+      - usuarios-obj:/app/Usuarios/Usuarios.API/obj
+    ports:
+      - "5284:5284"
+      - "5285:5285"
+    environment:
+      <<: [*dotnet-env, *db-conn]
+      AuditProducer__BootstrapServers: kafka:29092
+      AuditProducer__Topic: audit.events
+      AuditProducer__ClientId: usuarios-audit
+      ExternalServices__Authentication__GrpcUrl: "https://auth-api:5118"
+      ExternalServices__Authentication__SkipCertValidation: "true"
+    networks:
+      - barcelo-net
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+      auth-api:
+        condition: service_started
+
+  reservas-api:
+    <<: *dotnet-sdk
+    container_name: barcelo-reservas
+    working_dir: /app/Reservas/Reservas.API
+    command: dotnet watch run --no-launch-profile
+    volumes:
+      - .:/app
+      - ${NUGET_PACKAGES:-nuget-cache}:/root/.nuget/packages
+      - ./docker/certs:/https:ro
+      - reservas-obj:/app/Reservas/Reservas.API/obj
+    ports:
+      - "5141:5141"
+    environment:
+      <<: [*dotnet-env, *db-conn, *jwt]
+      ASPNETCORE_URLS: "http://+:5141"
+      GrpcClients__Usuarios__GrpcUrl: "https://usuarios-api:5285"
+      GrpcClients__Usuarios__SkipCertValidation: "true"
+      KafkaProducer__BootstrapServers: kafka:29092
+      KafkaProducer__Topic: reservas
+      KafkaProducer__UnlockDoorTopic: dispositivos.unlock-door
+      KafkaProducer__ClientId: reservas-api
+      AuditProducer__BootstrapServers: kafka:29092
+      AuditProducer__Topic: audit.events
+      AuditProducer__ClientId: reservas-audit
+    networks:
+      - barcelo-net
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+      usuarios-api:
+        condition: service_started
+
+  dispositivos-api:
+    <<: *dotnet-sdk
+    container_name: barcelo-dispositivos
+    working_dir: /app/Dispositivos.API
+    command: dotnet watch run --no-launch-profile
+    volumes:
+      - .:/app
+      - ${NUGET_PACKAGES:-nuget-cache}:/root/.nuget/packages
+      - ./docker/certs:/https:ro
+      - dispositivos-obj:/app/Dispositivos.API/obj
+    ports:
+      - "5185:5185"
+    environment:
+      <<: [*dotnet-env, *db-conn]
+      ASPNETCORE_URLS: "http://+:5185"
+      Thingsboard__BaseUrl: "http://thingsboard-ce:8080"
+      AuditProducer__BootstrapServers: kafka:29092
+      AuditProducer__Topic: audit.events
+      AuditProducer__ClientId: dispositivos-audit
+      KafkaConsumer__UnlockDoor__BootstrapServers: kafka:29092
+      KafkaConsumer__UnlockDoor__GroupId: dispositivos-unlock-door-group
+      KafkaConsumer__UnlockDoor__Topic: dispositivos.unlock-door
+    networks:
+      - barcelo-net
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+
+  api-gateway:
+    <<: *dotnet-sdk
+    container_name: barcelo-gateway
+    working_dir: /app/ApiGateway
+    command: dotnet watch run --no-launch-profile
+    volumes:
+      - .:/app
+      - ${NUGET_PACKAGES:-nuget-cache}:/root/.nuget/packages
+      - ./docker/certs:/https:ro
+      - gateway-obj:/app/ApiGateway/obj
+    ports:
+      - "5019:5019"
+      - "5020:5020"
+    environment:
+      <<: *dotnet-env
+      ASPNETCORE_URLS: "http://+:5019;https://+:5020"
+      ASPNETCORE_Kestrel__Certificates__Default__Path: /https/barcelo-dev.pfx
+      ASPNETCORE_Kestrel__Certificates__Default__Password: barcelo-dev
+    networks:
+      - barcelo-net
+    depends_on:
+      - auth-api
+      - usuarios-api
+      - reservas-api
+      - dispositivos-api
+
+  # ── Workers ───────────────────────────────────────────────────────────────────
+  notification-worker:
+    <<: *dotnet-sdk
+    container_name: barcelo-notification
+    working_dir: /app/Notification.Worker
+    command: dotnet watch run --no-launch-profile
+    volumes:
+      - .:/app
+      - ${NUGET_PACKAGES:-nuget-cache}:/root/.nuget/packages
+      - ./docker/certs:/https:ro
+      - notification-obj:/app/Notification.Worker/obj
+    environment:
+      <<: *dotnet-env
+      KafkaConsumer__UserCreated__BootstrapServers: kafka:29092
+      KafkaConsumer__UserCreated__GroupId: notification-user-created-group
+      KafkaConsumer__UserCreated__Topic: users
+      KafkaConsumer__ReservaCreada__BootstrapServers: kafka:29092
+      KafkaConsumer__ReservaCreada__GroupId: notification-reserva-creada-group
+      KafkaConsumer__ReservaCreada__Topic: reservas
+    networks:
+      - barcelo-net
+    depends_on:
+      kafka:
+        condition: service_started
+
+  audit-worker:
+    <<: *dotnet-sdk
+    container_name: barcelo-audit
+    working_dir: /app/Audit.Worker
+    command: dotnet watch run --no-launch-profile
+    volumes:
+      - .:/app
+      - ${NUGET_PACKAGES:-nuget-cache}:/root/.nuget/packages
+      - ./docker/certs:/https:ro
+      - audit-obj:/app/Audit.Worker/obj
+    environment:
+      <<: [*dotnet-env, *db-conn]
+      AuditConsumer__BootstrapServers: kafka:29092
+      AuditConsumer__GroupId: audit-worker-group
+      AuditConsumer__Topic: audit.events
+    networks:
+      - barcelo-net
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      kafka:
+        condition: service_started

@@ -5,22 +5,22 @@
       {
         "Path": "Authenticate\\Authentication.Api\\Authentication.Api.csproj",
         "Action": "Start",
-        "DebugTarget": "http"
+        "DebugTarget": "https"
       },
       {
         "Path": "ApiGateway\\ApiGateway.csproj",
         "Action": "Start",
-        "DebugTarget": "http"
+        "DebugTarget": "https"
       },
       {
         "Path": "Usuarios\\Usuarios.API\\Usuarios.API.csproj",
         "Action": "Start",
-        "DebugTarget": "http"
+        "DebugTarget": "https"
       },
       {
         "Path": "Reservas\\Reservas.API\\Reservas.API.csproj",
         "Action": "Start",
-        "DebugTarget": "http"
+        "DebugTarget": "https"
       },
       {
         "Path": "Notification.Worker\\Notification.Worker.csproj",
@@ -30,7 +30,7 @@
       {
         "Path": "Dispositivos.API\\Dispositivos.API.csproj",
         "Action": "Start",
-        "DebugTarget": "http"
+        "DebugTarget": "https"
       },
       {
         "Path": "Audit.Worker\\Audit.Worker.csproj",

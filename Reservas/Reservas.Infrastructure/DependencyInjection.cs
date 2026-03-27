@@ -30,23 +30,37 @@ namespace Reservas.Infrastructure
                 ?? configuration["Apis:Usuarios:BaseUrl"]
                 ?? "http://localhost:5284";
 
+            var skipCertValidation = configuration.GetValue<bool>("GrpcClients:Usuarios:SkipCertValidation");
+
             services.AddSingleton<GrpcChannel>(sp =>
             {
                 var logger = sp.GetRequiredService<ILogger<GrpcChannel>>();
                 logger.LogInformation("Canal gRPC → Usuarios.API: {Url}", usuariosGrpcUrl);
 
+                if (usuariosGrpcUrl.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+                {
+                    // HTTPS: opcionalmente bypass de validación de cert (solo dev/Docker)
+                    var httpHandler = new HttpClientHandler();
+                    if (skipCertValidation)
+                        httpHandler.ServerCertificateCustomValidationCallback =
+                            HttpClientHandler.DangerousAcceptAnyServerCertificateValidator;
+
+                    return GrpcChannel.ForAddress(usuariosGrpcUrl.TrimEnd('/'), new GrpcChannelOptions
+                    {
+                        HttpHandler = httpHandler
+                    });
+                }
+
+                // h2c (HTTP/2 cleartext) para desarrollo local
                 var handler = new SocketsHttpHandler
                 {
                     EnableMultipleHttp2Connections = true
                 };
-
-                // Forzar HTTP/2 en el cliente para h2c (sin TLS)
                 var httpClient = new HttpClient(handler)
                 {
                     DefaultRequestVersion = System.Net.HttpVersion.Version20,
                     DefaultVersionPolicy = System.Net.Http.HttpVersionPolicy.RequestVersionOrHigher
                 };
-
                 return GrpcChannel.ForAddress(usuariosGrpcUrl.TrimEnd('/'), new GrpcChannelOptions
                 {
                     HttpClient = httpClient

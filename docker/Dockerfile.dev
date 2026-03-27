@@ -1,0 +1,14 @@
+FROM mcr.microsoft.com/dotnet/sdk:9.0
+
+ARG PROJECT_PATH
+ENV PROJECT_PATH=${PROJECT_PATH}
+ENV DOTNET_USE_POLLING_FILE_WATCHER=true
+ENV DOTNET_CLI_TELEMETRY_OPTOUT=1
+ENV DOTNET_NOLOGO=1
+
+WORKDIR /app
+
+# El código fuente y el caché de NuGet se montan como volúmenes en docker-compose.
+# dotnet watch restaura paquetes usando el caché del host (/root/.nuget/packages)
+# sin necesitar acceso a internet.
+ENTRYPOINT ["sh", "-c", "cd /app/${PROJECT_PATH} && dotnet watch run --no-launch-profile"]

@@ -17,6 +17,7 @@ namespace ApiGateway
             builder.Services.AddOpenApi();
 
             builder.Configuration.AddJsonFile("ocelot.json", optional: false, reloadOnChange: true);
+            builder.Configuration.AddJsonFile($"ocelot.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true);
 
             builder.Services.AddOcelot();
 
@@ -31,7 +32,7 @@ namespace ApiGateway
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
-            if (app.Environment.IsDevelopment())
+            if (app.Environment.IsDevelopment() || app.Environment.IsEnvironment("Docker"))
             {
                 app.MapOpenApi();
             }

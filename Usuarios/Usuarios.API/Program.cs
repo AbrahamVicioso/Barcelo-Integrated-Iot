@@ -17,21 +17,25 @@ namespace Usuarios.API
 {
     public class Program
     {
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
             // Habilitar HTTP/2 sin cifrado (h2c) para clientes gRPC internos
             AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
 
             var builder = WebApplication.CreateBuilder(args);
 
-            // Forzar soporte de HTTP/2 cleartext (h2c) en Kestrel para gRPC sin TLS
-            builder.WebHost.ConfigureKestrel(options =>
+            // Si hay endpoints específicos en appsettings (ej: Docker con HTTPS gRPC en 5285),
+            // Kestrel los usa directamente. En dev local se usa h2c en todos los endpoints.
+            if (!builder.Configuration.GetSection("Kestrel:Endpoints").Exists())
             {
-                options.ConfigureEndpointDefaults(listenOptions =>
+                builder.WebHost.ConfigureKestrel(options =>
                 {
-                    listenOptions.Protocols = Microsoft.AspNetCore.Server.Kestrel.Core.HttpProtocols.Http1AndHttp2;
+                    options.ConfigureEndpointDefaults(listenOptions =>
+                    {
+                        listenOptions.Protocols = Microsoft.AspNetCore.Server.Kestrel.Core.HttpProtocols.Http1AndHttp2;
+                    });
                 });
-            });
+            }
 
             // Add DbContext
             builder.Services.AddDbContext<BarceloIoTSystemContext>(options =>
@@ -85,13 +89,17 @@ namespace Usuarios.API
 
             var app = builder.Build();
 
-            if (app.Environment.IsDevelopment())
+            using (var scope = app.Services.CreateScope())
+            {
+                var context = scope.ServiceProvider.GetRequiredService<Usuarios.Persistence.Data.BarceloIoTSystemContext>();
+                await context.Database.EnsureCreatedAsync();
+            }
+
+            if (app.Environment.IsDevelopment() || app.Environment.IsEnvironment("Docker"))
             {
                 app.MapOpenApi();
                 app.MapScalarApiReference();
             }
-
-            app.UseHttpsRedirection();
 
             app.UseRouting();
 
@@ -105,7 +113,7 @@ namespace Usuarios.API
             // gRPC endpoints
             app.MapGrpcService<HuespedeGrpcService>();
 
-            app.Run();
+            await app.RunAsync();
         }
     }
 }
