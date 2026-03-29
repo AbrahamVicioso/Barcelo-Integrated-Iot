@@ -13,7 +13,7 @@ Plataforma IoT para gestión de habitaciones inteligentes del Hotel Barcelo. Arq
 | `usuarios-api` | Huéspedes y personal | 5284 | 5285 (HTTPS) |
 | `reservas-api` | Reservas y check-in/out | 5141 | — |
 | `dispositivos-api` | Cerraduras inteligentes | 5185 | — |
-| `notification-worker` | Notificaciones por email | — | — |
+| `notification-worker` | Notificaciones por email y push | — | — |
 | `audit-worker` | Auditoría de eventos | — | — |
 
 ### Infraestructura
@@ -24,6 +24,7 @@ Plataforma IoT para gestión de habitaciones inteligentes del Hotel Barcelo. Arq
 | Kafka | 9092 | Mensajería entre servicios (KRaft, sin Zookeeper) |
 | PostgreSQL | 5432 | Base de datos de ThingsBoard |
 | ThingsBoard CE | 8080 | Gestión de dispositivos IoT |
+| ntfy | 8081 | Servidor de notificaciones push |
 
 ---
 
@@ -84,6 +85,8 @@ Espera a que termine (1-2 minutos) y luego continúa.
 ```bash
 docker compose up
 ```
+
+> **Notificaciones push:** ntfy arranca automáticamente en modo abierto (`read-write`). Para producción consulta la sección [Notificaciones Push](#notificaciones-push-ntfy).
 
 > No hay `docker compose build` — se usa directamente la imagen `mcr.microsoft.com/dotnet/sdk:9.0`.
 > SQL Server necesita ~60 segundos para arrancar; los servicios esperan automáticamente.
@@ -193,6 +196,88 @@ Data source=localhost;Database=BarceloIoTDatabase;User Id=barcelo;Password=Testi
 ```
 
 **En Docker** los servicios se conectan via `sqlserver:1433` con el usuario `sa`.
+
+---
+
+## Notificaciones Push (ntfy)
+
+El sistema usa [ntfy](https://ntfy.sh) como servidor de push notifications open-source y self-hosted.
+Dentro de Docker es accesible como `http://ntfy:80` (DNS interno). Desde el host como `http://localhost:8081`.
+
+### Cómo funcionan
+
+Cuando se crea una reserva o un usuario, el `notification-worker` publica automáticamente:
+- Un **email** (Azure Communication Services)
+- Una **notificación push** al topic personal del usuario en ntfy
+
+Cada usuario tiene un topic derivado de su email:
+```
+usuario@hotel.com  →  barcelo-usuario-at-hotel-com
+```
+
+### Configuración para desarrollo (ya funciona sin nada extra)
+
+ntfy arranca en modo `read-write` — abierto para que el worker pueda publicar sin token.
+La app móvil puede suscribirse directamente sin credenciales.
+
+**Suscribirse desde la app ntfy:**
+1. Descarga ntfy ([Android](https://play.google.com/store/apps/details?id=io.heckel.ntfy) / [iOS](https://apps.apple.com/app/ntfy/id1625396347))
+2. Agrega servidor: `http://<ip-de-tu-máquina>:8081`
+3. Suscríbete al topic: `barcelo-tuemail-at-dominio-com`
+
+**Probar desde dentro de Docker (DNS interno `ntfy`):**
+```bash
+# Enviar una push de prueba desde el contenedor del worker
+docker exec barcelo-notification \
+  curl -s -d "Prueba de notificación" \
+  -H "Title: Test Barcelo" \
+  -H "Priority: 3" \
+  http://ntfy:80/barcelo-test
+
+# Suscribirse por SSE desde dentro de la red Docker
+docker exec barcelo-notification \
+  curl -s http://ntfy:80/barcelo-test/sse
+```
+
+---
+
+### Hardening para producción
+
+En producción nadie debe poder publicar notificaciones falsas. Sigue estos pasos:
+
+**1. Levantar solo ntfy:**
+```bash
+docker compose up -d ntfy
+```
+
+**2. Crear el usuario administrador:**
+```bash
+docker exec -it barcelo-ntfy ntfy user add --role=admin admin
+# Introduce la contraseña cuando se pida
+```
+
+**3. Generar un token para el servidor:**
+```bash
+docker exec barcelo-ntfy ntfy token add admin
+# Devuelve algo como: tk_AgQdq7mVBoFD37zQVeaKCNYH...
+```
+
+**4. Añadir al `.env`:**
+```env
+NTFY_ADMIN_PASSWORD=tu-password-admin
+NTFY_SERVER_TOKEN=tk_AgQdq7mVBoFD37zQVeaKCNYH...
+NTFY_AUTH_DEFAULT_ACCESS=deny-all
+```
+
+**5. Levantar el resto del stack:**
+```bash
+docker compose up -d
+```
+
+Con `deny-all` activado:
+- Solo el `notification-worker` puede publicar (usa el token del servidor)
+- Cada usuario recibe sus credenciales ntfy por email al crear su cuenta (solo lectura de su topic personal)
+- Cualquier intento externo de publicar o leer es rechazado
 
 ---
 

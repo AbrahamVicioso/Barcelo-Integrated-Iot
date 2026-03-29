@@ -13,6 +13,7 @@ volumes:
   kafka-data:
     name: tb-ce-kafka-data
     driver: local
+  ntfy-data:
   # obj/ y bin/ en filesystem Linux (mucho más rápido que NTFS en WSL2)
   auth-obj:
   usuarios-obj:
@@ -43,6 +44,32 @@ x-jwt: &jwt
 
 services:
   # ── Infraestructura ──────────────────────────────────────────────────────────
+  ntfy:
+    image: binwiederhier/ntfy
+    container_name: barcelo-ntfy
+    command: serve
+    ports:
+      - "8081:80"
+    environment:
+      NTFY_BASE_URL: http://localhost:8081
+      NTFY_CACHE_FILE: /var/lib/ntfy/cache.db
+      NTFY_AUTH_FILE: /var/lib/ntfy/auth.db
+      # DEV: read-write (sin variables en .env, abierto para desarrollo local)
+      # PROD: configura NTFY_ADMIN_PASSWORD y NTFY_SERVER_TOKEN en .env → cambia a deny-all
+      NTFY_AUTH_DEFAULT_ACCESS: ${NTFY_AUTH_DEFAULT_ACCESS:-read-write}
+      NTFY_ATTACHMENT_CACHE_DIR: /var/lib/ntfy/attachments
+      NTFY_BEHIND_PROXY: "false"
+    volumes:
+      - ntfy-data:/var/lib/ntfy
+    networks:
+      - barcelo-net
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --tries=1 http://localhost/v1/health -O - | grep -c healthy || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
   sqlserver:
     image: mcr.microsoft.com/mssql/server:2022-latest
     container_name: barcelo-sqlserver
@@ -301,11 +328,17 @@ services:
       KafkaConsumer__ReservaCreada__Topic: reservas
       EmailSettings__ConnectionString: ${AZURE_COMMUNICATION_CONNECTION_STRING:?EmailSettings__ConnectionString is required. Set AZURE_COMMUNICATION_CONNECTION_STRING in your .env file}
       EmailSettings__Username: ${AZURE_COMMUNICATION_SENDER_ADDRESS:?EmailSettings__Username is required. Set AZURE_COMMUNICATION_SENDER_ADDRESS in your .env file}
+      Ntfy__BaseUrl: http://ntfy:80
+      Ntfy__TopicPrefix: barcelo
+      Ntfy__AccessToken: ${NTFY_SERVER_TOKEN:-}
+      Ntfy__AdminPassword: ${NTFY_ADMIN_PASSWORD:-}
     networks:
       - barcelo-net
     depends_on:
       kafka:
         condition: service_started
+      ntfy:
+        condition: service_healthy
 
   audit-worker:
     <<: *dotnet-sdk

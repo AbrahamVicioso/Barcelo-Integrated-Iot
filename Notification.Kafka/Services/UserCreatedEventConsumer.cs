@@ -4,6 +4,7 @@ using Confluent.Kafka.Admin;
 using Microsoft.Extensions.Logging;
 using Notification.Domain.Entities;
 using Notification.Domain.Events;
+using Notification.Domain.Helpers;
 using Notification.Domain.Interfaces;
 using Notification.Kafka.Configuration;
 
@@ -14,6 +15,8 @@ namespace Notification.Kafka.Services
         private readonly IConsumer<string, string> _consumer;
         private readonly IAdminClient _adminClient;
         private readonly IEmailService _emailService;
+        private readonly IPushNotificationService _pushService;
+        private readonly INtfyAdminService _ntfyAdmin;
         private readonly UserCreatedConsumerConfig _config;
         private readonly ILogger<UserCreatedEventConsumer> _logger;
         private CancellationTokenSource? _cancellationTokenSource;
@@ -25,10 +28,14 @@ namespace Notification.Kafka.Services
         public UserCreatedEventConsumer(
             UserCreatedConsumerConfig config,
             IEmailService emailService,
+            IPushNotificationService pushService,
+            INtfyAdminService ntfyAdmin,
             ILogger<UserCreatedEventConsumer> logger)
         {
             _config = config;
             _emailService = emailService;
+            _pushService = pushService;
+            _ntfyAdmin = ntfyAdmin;
             _logger = logger;
 
             var consumerConfig = new ConsumerConfig
@@ -179,7 +186,11 @@ namespace Notification.Kafka.Services
         {
             _logger.LogInformation("Processing UserCreatedEvent for user: {Email}", userEvent.Email);
 
-            var emailBody = GenerateUserCreatedEmailBody(userEvent);
+            // Create ntfy account for the user (read-only on their personal topic)
+            var ntfyPassword = await _ntfyAdmin.CreateUserAccountAsync(userEvent.Email, cancellationToken);
+            var ntfyUsername = NtfyTopicHelper.GetUserTopic(userEvent.Email);
+
+            var emailBody = GenerateUserCreatedEmailBody(userEvent, ntfyUsername, ntfyPassword);
 
             var emailNotification = new EmailNotification
             {
@@ -189,20 +200,42 @@ namespace Notification.Kafka.Services
                 IsHtml = true
             };
 
-            var sent = await _emailService.SendEmailAsync(emailNotification, cancellationToken);
+            var emailSent = await _emailService.SendEmailAsync(emailNotification, cancellationToken);
 
-            if (sent)
-            {
+            if (emailSent)
                 _logger.LogInformation("User created email sent successfully to {Email}", userEvent.Email);
-            }
             else
-            {
                 _logger.LogError("Failed to send user created email to {Email}", userEvent.Email);
+
+            // Push notification to the just-created account (if ntfy account was created)
+            if (ntfyPassword != null)
+            {
+                var pushNotification = new PushNotification
+                {
+                    Topic = ntfyUsername,
+                    Title = "Bienvenido a Barcelo IoT",
+                    Message = $"Hola {userEvent.UserName}, tu cuenta ha sido creada. Revisa tu email para configurar las notificaciones push.",
+                    Priority = PushPriority.Default,
+                    Tags = ["wave", "hotel"]
+                };
+
+                await _pushService.SendAsync(pushNotification, cancellationToken);
             }
         }
 
-        private string GenerateUserCreatedEmailBody(UserCreatedEvent userEvent)
+        private string GenerateUserCreatedEmailBody(UserCreatedEvent userEvent, string ntfyUsername, string? ntfyPassword)
         {
+            var ntfySection = ntfyPassword != null
+                ? $@"
+            <div class='credentials' style='margin-top:20px;'>
+                <p><strong>Notificaciones Push (app ntfy):</strong></p>
+                <p>Descarga la app <strong>ntfy</strong> (Android / iOS) y suscríbete con:</p>
+                <p>Usuario: <span class='password'>{ntfyUsername}</span></p>
+                <p>Contraseña: <span class='password'>{ntfyPassword}</span></p>
+                <p style='font-size:12px;color:#888;'>Estas credenciales son de solo lectura y únicamente para recibir tus notificaciones personales.</p>
+            </div>"
+                : "<p style='color:#888;font-size:12px;'>Las notificaciones push no están disponibles en este momento.</p>";
+
             return $@"
 <!DOCTYPE html>
 <html>
@@ -227,10 +260,11 @@ namespace Notification.Kafka.Services
             <p>Hola <strong>{userEvent.UserName}</strong>,</p>
             <p>Tu cuenta ha sido creada exitosamente en el sistema Barcelo Integrated IoT.</p>
             <div class='credentials'>
-                <p><strong>Credenciales de acceso:</strong></p>
+                <p><strong>Credenciales de acceso al sistema:</strong></p>
                 <p>Email: {userEvent.Email}</p>
                 <p>Contraseña: <span class='password'>{userEvent.GeneratedPassword}</span></p>
             </div>
+            {ntfySection}
             <p>Por seguridad, te recomendamos cambiar tu contraseña después de iniciar sesión por primera vez.</p>
             <p>Si tienes alguna pregunta, no dudes en contactar a nuestro equipo de soporte.</p>
         </div>

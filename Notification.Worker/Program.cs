@@ -5,6 +5,7 @@ using Notification.Domain.Interfaces;
 using Notification.Email;
 using Notification.Kafka.Configuration;
 using Notification.Kafka.Services;
+using Notification.Push;
 
 namespace Notification.Worker
 {
@@ -28,6 +29,9 @@ namespace Notification.Worker
 
                 // Add Email Service
                 services.AddSingleton<IEmailService, EmailService>();
+
+                // Add Push Notification Service (ntfy)
+                services.AddPushNotificationService(context.Configuration);
 
                 // Configure UserCreatedConsumerConfig
                 var userCreatedConsumerConfig = new UserCreatedConsumerConfig();

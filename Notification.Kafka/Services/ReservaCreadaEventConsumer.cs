@@ -4,6 +4,7 @@ using Confluent.Kafka.Admin;
 using Microsoft.Extensions.Logging;
 using Notification.Domain.Entities;
 using Notification.Domain.Events;
+using Notification.Domain.Helpers;
 using Notification.Domain.Interfaces;
 using Notification.Kafka.Configuration;
 
@@ -14,6 +15,7 @@ namespace Notification.Kafka.Services
         private readonly IConsumer<string, string> _consumer;
         private readonly IAdminClient _adminClient;
         private readonly IEmailService _emailService;
+        private readonly IPushNotificationService _pushService;
         private readonly ReservaCreadaConsumerConfig _config;
         private readonly ILogger<ReservaCreadaEventConsumer> _logger;
         private CancellationTokenSource? _cancellationTokenSource;
@@ -25,10 +27,12 @@ namespace Notification.Kafka.Services
         public ReservaCreadaEventConsumer(
             ReservaCreadaConsumerConfig config,
             IEmailService emailService,
+            IPushNotificationService pushService,
             ILogger<ReservaCreadaEventConsumer> logger)
         {
             _config = config;
             _emailService = emailService;
+            _pushService = pushService;
             _logger = logger;
 
             var consumerConfig = new ConsumerConfig
@@ -189,19 +193,28 @@ namespace Notification.Kafka.Services
                 IsHtml = true
             };
 
-            var sent = await _emailService.SendEmailAsync(emailNotification, cancellationToken);
+            var emailSent = await _emailService.SendEmailAsync(emailNotification, cancellationToken);
 
-            if (sent)
-            {
-                _logger.LogInformation("Reserva created email sent successfully to {Email} for reservation {NumeroReserva}", 
+            if (emailSent)
+                _logger.LogInformation("Reserva created email sent successfully to {Email} for reservation {NumeroReserva}",
                     reservaEvent.Email, reservaEvent.NumeroReserva);
-            }
             else
-            {
-                _logger.LogError("Failed to send reserva created email to {Email} for reservation {NumeroReserva}", 
+                _logger.LogError("Failed to send reserva created email to {Email} for reservation {NumeroReserva}",
                     reservaEvent.Email, reservaEvent.NumeroReserva);
-            }
+
+            var pushNotification = new PushNotification
+            {
+                Topic = NtfyTopicHelper.GetUserTopic(reservaEvent.Email),
+                Title = "Reserva Confirmada",
+                Message = $"Tu reserva {reservaEvent.NumeroReserva} en {reservaEvent.HotelNombre} ha sido confirmada. " +
+                          $"Check-in: {reservaEvent.FechaCheckIn:dd/MM/yyyy} · Check-out: {reservaEvent.FechaCheckOut:dd/MM/yyyy}",
+                Priority = PushPriority.High,
+                Tags = ["hotel", "white_check_mark"]
+            };
+
+            await _pushService.SendAsync(pushNotification, cancellationToken);
         }
+
 
         private string GenerateReservaCreadaEmailBody(ReservaCreadaEvent reservaEvent)
         {
