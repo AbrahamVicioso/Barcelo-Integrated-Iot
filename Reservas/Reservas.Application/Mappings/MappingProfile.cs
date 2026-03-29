@@ -22,6 +22,16 @@ public class MappingProfile : Profile
         CreateMap<CreateReservaCommand, Reserva>()
             .ForMember(dest => dest.EstadoReserva, opt => opt.Ignore())
             .ForMember(dest => dest.EstadoReservaId, opt => opt.Ignore());
+        CreateMap<UpdateReservaCommand, Reserva>()
+            .ForMember(dest => dest.ReservaId, opt => opt.Ignore())
+            .ForMember(dest => dest.HuespedId, opt => opt.Ignore())
+            .ForMember(dest => dest.NumeroReserva, opt => opt.Ignore())
+            .ForMember(dest => dest.FechaCreacion, opt => opt.Ignore())
+            .ForMember(dest => dest.FechaActualizacion, opt => opt.Ignore())
+            .ForMember(dest => dest.CreadoPor, opt => opt.Ignore())
+            .ForMember(dest => dest.EstadoReserva, opt => opt.Ignore())
+            .ForMember(dest => dest.CheckInRealizado, opt => opt.Ignore())
+            .ForMember(dest => dest.CheckOutRealizado, opt => opt.Ignore());
         CreateMap<Hotel, HotelesDto>();
         CreateMap<CreateReservaDto, Reserva>()
             .ForMember(dest => dest.ReservaId, opt => opt.Ignore())
