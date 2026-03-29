@@ -76,7 +76,6 @@
     <Build Include="dbo\Tables\ReservasActividades.sql" />
     <Build Include="dbo\Tables\Huespedes.sql" />
     <Build Include="dbo\Tables\Reservas.sql" />
-    <Build Include="dbo\Tables\CheckIns.sql" />
     <Build Include="dbo\Tables\CredencialesAcceso.sql" />
     <Build Include="dbo\Tables\Users.sql" />
     <Build Include="dbo\Tables\ConfiguracionSistema.sql" />

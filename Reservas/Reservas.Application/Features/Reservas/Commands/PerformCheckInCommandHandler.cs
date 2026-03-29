@@ -1,10 +1,8 @@
 using MediatR;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Reservas.Application.Common;
 using Reservas.Application.DTOs;
 using Reservas.Application.Interfaces;
-using Reservas.Domain.Entities;
 using Reservas.Domain.Entites;
 
 namespace Reservas.Application.Features.Reservas.Commands;
@@ -13,18 +11,15 @@ public class PerformCheckInCommandHandler : IRequestHandler<PerformCheckInComman
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IUsuariosApiService _usuariosApiService;
-    private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly ILogger<PerformCheckInCommandHandler> _logger;
 
     public PerformCheckInCommandHandler(
         IUnitOfWork unitOfWork,
         IUsuariosApiService usuariosApiService,
-        IHttpContextAccessor httpContextAccessor,
         ILogger<PerformCheckInCommandHandler> logger)
     {
         _unitOfWork = unitOfWork;
         _usuariosApiService = usuariosApiService;
-        _httpContextAccessor = httpContextAccessor;
         _logger = logger;
     }
 
@@ -49,8 +44,7 @@ public class PerformCheckInCommandHandler : IRequestHandler<PerformCheckInComman
                 return Result<CheckInDto>.Failure("No se puede realizar check-in para una reserva cancelada.");
 
             // Verificar que no exista ya un check-in para esta reserva
-            var checkInExistente = await _unitOfWork.CheckIns.ExisteCheckInParaReservaAsync(reserva.ReservaId, cancellationToken);
-            if (checkInExistente)
+            if (reserva.CheckInRealizado.HasValue)
                 return Result<CheckInDto>.Failure("Ya existe un check-in registrado para esta reserva.");
 
             // RF-003: Validar identidad del huesped via email
@@ -63,26 +57,12 @@ public class PerformCheckInCommandHandler : IRequestHandler<PerformCheckInComman
                 !huesped.CorreoElectronico.Equals(request.Email, StringComparison.OrdinalIgnoreCase))
                 return Result<CheckInDto>.Failure("El email proporcionado no coincide con el registrado para esta reserva.");
 
-            var ipAddress = _httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString();
+            var fechaCheckIn = DateTime.UtcNow;
 
-            var checkIn = new CheckIn
-            {
-                ReservaId = reserva.ReservaId,
-                NombreCompleto = request.NombreCompleto,
-                Email = request.Email,
-                Telefono = request.Telefono,
-                FechaCheckIn = DateTime.UtcNow,
-                DireccionIp = ipAddress ?? string.Empty,
-                Estado = "Completado"
-            };
-
-            await _unitOfWork.CheckIns.AddAsync(checkIn, cancellationToken);
-
-            // Activar la reserva
             reserva.EstadoReservaId = EstadoReserva.Activa;
-            reserva.CheckInRealizado = DateTime.UtcNow;
-            await _unitOfWork.Reservas.UpdateAsync(reserva, cancellationToken);
+            reserva.CheckInRealizado = fechaCheckIn;
 
+            await _unitOfWork.Reservas.UpdateAsync(reserva, cancellationToken);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
             _logger.LogInformation(
@@ -91,13 +71,8 @@ public class PerformCheckInCommandHandler : IRequestHandler<PerformCheckInComman
 
             return Result<CheckInDto>.Success(new CheckInDto
             {
-                CheckInId = checkIn.CheckInId,
-                ReservaId = checkIn.ReservaId,
-                NombreCompleto = checkIn.NombreCompleto,
-                Email = checkIn.Email,
-                Telefono = checkIn.Telefono,
-                FechaCheckIn = checkIn.FechaCheckIn,
-                Estado = checkIn.Estado
+                ReservaId = reserva.ReservaId,
+                FechaCheckIn = reserva.CheckInRealizado.Value
             });
         }
         catch (Exception ex)

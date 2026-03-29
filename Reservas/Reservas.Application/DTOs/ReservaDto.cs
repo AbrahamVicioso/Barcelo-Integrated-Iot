@@ -4,7 +4,7 @@ public class ReservaDto
 {
     public int ReservaId { get; set; }
     public int HuespedId { get; set; }
-    public int HabitacionId { get; set; }
+    public int? HabitacionId { get; set; }
     public string NumeroReserva { get; set; } = string.Empty;
     public DateTime FechaCheckIn { get; set; }
     public DateTime FechaCheckOut { get; set; }

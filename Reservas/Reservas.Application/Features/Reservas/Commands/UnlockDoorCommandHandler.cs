@@ -31,10 +31,13 @@ public class UnlockDoorCommandHandler : IRequestHandler<UnlockDoorCommand, Resul
             if (reserva == null)
                 return Result<string>.Failure($"Reserva con ID {request.ReservaId} no encontrada.");
 
+            if (!reserva.HabitacionId.HasValue)
+                return Result<string>.Failure("La reserva no tiene una habitación asignada.");
+
             var unlockDoorEvent = new UnlockDoorEvent
             {
                 ReservaId = reserva.ReservaId,
-                HabitacionId = reserva.HabitacionId,
+                HabitacionId = reserva.HabitacionId.Value,
                 NumeroReserva = reserva.NumeroReserva
             };
 
@@ -44,7 +47,7 @@ public class UnlockDoorCommandHandler : IRequestHandler<UnlockDoorCommand, Resul
                 "UnlockDoorEvent publicado para reserva {NumeroReserva}, habitacion {HabitacionId}",
                 reserva.NumeroReserva, reserva.HabitacionId);
 
-            return Result<string>.Success($"Cerradura de habitacion {reserva.HabitacionId} desbloqueada para reserva {reserva.NumeroReserva}.");
+            return Result<string>.Success($"Cerradura de habitacion {reserva.HabitacionId.Value} desbloqueada para reserva {reserva.NumeroReserva}.");
         }
         catch (Exception ex)
         {

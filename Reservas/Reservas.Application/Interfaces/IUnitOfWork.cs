@@ -9,8 +9,6 @@ public interface IUnitOfWork : IDisposable
     IHabitacionRepository Habitaciones { get; }
     IEstadoHabitacionRepository EstadosHabitacion { get; }
     ITipoHabitacionRepository TiposHabitacion { get; }
-    ICheckInRepository CheckIns { get; }
-    ICheckOutRepository CheckOuts { get; }
     IEstadoReservaRepository EstadosReserva { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);

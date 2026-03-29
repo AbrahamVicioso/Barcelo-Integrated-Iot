@@ -3,7 +3,7 @@ namespace Reservas.Application.DTOs;
 public class CreateReservaDto
 {
     public int HuespedId { get; set; }
-    public int HabitacionId { get; set; }
+    public int? HabitacionId { get; set; }
     public DateTime FechaCheckIn { get; set; }
     public DateTime FechaCheckOut { get; set; }
     public int NumeroHuespedes { get; set; }

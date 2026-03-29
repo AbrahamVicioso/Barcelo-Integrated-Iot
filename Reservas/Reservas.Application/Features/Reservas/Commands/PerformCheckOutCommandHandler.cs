@@ -4,7 +4,6 @@ using Microsoft.Extensions.Logging;
 using Reservas.Application.Common;
 using Reservas.Application.DTOs;
 using Reservas.Application.Interfaces;
-using Reservas.Domain.Entities;
 using Reservas.Domain.Entites;
 
 namespace Reservas.Application.Features.Reservas.Commands;
@@ -43,14 +42,7 @@ public class PerformCheckOutCommandHandler : IRequestHandler<PerformCheckOutComm
             reserva.CheckOutRealizado = fechaCheckOut;
             reserva.FechaActualizacion = fechaCheckOut;
 
-            var checkOut = new Domain.Entities.CheckOut
-            {
-                ReservaId = reserva.ReservaId,
-                FechaCheckOut = fechaCheckOut
-            };
-
             await _unitOfWork.Reservas.UpdateAsync(reserva, cancellationToken);
-            await _unitOfWork.CheckOuts.AddAsync(checkOut, cancellationToken);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
             _logger.LogInformation(
