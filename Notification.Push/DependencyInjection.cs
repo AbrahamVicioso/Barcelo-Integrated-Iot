@@ -14,13 +14,11 @@ public static class DependencyInjection
         configuration.GetSection("Ntfy").Bind(options);
         services.AddSingleton(options);
 
-        services.AddHttpClient<NtfyPushNotificationService>()
+        services.AddHttpClient<IPushNotificationService, NtfyPushNotificationService>()
             .ConfigurePrimaryHttpMessageHandler(() => BuildHandler(options));
-        services.AddSingleton<IPushNotificationService, NtfyPushNotificationService>();
 
-        services.AddHttpClient<NtfyAdminService>()
+        services.AddHttpClient<INtfyAdminService, NtfyAdminService>()
             .ConfigurePrimaryHttpMessageHandler(() => BuildHandler(options));
-        services.AddSingleton<INtfyAdminService, NtfyAdminService>();
 
         return services;
     }

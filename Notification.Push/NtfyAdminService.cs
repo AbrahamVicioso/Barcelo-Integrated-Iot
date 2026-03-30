@@ -48,12 +48,12 @@ public class NtfyAdminService : Notification.Domain.Interfaces.INtfyAdminService
             }
 
             // 2. Grant read-only access to their personal topic
-            var accessGranted = await GrantReadAccessAsync(username, topic, cancellationToken);
+            var (accessGranted, grantError) = await GrantReadAccessAsync(username, topic, cancellationToken);
             if (!accessGranted)
             {
-                _logger.LogError("Could not grant read access for ntfy user {Username} on topic {Topic}. " +
-                    "Verify that NTFY_SERVER_TOKEN or NTFY_ADMIN_PASSWORD is configured and belongs to an admin user.",
-                    username, topic);
+                _logger.LogError(
+                    "Could not grant read access for ntfy user {Username} on topic {Topic}. Reason: {Reason}",
+                    username, topic, grantError);
                 return null;
             }
 
@@ -124,12 +124,14 @@ public class NtfyAdminService : Notification.Domain.Interfaces.INtfyAdminService
         if (response.IsSuccessStatusCode)
             return true;
 
-        // 409 = user already exists. Reset the password so we can authenticate
-        // and generate a fresh token (handles at-least-once Kafka delivery).
+        // 409 = user already exists. Delete and recreate so we can authenticate
+        // with the new password and generate a fresh token (handles at-least-once Kafka delivery).
         if ((int)response.StatusCode == 409)
         {
-            _logger.LogInformation("ntfy user {Username} already exists. Resetting password.", username);
-            return await ResetNtfyUserPasswordAsync(username, password, cancellationToken);
+            _logger.LogInformation("ntfy user {Username} already exists. Deleting and recreating.", username);
+            var deleted = await DeleteNtfyUserAsync(username, cancellationToken);
+            if (!deleted) return false;
+            return await CreateNtfyUserAsync(username, password, cancellationToken);
         }
 
         var body = await response.Content.ReadAsStringAsync(cancellationToken);
@@ -138,13 +140,31 @@ public class NtfyAdminService : Notification.Domain.Interfaces.INtfyAdminService
         return false;
     }
 
-    private async Task<bool> ResetNtfyUserPasswordAsync(string username, string password, CancellationToken cancellationToken)
+    private async Task<bool> DeleteNtfyUserAsync(string username, CancellationToken cancellationToken)
     {
         var url = $"{_options.BaseUrl.TrimEnd('/')}/v1/users/{username}";
 
-        var request = new HttpRequestMessage(HttpMethod.Patch, url)
+        var request = new HttpRequestMessage(HttpMethod.Delete, url);
+        AddAdminAuth(request);
+
+        var response = await _httpClient.SendAsync(request, cancellationToken);
+
+        if (response.IsSuccessStatusCode)
+            return true;
+
+        var body = await response.Content.ReadAsStringAsync(cancellationToken);
+        _logger.LogError("Failed to delete ntfy user {Username}. Status: {Status}. Body: {Body}",
+            username, response.StatusCode, body);
+        return false;
+    }
+
+    private async Task<bool> CreateNtfyUserAsync(string username, string password, CancellationToken cancellationToken)
+    {
+        var url = $"{_options.BaseUrl.TrimEnd('/')}/v1/users";
+
+        var request = new HttpRequestMessage(HttpMethod.Post, url)
         {
-            Content = JsonContent.Create(new { password })
+            Content = JsonContent.Create(new { username, password, role = "user" })
         };
         AddAdminAuth(request);
 
@@ -154,14 +174,18 @@ public class NtfyAdminService : Notification.Domain.Interfaces.INtfyAdminService
             return true;
 
         var body = await response.Content.ReadAsStringAsync(cancellationToken);
-        _logger.LogError("Failed to reset password for ntfy user {Username}. Status: {Status}. Body: {Body}",
+        _logger.LogError("Failed to create ntfy user {Username}. Status: {Status}. Body: {Body}",
             username, response.StatusCode, body);
         return false;
     }
 
-    private async Task<bool> GrantReadAccessAsync(string username, string topic, CancellationToken cancellationToken)
+    private async Task<(bool Success, string? ErrorDetail)> GrantReadAccessAsync(string username, string topic, CancellationToken cancellationToken)
     {
-        var url = $"{_options.BaseUrl.TrimEnd('/')}/v1/access";
+        var url = $"{_options.BaseUrl.TrimEnd('/')}/v1/users/access";
+
+        var hasAuth = !string.IsNullOrEmpty(_options.AccessToken) || !string.IsNullOrEmpty(_options.AdminPassword);
+        if (!hasAuth)
+            return (false, "no admin credentials configured (NTFY_SERVER_TOKEN and NTFY_ADMIN_PASSWORD are both empty)");
 
         var request = new HttpRequestMessage(HttpMethod.Put, url)
         {
@@ -173,12 +197,10 @@ public class NtfyAdminService : Notification.Domain.Interfaces.INtfyAdminService
         var response = await _httpClient.SendAsync(request, cancellationToken);
 
         if (response.IsSuccessStatusCode)
-            return true;
+            return (true, null);
 
         var body = await response.Content.ReadAsStringAsync(cancellationToken);
-        _logger.LogError("Failed to grant read access for {Username} on topic {Topic}. Status: {Status}. Body: {Body}",
-            username, topic, response.StatusCode, body);
-        return false;
+        return (false, $"HTTP {(int)response.StatusCode} {response.StatusCode} — {body}");
     }
 
     private void AddAdminAuth(HttpRequestMessage request)
@@ -192,9 +214,9 @@ public class NtfyAdminService : Notification.Domain.Interfaces.INtfyAdminService
 
     public async Task GrantSystemTopicAccessAsync(string ntfyUsername, CancellationToken cancellationToken = default)
     {
-        var granted = await GrantReadAccessAsync(ntfyUsername, _options.SystemTopic, cancellationToken);
+        var (granted, error) = await GrantReadAccessAsync(ntfyUsername, _options.SystemTopic, cancellationToken);
         if (!granted)
-            _logger.LogWarning("Could not grant system topic access for ntfy user {Username}.", ntfyUsername);
+            _logger.LogWarning("Could not grant system topic access for ntfy user {Username}. Reason: {Reason}", ntfyUsername, error);
         else
             _logger.LogInformation("System topic access granted to {Username}", ntfyUsername);
     }
