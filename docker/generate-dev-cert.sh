@@ -22,7 +22,7 @@ openssl req -x509 \
   -keyout "$CERT_DIR/$CERT_NAME.key" \
   -out    "$CERT_DIR/$CERT_NAME.crt" \
   -subj   "/CN=barcelo-dev/O=Barcelo IoT Dev" \
-  -addext "subjectAltName=DNS:localhost,DNS:auth-api,DNS:usuarios-api,DNS:reservas-api,DNS:dispositivos-api,DNS:api-gateway,IP:127.0.0.1"
+  -addext "subjectAltName=DNS:localhost,DNS:ntfy,DNS:auth-api,DNS:usuarios-api,DNS:reservas-api,DNS:dispositivos-api,DNS:api-gateway,IP:127.0.0.1"
 
 # Empaquetar como PFX para Kestrel
 openssl pkcs12 -export \

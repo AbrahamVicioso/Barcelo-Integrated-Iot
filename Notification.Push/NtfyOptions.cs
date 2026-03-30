@@ -14,4 +14,7 @@ public class NtfyOptions
 
     /// <summary>Fixed topic for system-wide admin notifications.</summary>
     public string SystemTopic { get; set; } = "barcelo-system";
+
+    /// <summary>Skip TLS certificate validation. Use only in development with self-signed certs.</summary>
+    public bool IgnoreCertificateErrors { get; set; } = false;
 }

@@ -35,11 +35,12 @@ subjectAltName = @alt_names
 
 [alt_names]
 DNS.1 = localhost
-DNS.2 = auth-api
-DNS.3 = usuarios-api
-DNS.4 = reservas-api
-DNS.5 = dispositivos-api
-DNS.6 = api-gateway
+DNS.2 = ntfy
+DNS.3 = auth-api
+DNS.4 = usuarios-api
+DNS.5 = reservas-api
+DNS.6 = dispositivos-api
+DNS.7 = api-gateway
 IP.1  = 127.0.0.1
 EOF
 

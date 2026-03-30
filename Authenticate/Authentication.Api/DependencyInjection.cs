@@ -38,7 +38,15 @@ namespace Authentication.Api
             var ntfyOptions = new NtfyOptions();
             configuration.GetSection("Ntfy").Bind(ntfyOptions);
             services.AddSingleton(ntfyOptions);
-            services.AddHttpClient<NtfyAdminService>();
+            services.AddHttpClient<NtfyAdminService>()
+                .ConfigurePrimaryHttpMessageHandler(() =>
+                {
+                    var handler = new HttpClientHandler();
+                    if (ntfyOptions.IgnoreCertificateErrors)
+                        handler.ServerCertificateCustomValidationCallback =
+                            HttpClientHandler.DangerousAcceptAnyServerCertificateValidator;
+                    return handler;
+                });
             services.AddSingleton<INtfyAdminService, NtfyAdminService>();
 
             return services;

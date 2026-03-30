@@ -49,9 +49,13 @@ services:
     container_name: barcelo-ntfy
     command: serve
     ports:
-      - "8081:80"
+      - "8081:443"
     environment:
-      NTFY_BASE_URL: http://localhost:8081
+      NTFY_BASE_URL: https://localhost:8081
+      NTFY_LISTEN_HTTP: ":80"
+      NTFY_LISTEN_HTTPS: ":443"
+      NTFY_KEY_FILE: /certs/barcelo-dev.key
+      NTFY_CERT_FILE: /certs/barcelo-dev.crt
       NTFY_CACHE_FILE: /var/lib/ntfy/cache.db
       NTFY_AUTH_FILE: /var/lib/ntfy/auth.db
       # Siempre deny-all. Sin credenciales configuradas nadie puede suscribirse.
@@ -60,10 +64,11 @@ services:
       NTFY_BEHIND_PROXY: "false"
     volumes:
       - ntfy-data:/var/lib/ntfy
+      - ./docker/certs:/certs:ro
     networks:
       - barcelo-net
     healthcheck:
-      test: ["CMD-SHELL", "wget -q --tries=1 http://localhost/v1/health -O - | grep -c healthy || exit 1"]
+      test: ["CMD-SHELL", "wget -q --tries=1 --no-check-certificate https://localhost:443/v1/health -O - | grep -c healthy || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -178,7 +183,8 @@ services:
       AuditProducer__BootstrapServers: kafka:29092
       AuditProducer__Topic: audit.events
       AuditProducer__ClientId: authenticate-audit
-      Ntfy__BaseUrl: http://ntfy:80
+      Ntfy__BaseUrl: https://ntfy:443
+      Ntfy__IgnoreCertificateErrors: "true"
     networks:
       - barcelo-net
     depends_on:
@@ -328,10 +334,11 @@ services:
       KafkaConsumer__ReservaCreada__Topic: reservas
       EmailSettings__ConnectionString: ${AZURE_COMMUNICATION_CONNECTION_STRING:?EmailSettings__ConnectionString is required. Set AZURE_COMMUNICATION_CONNECTION_STRING in your .env file}
       EmailSettings__Username: ${AZURE_COMMUNICATION_SENDER_ADDRESS:?EmailSettings__Username is required. Set AZURE_COMMUNICATION_SENDER_ADDRESS in your .env file}
-      Ntfy__BaseUrl: http://ntfy:80
+      Ntfy__BaseUrl: https://ntfy:443
       Ntfy__TopicPrefix: barcelo
       Ntfy__AccessToken: ${NTFY_SERVER_TOKEN:-}
       Ntfy__AdminPassword: ${NTFY_ADMIN_PASSWORD:-}
+      Ntfy__IgnoreCertificateErrors: "true"
       AuthApi__BaseUrl: http://auth-api:5117
     networks:
       - barcelo-net

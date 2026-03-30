@@ -14,12 +14,23 @@ public static class DependencyInjection
         configuration.GetSection("Ntfy").Bind(options);
         services.AddSingleton(options);
 
-        services.AddHttpClient<NtfyPushNotificationService>();
+        services.AddHttpClient<NtfyPushNotificationService>()
+            .ConfigurePrimaryHttpMessageHandler(() => BuildHandler(options));
         services.AddSingleton<IPushNotificationService, NtfyPushNotificationService>();
 
-        services.AddHttpClient<NtfyAdminService>();
-        services.AddSingleton<Notification.Domain.Interfaces.INtfyAdminService, NtfyAdminService>();
+        services.AddHttpClient<NtfyAdminService>()
+            .ConfigurePrimaryHttpMessageHandler(() => BuildHandler(options));
+        services.AddSingleton<INtfyAdminService, NtfyAdminService>();
 
         return services;
+    }
+
+    private static HttpClientHandler BuildHandler(NtfyOptions options)
+    {
+        var handler = new HttpClientHandler();
+        if (options.IgnoreCertificateErrors)
+            handler.ServerCertificateCustomValidationCallback =
+                HttpClientHandler.DangerousAcceptAnyServerCertificateValidator;
+        return handler;
     }
 }

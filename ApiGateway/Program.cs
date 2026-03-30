@@ -39,6 +39,8 @@ namespace ApiGateway
 
             app.UseHttpsRedirection();
 
+            app.UseWebSockets();
+
             app.UseAuthorization();
 
             app.UseCors();

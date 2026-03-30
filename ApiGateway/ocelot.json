@@ -87,10 +87,10 @@
         "GET"
       ]
     },
-    //ROUTE FOR NTFY 
+    //ROUTE FOR NTFY
     {
       "DownstreamPathTemplate": "/{everything}",
-      "DownstreamScheme": "http",
+      "DownstreamScheme": "https",
       "DownstreamHostAndPorts": [
         {
           "Host": "localhost",
@@ -99,8 +99,12 @@
       ],
       "UpstreamPathTemplate": "/ntfy/{everything}",
       "UpstreamHttpMethod": [
-        "GET"
-      ]
+        "GET",
+        "POST",
+        "PUT",
+        "DELETE"
+      ],
+      "DangerousAcceptAnyServerCertificateValidator": true
     }
   ],
   "IgnoreRoutes": [
