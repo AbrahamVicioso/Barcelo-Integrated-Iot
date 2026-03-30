@@ -54,9 +54,8 @@ services:
       NTFY_BASE_URL: http://localhost:8081
       NTFY_CACHE_FILE: /var/lib/ntfy/cache.db
       NTFY_AUTH_FILE: /var/lib/ntfy/auth.db
-      # DEV: read-write (sin variables en .env, abierto para desarrollo local)
-      # PROD: configura NTFY_ADMIN_PASSWORD y NTFY_SERVER_TOKEN en .env → cambia a deny-all
-      NTFY_AUTH_DEFAULT_ACCESS: ${NTFY_AUTH_DEFAULT_ACCESS:-read-write}
+      # Siempre deny-all. Sin credenciales configuradas nadie puede suscribirse.
+      NTFY_AUTH_DEFAULT_ACCESS: ${NTFY_AUTH_DEFAULT_ACCESS:-deny-all}
       NTFY_ATTACHMENT_CACHE_DIR: /var/lib/ntfy/attachments
       NTFY_BEHIND_PROXY: "false"
     volumes:
@@ -179,6 +178,7 @@ services:
       AuditProducer__BootstrapServers: kafka:29092
       AuditProducer__Topic: audit.events
       AuditProducer__ClientId: authenticate-audit
+      Ntfy__BaseUrl: http://ntfy:80
     networks:
       - barcelo-net
     depends_on:
@@ -332,6 +332,7 @@ services:
       Ntfy__TopicPrefix: barcelo
       Ntfy__AccessToken: ${NTFY_SERVER_TOKEN:-}
       Ntfy__AdminPassword: ${NTFY_ADMIN_PASSWORD:-}
+      AuthApi__BaseUrl: http://auth-api:5117
     networks:
       - barcelo-net
     depends_on:

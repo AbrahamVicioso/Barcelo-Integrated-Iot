@@ -33,6 +33,13 @@ namespace Notification.Worker
                 // Add Push Notification Service (ntfy)
                 services.AddPushNotificationService(context.Configuration);
 
+                // Register AuthApiClient (stores ntfy token in Authenticate.API)
+                var authApiBaseUrl = context.Configuration["AuthApi:BaseUrl"] ?? "http://localhost:5117";
+                services.AddHttpClient<AuthApiClient>(client =>
+                {
+                    client.BaseAddress = new Uri(authApiBaseUrl);
+                });
+
                 // Configure UserCreatedConsumerConfig
                 var userCreatedConsumerConfig = new UserCreatedConsumerConfig();
                 context.Configuration.GetSection("KafkaConsumer:UserCreated").Bind(userCreatedConsumerConfig);

@@ -21,6 +21,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\Grpc.Contracts\Grpc.Contracts.csproj" />
     <ProjectReference Include="..\..\Notification.Domain\Notification.Domain.csproj" />
+    <ProjectReference Include="..\..\Notification.Push\Notification.Push.csproj" />
   </ItemGroup>
 
 </Project>

@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Notification.Domain.Interfaces;
+using Notification.Push;
 
 namespace Authentication.Api
 {
@@ -32,6 +33,13 @@ namespace Authentication.Api
             configuration.GetSection("AuditProducer").Bind(auditConfig);
             services.AddSingleton(auditConfig);
             services.AddSingleton<IAuditProducer, AuditKafkaProducer>();
+
+            // Register ntfy admin service (used by NotificationsController to grant system topic access)
+            var ntfyOptions = new NtfyOptions();
+            configuration.GetSection("Ntfy").Bind(ntfyOptions);
+            services.AddSingleton(ntfyOptions);
+            services.AddHttpClient<NtfyAdminService>();
+            services.AddSingleton<INtfyAdminService, NtfyAdminService>();
 
             return services;
         }

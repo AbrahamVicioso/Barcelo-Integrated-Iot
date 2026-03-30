@@ -17,6 +17,7 @@ namespace Notification.Kafka.Services
         private readonly IEmailService _emailService;
         private readonly IPushNotificationService _pushService;
         private readonly INtfyAdminService _ntfyAdmin;
+        private readonly AuthApiClient _authApiClient;
         private readonly UserCreatedConsumerConfig _config;
         private readonly ILogger<UserCreatedEventConsumer> _logger;
         private CancellationTokenSource? _cancellationTokenSource;
@@ -30,12 +31,14 @@ namespace Notification.Kafka.Services
             IEmailService emailService,
             IPushNotificationService pushService,
             INtfyAdminService ntfyAdmin,
+            AuthApiClient authApiClient,
             ILogger<UserCreatedEventConsumer> logger)
         {
             _config = config;
             _emailService = emailService;
             _pushService = pushService;
             _ntfyAdmin = ntfyAdmin;
+            _authApiClient = authApiClient;
             _logger = logger;
 
             var consumerConfig = new ConsumerConfig
@@ -186,11 +189,16 @@ namespace Notification.Kafka.Services
         {
             _logger.LogInformation("Processing UserCreatedEvent for user: {Email}", userEvent.Email);
 
-            // Create ntfy account for the user (read-only on their personal topic)
-            var ntfyPassword = await _ntfyAdmin.CreateUserAccountAsync(userEvent.Email, cancellationToken);
-            var ntfyUsername = NtfyTopicHelper.GetUserTopic(userEvent.Email);
+            // 1. Create ntfy account → get access token (password is discarded internally)
+            var ntfyToken = await _ntfyAdmin.CreateUserAccountAsync(userEvent.Email, cancellationToken);
+            var ntfyTopic = NtfyTopicHelper.GetUserTopic(userEvent.Email);
 
-            var emailBody = GenerateUserCreatedEmailBody(userEvent, ntfyUsername, ntfyPassword);
+            // 2. Store the token in Authenticate.API so users can retrieve it via JWT-auth endpoint
+            if (ntfyToken != null)
+                await _authApiClient.StoreNtfyTokenAsync(userEvent.Email, ntfyToken, cancellationToken);
+
+            // 3. Send welcome email (no ntfy credentials — user fetches them via the API)
+            var emailBody = GenerateUserCreatedEmailBody(userEvent);
 
             var emailNotification = new EmailNotification
             {
@@ -207,14 +215,14 @@ namespace Notification.Kafka.Services
             else
                 _logger.LogError("Failed to send user created email to {Email}", userEvent.Email);
 
-            // Push notification to the just-created account (if ntfy account was created)
-            if (ntfyPassword != null)
+            // 4. Welcome push notification (the token is already stored, so publishing works)
+            if (ntfyToken != null)
             {
                 var pushNotification = new PushNotification
                 {
-                    Topic = ntfyUsername,
+                    Topic = ntfyTopic,
                     Title = "Bienvenido a Barcelo IoT",
-                    Message = $"Hola {userEvent.UserName}, tu cuenta ha sido creada. Revisa tu email para configurar las notificaciones push.",
+                    Message = $"Hola {userEvent.UserName}, tu cuenta ha sido creada exitosamente.",
                     Priority = PushPriority.Default,
                     Tags = ["wave", "hotel"]
                 };
@@ -223,19 +231,8 @@ namespace Notification.Kafka.Services
             }
         }
 
-        private string GenerateUserCreatedEmailBody(UserCreatedEvent userEvent, string ntfyUsername, string? ntfyPassword)
+        private string GenerateUserCreatedEmailBody(UserCreatedEvent userEvent)
         {
-            var ntfySection = ntfyPassword != null
-                ? $@"
-            <div class='credentials' style='margin-top:20px;'>
-                <p><strong>Notificaciones Push (app ntfy):</strong></p>
-                <p>Descarga la app <strong>ntfy</strong> (Android / iOS) y suscríbete con:</p>
-                <p>Usuario: <span class='password'>{ntfyUsername}</span></p>
-                <p>Contraseña: <span class='password'>{ntfyPassword}</span></p>
-                <p style='font-size:12px;color:#888;'>Estas credenciales son de solo lectura y únicamente para recibir tus notificaciones personales.</p>
-            </div>"
-                : "<p style='color:#888;font-size:12px;'>Las notificaciones push no están disponibles en este momento.</p>";
-
             return $@"
 <!DOCTYPE html>
 <html>
@@ -264,7 +261,7 @@ namespace Notification.Kafka.Services
                 <p>Email: {userEvent.Email}</p>
                 <p>Contraseña: <span class='password'>{userEvent.GeneratedPassword}</span></p>
             </div>
-            {ntfySection}
+            <p>Para activar las notificaciones push, inicia sesión en la app y accede a <strong>Configuración → Notificaciones</strong>. Tu token de acceso a ntfy se genera automáticamente.</p>
             <p>Por seguridad, te recomendamos cambiar tu contraseña después de iniciar sesión por primera vez.</p>
             <p>Si tienes alguna pregunta, no dudes en contactar a nuestro equipo de soporte.</p>
         </div>

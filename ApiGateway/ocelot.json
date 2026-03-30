@@ -11,7 +11,12 @@
         }
       ],
       "UpstreamPathTemplate": "/api/auth/{everything}",
-      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE" ]
+      "UpstreamHttpMethod": [
+        "GET",
+        "POST",
+        "PUT",
+        "DELETE"
+      ]
     },
     // Route for Users Service
     {
@@ -24,7 +29,12 @@
         }
       ],
       "UpstreamPathTemplate": "/api/user/{everything}",
-      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE" ]
+      "UpstreamHttpMethod": [
+        "GET",
+        "POST",
+        "PUT",
+        "DELETE"
+      ]
     },
     // Route for Reservas Service
     {
@@ -37,7 +47,12 @@
         }
       ],
       "UpstreamPathTemplate": "/api/reserva/{everything}",
-      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE" ]
+      "UpstreamHttpMethod": [
+        "GET",
+        "POST",
+        "PUT",
+        "DELETE"
+      ]
     },
     // Route for Devices Service
     {
@@ -50,7 +65,42 @@
         }
       ],
       "UpstreamPathTemplate": "/api/device/{everything}",
-      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE" ]
+      "UpstreamHttpMethod": [
+        "GET",
+        "POST",
+        "PUT",
+        "DELETE"
+      ]
+    },
+    // Route for push notifications config (JWT protected, served by Auth Service)
+    {
+      "DownstreamPathTemplate": "/push-config",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 5117
+        }
+      ],
+      "UpstreamPathTemplate": "/api/notifications/push-config",
+      "UpstreamHttpMethod": [
+        "GET"
+      ]
+    },
+    //ROUTE FOR NTFY 
+    {
+      "DownstreamPathTemplate": "/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 8081
+        }
+      ],
+      "UpstreamPathTemplate": "/ntfy/{everything}",
+      "UpstreamHttpMethod": [
+        "GET"
+      ]
     }
   ],
   "IgnoreRoutes": [

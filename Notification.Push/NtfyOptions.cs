@@ -11,4 +11,7 @@ public class NtfyOptions
     public string? AdminPassword { get; set; }
 
     public string TopicPrefix { get; set; } = "barcelo";
+
+    /// <summary>Fixed topic for system-wide admin notifications.</summary>
+    public string SystemTopic { get; set; } = "barcelo-system";
 }
