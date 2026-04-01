@@ -185,6 +185,7 @@ services:
       AuditProducer__Topic: audit.events
       AuditProducer__ClientId: authenticate-audit
       Ntfy__BaseUrl: https://ntfy:443
+      Ntfy__PublicBaseUrl: http://localhost:5019/ntfy
       Ntfy__IgnoreCertificateErrors: "true"
     networks:
       - barcelo-net
@@ -208,7 +209,7 @@ services:
       - "5284:5284"
       - "5285:5285"
     environment:
-      <<: [*dotnet-env, *db-conn]
+      <<: [*dotnet-env, *db-conn, *jwt]
       AuditProducer__BootstrapServers: kafka:29092
       AuditProducer__Topic: audit.events
       AuditProducer__ClientId: usuarios-audit
@@ -271,7 +272,7 @@ services:
     ports:
       - "5185:5185"
     environment:
-      <<: [*dotnet-env, *db-conn]
+      <<: [*dotnet-env, *db-conn, *jwt]
       ASPNETCORE_URLS: "http://+:5185"
       Thingsboard__BaseUrl: "http://thingsboard-ce:8080"
       AuditProducer__BootstrapServers: kafka:29092

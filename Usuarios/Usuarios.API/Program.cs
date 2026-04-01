@@ -1,9 +1,13 @@
 using FluentValidation;
 using MediatR;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Usuarios.API.Middleware;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using Notification.Domain.Interfaces;
 using Scalar.AspNetCore;
+using System.Security.Claims;
+using System.Text;
 using Usuarios.Application.Behaviors;
 using Usuarios.Application.Mappings;
 using Usuarios.API.GrpcServices;
@@ -69,6 +73,28 @@ namespace Usuarios.API
             builder.Services.AddScoped<IPersonalRepository, PersonalRepository>();
             builder.Services.AddScoped<IPermisosPersonalRepository, PermisosPersonalRepository>();
 
+            builder.Services.AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            }).AddJwtBearer(options =>
+            {
+                options.MapInboundClaims = false;
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuer = true,
+                    ValidateAudience = true,
+                    ValidateLifetime = true,
+                    ValidateIssuerSigningKey = true,
+                    ValidIssuer = builder.Configuration["Jwt:Issuer"],
+                    ValidAudience = builder.Configuration["Jwt:Audience"],
+                    IssuerSigningKey = new SymmetricSecurityKey(
+                        Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!)),
+                    NameClaimType = ClaimTypes.NameIdentifier
+                };
+            });
+            builder.Services.AddAuthorization();
+
             // Add Controllers + gRPC
             builder.Services.AddControllers();
             builder.Services.AddGrpc();
@@ -108,6 +134,7 @@ namespace Usuarios.API
 
             app.UseCors("AllowAll");
 
+            app.UseAuthentication();
             app.UseAuthorization();
 
             // REST endpoints

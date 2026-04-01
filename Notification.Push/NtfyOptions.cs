@@ -17,4 +17,11 @@ public class NtfyOptions
 
     /// <summary>Skip TLS certificate validation. Use only in development with self-signed certs.</summary>
     public bool IgnoreCertificateErrors { get; set; } = false;
+
+    /// <summary>
+    /// Publicly accessible ntfy URL returned to clients in push-config.
+    /// Should point to the API Gateway ntfy route (e.g. http://localhost:5019/ntfy).
+    /// Falls back to BaseUrl if not set.
+    /// </summary>
+    public string? PublicBaseUrl { get; set; }
 }

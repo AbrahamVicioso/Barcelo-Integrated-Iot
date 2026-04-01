@@ -77,7 +77,7 @@ public class NotificationsController : ControllerBase
         if (ntfyToken is null)
             return TypedResults.NotFound();
 
-        var ntfyBaseUrl = _ntfyOptions.BaseUrl;
+        var ntfyBaseUrl = _ntfyOptions.PublicBaseUrl ?? _ntfyOptions.BaseUrl;
         var topic = NtfyTopicHelper.GetUserTopic(user.Email!);
 
         // For admins: grant access to the system topic (idempotent) and include it in the response

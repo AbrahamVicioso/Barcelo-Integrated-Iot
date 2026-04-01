@@ -2,7 +2,11 @@ using Dispositivos.Application;
 using Dispositivos.Infrastructure;
 using Dispositivos.Persistence;
 using Dispositivos.Persistence.Data;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
+using System.Security.Claims;
+using System.Text;
 
 namespace Dispositivos.API
 {
@@ -26,6 +30,28 @@ namespace Dispositivos.API
 
             // Add Thingsboard Infrastructure Layer
             builder.Services.AddThingsboardInfrastructure(builder.Configuration);
+
+            builder.Services.AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            }).AddJwtBearer(options =>
+            {
+                options.MapInboundClaims = false;
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuer = true,
+                    ValidateAudience = true,
+                    ValidateLifetime = true,
+                    ValidateIssuerSigningKey = true,
+                    ValidIssuer = builder.Configuration["Jwt:Issuer"],
+                    ValidAudience = builder.Configuration["Jwt:Audience"],
+                    IssuerSigningKey = new SymmetricSecurityKey(
+                        Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!)),
+                    NameClaimType = ClaimTypes.NameIdentifier
+                };
+            });
+            builder.Services.AddAuthorization();
 
             builder.Services.AddCors(options =>
             {
@@ -53,6 +79,7 @@ namespace Dispositivos.API
             }
 
             app.UseCors("AllowAll");
+            app.UseAuthentication();
             app.UseAuthorization();
             app.MapControllers();
             app.Run();

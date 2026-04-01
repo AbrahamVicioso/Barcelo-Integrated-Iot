@@ -21,11 +21,18 @@ namespace ApiGateway
 
             builder.Services.AddOcelot();
 
+            var allowedOrigins = builder.Configuration
+                .GetSection("AllowedOrigins").Get<string[]>()
+                ?? ["http://localhost:3000"];
+
             builder.Services.AddCors(options =>
             {
-                options.AddDefaultPolicy(builder =>
+                options.AddDefaultPolicy(policy =>
                 {
-                    builder.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader();
+                    policy.WithOrigins(allowedOrigins)
+                          .AllowAnyMethod()
+                          .AllowAnyHeader()
+                          .AllowCredentials();
                 });
             });
 
