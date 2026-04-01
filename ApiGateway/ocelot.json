@@ -87,24 +87,6 @@
         "GET"
       ]
     },
-    //ROUTE FOR NTFY
-    {
-      "DownstreamPathTemplate": "/{everything}",
-      "DownstreamScheme": "http",
-      "DownstreamHostAndPorts": [
-        {
-          "Host": "localhost",
-          "Port": 8082
-        }
-      ],
-      "UpstreamPathTemplate": "/ntfy/{everything}",
-      "UpstreamHttpMethod": [
-        "GET",
-        "POST",
-        "PUT",
-        "DELETE"
-      ]
-    }
   ],
   "IgnoreRoutes": [
     "/scalar/{everything}"

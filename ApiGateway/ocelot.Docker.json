@@ -82,25 +82,9 @@
         "GET"
       ]
     },
-    {
-      "DownstreamPathTemplate": "/{everything}",
-      "DownstreamScheme": "http",
-      "DownstreamHostAndPorts": [
-        {
-          "Host": "ntfy",
-          "Port": 80
-        }
-      ],
-      "UpstreamPathTemplate": "/ntfy/{everything}",
-      "UpstreamHttpMethod": [
-        "GET",
-        "POST",
-        "PUT",
-        "DELETE"
-      ]
-    }
   ],
   "GlobalConfiguration": {
-    "BaseUrl": "http://api-gateway:5019"
+    "BaseUrl": "https://localhost:5020"
   }
+
 }

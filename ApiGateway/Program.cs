@@ -34,6 +34,7 @@ namespace ApiGateway
                           .AllowAnyHeader()
                           .AllowCredentials();
                 });
+
             });
 
             var app = builder.Build();
