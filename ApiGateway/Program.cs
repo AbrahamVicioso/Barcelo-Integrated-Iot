@@ -37,8 +37,6 @@ namespace ApiGateway
                 app.MapOpenApi();
             }
 
-            app.UseHttpsRedirection();
-
             app.UseWebSockets();
 
             app.UseAuthorization();

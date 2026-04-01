@@ -50,6 +50,7 @@ services:
     command: serve
     ports:
       - "8081:443"
+      - "8082:80"
     environment:
       NTFY_BASE_URL: https://localhost:8081
       NTFY_LISTEN_HTTP: ":80"
