@@ -18,6 +18,22 @@ public class UpdateHuespedeDtoValidator : AbstractValidator<UpdateHuespedeDto>
             .NotEmpty().WithMessage("El nombre completo es requerido")
             .MaximumLength(200).WithMessage("El nombre completo no puede exceder 200 caracteres");
 
+        RuleFor(x => x.TipoDocumento)
+            .NotEmpty().WithMessage("El tipo de documento es requerido")
+            .MaximumLength(50).WithMessage("El tipo de documento no puede exceder 50 caracteres");
+
+        RuleFor(x => x.NumeroDocumento)
+            .NotEmpty().WithMessage("El número de documento es requerido")
+            .MaximumLength(100).WithMessage("El número de documento no puede exceder 100 caracteres");
+
+        RuleFor(x => x.Nacionalidad)
+            .NotEmpty().WithMessage("La nacionalidad es requerida")
+            .MaximumLength(100).WithMessage("La nacionalidad no puede exceder 100 caracteres");
+
+        RuleFor(x => x.FechaNacimiento)
+            .NotEmpty().WithMessage("La fecha de nacimiento es requerida")
+            .LessThan(DateTime.Today).WithMessage("La fecha de nacimiento debe ser anterior a hoy");
+
         RuleFor(x => x.ContactoEmergencia)
             .MaximumLength(200).WithMessage("El contacto de emergencia no puede exceder 200 caracteres")
             .When(x => !string.IsNullOrEmpty(x.ContactoEmergencia));

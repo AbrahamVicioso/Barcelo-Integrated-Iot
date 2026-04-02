@@ -44,6 +44,10 @@ public class UpdateHuespedeCommandHandler : IRequestHandler<UpdateHuespedeComman
         }
 
         huespede.NombreCompleto = request.Huespede.NombreCompleto;
+        huespede.TipoDocumento = request.Huespede.TipoDocumento;
+        huespede.NumeroDocumento = request.Huespede.NumeroDocumento;
+        huespede.Nacionalidad = request.Huespede.Nacionalidad;
+        huespede.FechaNacimiento = request.Huespede.FechaNacimiento;
         huespede.ContactoEmergencia = request.Huespede.ContactoEmergencia;
         huespede.TelefonoEmergencia = request.Huespede.TelefonoEmergencia;
         huespede.EsVip = request.Huespede.EsVip;
