@@ -4,6 +4,7 @@ public class ReservaDto
 {
     public int ReservaId { get; set; }
     public int HuespedId { get; set; }
+    public List<ReservaHuespedItemDto> Huespedes { get; set; } = new();
     public int? HabitacionId { get; set; }
     public string NumeroReserva { get; set; } = string.Empty;
     public DateTime FechaCheckIn { get; set; }

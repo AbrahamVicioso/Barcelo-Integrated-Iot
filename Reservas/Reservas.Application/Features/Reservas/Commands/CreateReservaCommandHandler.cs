@@ -36,13 +36,53 @@ public class CreateReservaCommandHandler : IRequestHandler<CreateReservaCommand,
     {
         try
         {
+            // Build guest list (always include the titular guest)
+            var huespedes = request.Huespedes ?? [];
+            var allHuespedIds = huespedes.Select(h => h.HuespedId).ToHashSet();
+            int totalHuespedes = allHuespedIds.Count;
+
+            string habitacionNumero = "Por asignar";
+            string hotelNombre = "Hotel Barcelo";
+
+            if (request.HabitacionId.HasValue)
+            {
+                var habitacion = await _unitOfWork.Habitaciones.GetById(request.HabitacionId.Value);
+                if (habitacion == null)
+                    return Result<ReservaDto>.Failure($"Habitación con ID {request.HabitacionId.Value} no encontrada.");
+
+                if (habitacion.CapacidadMaxima < totalHuespedes)
+                    return Result<ReservaDto>.Failure(
+                        $"La habitación {habitacion.NumeroHabitacion} tiene capacidad máxima de {habitacion.CapacidadMaxima} persona(s), " +
+                        $"pero la reserva incluye {totalHuespedes} huésped(es).");
+
+                habitacionNumero = $"Habitación {habitacion.NumeroHabitacion}";
+                hotelNombre = habitacion.Hotel?.Nombre ?? "Hotel Barcelo";
+            }
+
+            var reservaHuespedes = allHuespedIds.Select(id =>
+            {
+                var permisos = huespedes.FirstOrDefault(h => h.HuespedId == id);
+                return new ReservaHuesped
+                {
+                    HuespedId = id,
+                    PuedeCrearActividadesRecreativas = permisos?.PuedeCrearActividadesRecreativas ?? false,
+                    PuedeDesbloquearCerradura = permisos?.PuedeDesbloquearCerradura ?? false,
+                    FechaAgregado = DateTime.UtcNow
+                };
+            }).ToList();
+
             var reserva = new Reserva {
                 FechaCheckIn = request.FechaCheckIn,
                 FechaCheckOut = request.FechaCheckOut,
                 HuespedId = request.HuespedId,
                 HabitacionId = request.HabitacionId,
+                NumeroHuespedes = request.NumeroHuespedes,
+                NumeroNinos = request.NumeroNinos,
                 MontoTotal = request.MontoTotal,
-                MontoPagado = request.MontoPagado
+                MontoPagado = request.MontoPagado,
+                CreadoPor = request.CreadoPor,
+                Observaciones = request.Observaciones,
+                ReservaHuespedes = reservaHuespedes
             };
 
             // Generate unique reservation number
@@ -54,19 +94,6 @@ public class CreateReservaCommandHandler : IRequestHandler<CreateReservaCommand,
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
             var email = await _huespedRepository.GetHuespedIdByEmail(reserva.HuespedId);
-
-            string habitacionNumero = "Por asignar";
-            string hotelNombre = "Hotel Barcelo";
-
-            if (reserva.HabitacionId.HasValue)
-            {
-                var habitacion = await _unitOfWork.Habitaciones.GetById(reserva.HabitacionId.Value);
-                if (habitacion != null)
-                {
-                    habitacionNumero = $"Habitación {habitacion.NumeroHabitacion}";
-                    hotelNombre = habitacion.Hotel?.Nombre ?? "Hotel Barcelo";
-                }
-            }
 
             // Publish to Kafka for notification
             var reservaCreadaEvent = new ReservaCreadaEvent

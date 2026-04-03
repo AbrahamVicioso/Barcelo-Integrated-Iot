@@ -1,12 +1,14 @@
 using MediatR;
 using Reservas.Application.Common;
 using Reservas.Application.DTOs;
+using System.Collections.Generic;
 
 namespace Reservas.Application.Features.Reservas.Commands;
 
 public class CreateReservaCommand : IRequest<Result<ReservaDto>>
 {
     public int HuespedId { get; set; }
+    public List<ReservaHuespedItemDto>? Huespedes { get; set; }
     public int? HabitacionId { get; set; }
     public DateTime FechaCheckIn { get; set; }
     public DateTime FechaCheckOut { get; set; }

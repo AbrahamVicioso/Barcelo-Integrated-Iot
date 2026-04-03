@@ -17,6 +17,7 @@ public class ReservaRepository : GenericRepository<Reserva>, IReservaRepository
     {
         return await _dbSet
             .Include(r => r.EstadoReserva)
+            .Include(r => r.ReservaHuespedes)
             .FirstOrDefaultAsync(r => r.ReservaId == id, cancellationToken);
     }
 
@@ -24,6 +25,7 @@ public class ReservaRepository : GenericRepository<Reserva>, IReservaRepository
     {
         return await _dbSet
             .Include(r => r.EstadoReserva)
+            .Include(r => r.ReservaHuespedes)
             .ToListAsync(cancellationToken);
     }
 
@@ -31,7 +33,8 @@ public class ReservaRepository : GenericRepository<Reserva>, IReservaRepository
     {
         return await _dbSet
             .Include(r => r.EstadoReserva)
-            .Where(r => r.HuespedId == huespedId)
+            .Include(r => r.ReservaHuespedes)
+            .Where(r => r.HuespedId == huespedId || r.ReservaHuespedes.Any(rh => rh.HuespedId == huespedId))
             .OrderByDescending(r => r.FechaCreacion)
             .ToListAsync(cancellationToken);
     }
@@ -40,6 +43,7 @@ public class ReservaRepository : GenericRepository<Reserva>, IReservaRepository
     {
         return await _dbSet
             .Include(r => r.EstadoReserva)
+            .Include(r => r.ReservaHuespedes)
             .FirstOrDefaultAsync(r => r.NumeroReserva == numeroReserva, cancellationToken);
     }
 

@@ -7,6 +7,8 @@ namespace Reservas.Domain.Entites;
 
 public partial class Reserva
 {
+    public virtual ICollection<ReservaHuesped> ReservaHuespedes { get; set; } = new List<ReservaHuesped>();
+
     public int ReservaId { get; set; }
 
     public int HuespedId { get; set; }
