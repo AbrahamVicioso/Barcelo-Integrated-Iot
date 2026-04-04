@@ -1,15 +1,13 @@
-﻿using Authentication.Api.Services;
+using Authentication.Api.Services;
 using Authentication.Api.Utils.Commons;
 using Authentication.Domain.Entities;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.Data;
-using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.AspNetCore.WebUtilities;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Notification.Domain.Events;
 using System.ComponentModel.DataAnnotations;
 using System.Text;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Model;
 
 namespace Authentication.Api.UseCases.Commands.RegisterUser
 {
@@ -18,7 +16,9 @@ namespace Authentication.Api.UseCases.Commands.RegisterUser
         public static async Task<Results<Ok, ValidationProblem>> Handle(
             RegisterRequest registerRequest,
             UserManager<User> userManager,
-            IUserStore<User> userStore
+            IUserStore<User> userStore,
+            IKafkaProducerService kafkaProducerService,
+            string confirmEmailBaseUrl
             )
         {
             EmailAddressAttribute _emailAddressAttribute = new EmailAddressAttribute();
@@ -30,7 +30,7 @@ namespace Authentication.Api.UseCases.Commands.RegisterUser
 
             var user = new User();
 
-            await userManager.SetUserNameAsync(user,registerRequest.Email);
+            await userManager.SetUserNameAsync(user, registerRequest.Email);
             await userManager.SetEmailAsync(user, registerRequest.Email);
 
             var result = await userManager.CreateAsync(user, registerRequest.Password);
@@ -39,8 +39,18 @@ namespace Authentication.Api.UseCases.Commands.RegisterUser
             {
                 return result.ToValidationProblem();
             }
-            
-            //AQUI VA EL SERVICIO DE CONFIMATION EMAIL
+
+            var token = await userManager.GenerateEmailConfirmationTokenAsync(user);
+            var encodedToken = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));
+            var confirmationUrl = $"{confirmEmailBaseUrl}/ConfirmEmail?userId={user.Id}&token={encodedToken}";
+
+            await kafkaProducerService.PublishEmailConfirmationAsync(new EmailConfirmationEvent
+            {
+                UserId = user.Id,
+                Email = user.Email!,
+                ConfirmationUrl = confirmationUrl
+            });
+
             return TypedResults.Ok();
         }
     }

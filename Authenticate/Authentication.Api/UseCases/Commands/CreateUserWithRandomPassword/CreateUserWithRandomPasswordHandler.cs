@@ -5,7 +5,10 @@ using Authentication.Api.Utils.Commons;
 using Authentication.Domain.Entities;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.WebUtilities;
+using Notification.Domain.Events;
 using System.ComponentModel.DataAnnotations;
+using System.Text;
 
 namespace Authentication.Api.UseCases.Commands.CreateUserWithRandomPassword
 {
@@ -14,7 +17,8 @@ namespace Authentication.Api.UseCases.Commands.CreateUserWithRandomPassword
         public static async Task<Results<Ok<CreateUserWithRandomPasswordResponse>, ValidationProblem>> Handle(
             EmailRequest request,
             UserManager<User> userManager,
-            IKafkaProducerService kafkaProducerService
+            IKafkaProducerService kafkaProducerService,
+            string confirmEmailBaseUrl
             )
         {
             EmailAddressAttribute _emailAddressAttribute = new EmailAddressAttribute();
@@ -58,8 +62,8 @@ namespace Authentication.Api.UseCases.Commands.CreateUserWithRandomPassword
                 return result.ToValidationProblem();
             }
 
-            // Publish UserCreatedEvent to Kafka for email notification
-            var userCreatedEvent = new Notification.Domain.Events.UserCreatedEvent
+            // Publish UserCreatedEvent to Kafka for welcome email + ntfy setup
+            var userCreatedEvent = new UserCreatedEvent
             {
                 Id = Guid.Parse(user.Id),
                 Email = request.Email,
@@ -69,6 +73,18 @@ namespace Authentication.Api.UseCases.Commands.CreateUserWithRandomPassword
             };
 
             await kafkaProducerService.PublishUserCreatedAsync(userCreatedEvent);
+
+            // Publish EmailConfirmationEvent so the user must confirm their email
+            var token = await userManager.GenerateEmailConfirmationTokenAsync(user);
+            var encodedToken = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));
+            var confirmationUrl = $"{confirmEmailBaseUrl}/ConfirmEmail?userId={user.Id}&token={encodedToken}";
+
+            await kafkaProducerService.PublishEmailConfirmationAsync(new EmailConfirmationEvent
+            {
+                UserId = user.Id,
+                Email = user.Email!,
+                ConfirmationUrl = confirmationUrl
+            });
 
             var responseSuccess = new CreateUserWithRandomPasswordResponse
             {

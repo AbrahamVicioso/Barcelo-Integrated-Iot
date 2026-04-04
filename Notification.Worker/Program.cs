@@ -50,13 +50,20 @@ namespace Notification.Worker
                 context.Configuration.GetSection("KafkaConsumer:ReservaCreada").Bind(reservaCreadaConsumerConfig);
                 services.AddSingleton(reservaCreadaConsumerConfig);
 
+                // Configure EmailConfirmationConsumerConfig
+                var emailConfirmationConsumerConfig = new EmailConfirmationConsumerConfig();
+                context.Configuration.GetSection("KafkaConsumer:EmailConfirmation").Bind(emailConfirmationConsumerConfig);
+                services.AddSingleton(emailConfirmationConsumerConfig);
+
                 // Add Kafka Consumers as separate instances
                 services.AddSingleton<UserCreatedEventConsumer>();
                 services.AddSingleton<ReservaCreadaEventConsumer>();
+                services.AddSingleton<EmailConfirmationEventConsumer>();
 
                 // Add Background Services for Kafka Consumers
                 services.AddHostedService<UserCreatedNotificationWorker>();
                 services.AddHostedService<ReservaCreadaNotificationWorker>();
+                services.AddHostedService<EmailConfirmationNotificationWorker>();
             });
 
             IHost host = builder.Build();
@@ -130,6 +137,41 @@ namespace Notification.Worker
         public override async Task StopAsync(CancellationToken cancellationToken)
         {
             _logger.LogInformation("Stopping Reserva Creada Notification Worker...");
+
+            await _kafkaConsumer.StopAsync(cancellationToken);
+
+            await base.StopAsync(cancellationToken);
+        }
+    }
+
+    public class EmailConfirmationNotificationWorker : BackgroundService
+    {
+        private readonly EmailConfirmationEventConsumer _kafkaConsumer;
+        private readonly ILogger<EmailConfirmationNotificationWorker> _logger;
+
+        public EmailConfirmationNotificationWorker(
+            EmailConfirmationEventConsumer kafkaConsumer,
+            ILogger<EmailConfirmationNotificationWorker> logger)
+        {
+            _kafkaConsumer = kafkaConsumer;
+            _logger = logger;
+        }
+
+        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+        {
+            _logger.LogInformation("Starting Email Confirmation Notification Worker...");
+
+            await _kafkaConsumer.StartAsync(stoppingToken);
+
+            while (!stoppingToken.IsCancellationRequested)
+            {
+                await Task.Delay(Timeout.Infinite, stoppingToken);
+            }
+        }
+
+        public override async Task StopAsync(CancellationToken cancellationToken)
+        {
+            _logger.LogInformation("Stopping Email Confirmation Notification Worker...");
 
             await _kafkaConsumer.StopAsync(cancellationToken);
 

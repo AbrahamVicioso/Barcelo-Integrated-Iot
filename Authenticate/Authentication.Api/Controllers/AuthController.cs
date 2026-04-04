@@ -11,8 +11,10 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.WebUtilities;
 using Notification.Domain.Events;
 using Notification.Domain.Interfaces;
+using System.Text;
 
 namespace Authentication.Api.Controllers
 {
@@ -26,6 +28,7 @@ namespace Authentication.Api.Controllers
         private readonly IAuditProducer auditProducer;
         private readonly SignInManager<User> signInManager;
         private readonly IJwtGenerator jwtGenerator;
+        private readonly IConfiguration configuration;
 
         public AuthController(
             UserManager<User> userManager,
@@ -33,7 +36,8 @@ namespace Authentication.Api.Controllers
             IKafkaProducerService kafkaProducerService,
             IAuditProducer auditProducer,
             SignInManager<User> signInManager,
-            IJwtGenerator jwtGenerator)
+            IJwtGenerator jwtGenerator,
+            IConfiguration configuration)
         {
             this.userManager = userManager;
             this.userStore = userStore;
@@ -41,6 +45,7 @@ namespace Authentication.Api.Controllers
             this.auditProducer = auditProducer;
             this.signInManager = signInManager;
             this.jwtGenerator = jwtGenerator;
+            this.configuration = configuration;
         }
 
         [HttpPost]
@@ -68,7 +73,8 @@ namespace Authentication.Api.Controllers
         [HttpPost]
         public async Task<Results<Ok, ValidationProblem>> Register(RegisterRequest registerRequest)
         {
-            var result = await RegisterUserHandler.Handle(registerRequest, userManager, userStore);
+            var confirmEmailBaseUrl = configuration["ConfirmEmail:BaseUrl"] ?? "http://localhost:5117";
+            var result = await RegisterUserHandler.Handle(registerRequest, userManager, userStore, kafkaProducerService, confirmEmailBaseUrl);
 
             var isSuccess = result.Result is Ok;
             var user = isSuccess ? await userManager.FindByEmailAsync(registerRequest.Email) : null;
@@ -90,7 +96,8 @@ namespace Authentication.Api.Controllers
         [HttpPost]
         public async Task<Results<Ok<CreateUserWithRandomPasswordResponse>, ValidationProblem>> Create([FromBody] EmailRequest request)
         {
-            return await CreateUserWithRandomPasswordHandler.Handle(request, userManager, kafkaProducerService);
+            var confirmEmailBaseUrl = configuration["ConfirmEmail:BaseUrl"] ?? "http://localhost:5117";
+            return await CreateUserWithRandomPasswordHandler.Handle(request, userManager, kafkaProducerService, confirmEmailBaseUrl);
         }
 
         [Authorize]
@@ -130,6 +137,25 @@ namespace Authentication.Api.Controllers
             };
 
             return TypedResults.Ok(response);
+        }
+
+        [HttpGet]
+        public async Task<Results<Ok<string>, BadRequest<string>>> ConfirmEmail([FromQuery] string userId, [FromQuery] string token)
+        {
+            if (string.IsNullOrWhiteSpace(userId) || string.IsNullOrWhiteSpace(token))
+                return TypedResults.BadRequest("userId y token son requeridos.");
+
+            var user = await userManager.FindByIdAsync(userId);
+            if (user is null)
+                return TypedResults.BadRequest("Usuario no encontrado.");
+
+            var decodedToken = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(token));
+            var result = await userManager.ConfirmEmailAsync(user, decodedToken);
+
+            if (!result.Succeeded)
+                return TypedResults.BadRequest("El token de confirmación es inválido o ha expirado.");
+
+            return TypedResults.Ok("Correo electrónico confirmado exitosamente.");
         }
 
         private static async Task<InfoResponse> CreateInfoResponseAsync<TUser>(TUser user, UserManager<TUser> userManager)

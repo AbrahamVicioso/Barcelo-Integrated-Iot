@@ -4,7 +4,10 @@ using Authentication.Domain.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
+using Notification.Domain.Events;
+using System.Text;
 
 namespace Authentication.Api.Controllers;
 
@@ -16,12 +19,14 @@ public class UsersController : ControllerBase
     private readonly UserManager<User> _userManager;
     private readonly RoleManager<IdentityRole> _roleManager;
     private readonly IKafkaProducerService _kafkaProducerService;
+    private readonly IConfiguration _configuration;
 
-    public UsersController(UserManager<User> userManager, RoleManager<IdentityRole> roleManager, IKafkaProducerService kafkaProducerService)
+    public UsersController(UserManager<User> userManager, RoleManager<IdentityRole> roleManager, IKafkaProducerService kafkaProducerService, IConfiguration configuration)
     {
         _userManager = userManager;
         _roleManager = roleManager;
         _kafkaProducerService = kafkaProducerService;
+        _configuration = configuration;
     }
 
     #region Queries
@@ -192,8 +197,8 @@ public class UsersController : ControllerBase
             return BadRequest(new { message = "Error al crear usuario", errors });
         }
 
-        // Publish UserCreatedEvent to Kafka for email notification
-        var userCreatedEvent = new Notification.Domain.Events.UserCreatedEvent
+        // Publish UserCreatedEvent to Kafka for welcome email + ntfy setup
+        var userCreatedEvent = new UserCreatedEvent
         {
             Id = Guid.Parse(user.Id),
             Email = model.Email,
@@ -203,6 +208,19 @@ public class UsersController : ControllerBase
         };
 
         await _kafkaProducerService.PublishUserCreatedAsync(userCreatedEvent);
+
+        // Publish EmailConfirmationEvent so the user must confirm their email
+        var confirmEmailBaseUrl = _configuration["ConfirmEmail:BaseUrl"] ?? "http://localhost:5117";
+        var confirmToken = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+        var encodedToken = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(confirmToken));
+        var confirmationUrl = $"{confirmEmailBaseUrl}/ConfirmEmail?userId={user.Id}&token={encodedToken}";
+
+        await _kafkaProducerService.PublishEmailConfirmationAsync(new EmailConfirmationEvent
+        {
+            UserId = user.Id,
+            Email = user.Email!,
+            ConfirmationUrl = confirmationUrl
+        });
 
         return CreatedAtAction(nameof(GetById), new { id = user.Id }, new UserResponseDto
         {
