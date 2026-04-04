@@ -73,7 +73,7 @@ namespace Authentication.Api.Controllers
         [HttpPost]
         public async Task<Results<Ok, ValidationProblem>> Register(RegisterRequest registerRequest)
         {
-            var confirmEmailBaseUrl = configuration["ConfirmEmail:BaseUrl"] ?? "http://localhost:5117";
+            var confirmEmailBaseUrl = BuildConfirmEmailBaseUrl();
             var result = await RegisterUserHandler.Handle(registerRequest, userManager, userStore, kafkaProducerService, confirmEmailBaseUrl);
 
             var isSuccess = result.Result is Ok;
@@ -96,7 +96,7 @@ namespace Authentication.Api.Controllers
         [HttpPost]
         public async Task<Results<Ok<CreateUserWithRandomPasswordResponse>, ValidationProblem>> Create([FromBody] EmailRequest request)
         {
-            var confirmEmailBaseUrl = configuration["ConfirmEmail:BaseUrl"] ?? "http://localhost:5117";
+            var confirmEmailBaseUrl = BuildConfirmEmailBaseUrl();
             return await CreateUserWithRandomPasswordHandler.Handle(request, userManager, kafkaProducerService, confirmEmailBaseUrl);
         }
 
@@ -166,6 +166,27 @@ namespace Authentication.Api.Controllers
                 Email = await userManager.GetEmailAsync(user) ?? throw new NotSupportedException("Users must have an email."),
                 IsEmailConfirmed = await userManager.IsEmailConfirmedAsync(user),
             };
+        }
+
+        /// <summary>
+        /// Builds the base URL for email confirmation links.
+        /// When the request comes through the API Gateway, the gateway injects X-Forwarded-Host
+        /// and X-Forwarded-Proto headers, so we use those to construct the public-facing URL.
+        /// When called directly (e.g. in development), we fall back to the configured BaseUrl.
+        /// </summary>
+        private string BuildConfirmEmailBaseUrl()
+        {
+            var forwardedHost = Request.Headers["X-Forwarded-Host"].FirstOrDefault();
+            var forwardedProto = Request.Headers["X-Forwarded-Proto"].FirstOrDefault();
+
+            if (!string.IsNullOrEmpty(forwardedHost))
+            {
+                var proto = forwardedProto ?? Request.Scheme;
+                var pathPrefix = configuration["ConfirmEmail:PathPrefix"] ?? "/api/auth";
+                return $"{proto}://{forwardedHost}{pathPrefix}";
+            }
+
+            return configuration["ConfirmEmail:BaseUrl"] ?? $"{Request.Scheme}://{Request.Host}";
         }
     }
 }

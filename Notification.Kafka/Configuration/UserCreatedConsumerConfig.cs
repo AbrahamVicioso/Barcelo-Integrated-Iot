@@ -4,7 +4,7 @@ namespace Notification.Kafka.Configuration
     {
         public string BootstrapServers { get; set; } = string.Empty;
         public string GroupId { get; set; } = "notification-user-created-group";
-        public string Topic { get; set; } = "user-created";
+        public string Topic { get; set; } = "users";
         public string AutoOffsetReset { get; set; } = "Earliest";
         public bool EnableAutoCommit { get; set; } = true;
         public int AutoCommitIntervalMs { get; set; } = 5000;

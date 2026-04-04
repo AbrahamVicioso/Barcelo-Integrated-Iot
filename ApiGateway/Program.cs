@@ -51,6 +51,16 @@ namespace ApiGateway
 
             app.UseCors();
 
+            // Propagate the gateway's public address to downstream services via forwarded headers.
+            // This allows services to build correct public-facing URLs (e.g. email confirmation links)
+            // regardless of where they're deployed.
+            app.Use(async (ctx, next) =>
+            {
+                ctx.Request.Headers["X-Forwarded-Proto"] = ctx.Request.Scheme;
+                ctx.Request.Headers["X-Forwarded-Host"] = ctx.Request.Host.Value;
+                await next(ctx);
+            });
+
             await app.UseOcelot();
 
             app.MapControllers();

@@ -15,8 +15,13 @@ namespace Reservas.Email
     {
         public static IServiceCollection AddEmailServices(this IServiceCollection services, IConfiguration configuration)
         {
-            EmailClient emailClient = new EmailClient(configuration.GetSection("Email:ConnectionString").Value);
-            services.AddSingleton(emailClient); 
+            var connectionString = configuration["Email:ConnectionString"]
+                ?? throw new InvalidOperationException(
+                    "Missing required configuration 'Email:ConnectionString'. " +
+                    "Set the environment variable 'Email__ConnectionString' with your Azure Communication Services connection string.");
+
+            EmailClient emailClient = new EmailClient(connectionString);
+            services.AddSingleton(emailClient);
 
             services.AddScoped<IEmailRepository, EmailRepository>();
             return services;

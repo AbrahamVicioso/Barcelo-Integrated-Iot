@@ -210,7 +210,7 @@ public class UsersController : ControllerBase
         await _kafkaProducerService.PublishUserCreatedAsync(userCreatedEvent);
 
         // Publish EmailConfirmationEvent so the user must confirm their email
-        var confirmEmailBaseUrl = _configuration["ConfirmEmail:BaseUrl"] ?? "http://localhost:5117";
+        var confirmEmailBaseUrl = BuildConfirmEmailBaseUrl();
         var confirmToken = await _userManager.GenerateEmailConfirmationTokenAsync(user);
         var encodedToken = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(confirmToken));
         var confirmationUrl = $"{confirmEmailBaseUrl}/ConfirmEmail?userId={user.Id}&token={encodedToken}";
@@ -566,4 +566,19 @@ public class UsersController : ControllerBase
     }
 
     #endregion
+
+    private string BuildConfirmEmailBaseUrl()
+    {
+        var forwardedHost = Request.Headers["X-Forwarded-Host"].FirstOrDefault();
+        var forwardedProto = Request.Headers["X-Forwarded-Proto"].FirstOrDefault();
+
+        if (!string.IsNullOrEmpty(forwardedHost))
+        {
+            var proto = forwardedProto ?? Request.Scheme;
+            var pathPrefix = _configuration["ConfirmEmail:PathPrefix"] ?? "/api/auth";
+            return $"{proto}://{forwardedHost}{pathPrefix}";
+        }
+
+        return _configuration["ConfirmEmail:BaseUrl"] ?? $"{Request.Scheme}://{Request.Host}";
+    }
 }

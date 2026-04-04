@@ -34,7 +34,10 @@ namespace Notification.Worker
                 services.AddPushNotificationService(context.Configuration);
 
                 // Register AuthApiClient (stores ntfy token in Authenticate.API)
-                var authApiBaseUrl = context.Configuration["AuthApi:BaseUrl"] ?? "http://localhost:5117";
+                var authApiBaseUrl = context.Configuration["AuthApi:BaseUrl"]
+                    ?? throw new InvalidOperationException(
+                        "Missing required configuration 'AuthApi:BaseUrl'. " +
+                        "Add it to appsettings.json or set the environment variable 'AuthApi__BaseUrl'.");
                 services.AddHttpClient<AuthApiClient>(client =>
                 {
                     client.BaseAddress = new Uri(authApiBaseUrl);

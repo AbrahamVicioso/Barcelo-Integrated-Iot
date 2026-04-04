@@ -11,10 +11,13 @@ namespace Usuarios.ExternalService
     {
         public static IServiceCollection AddExternalServices(this IServiceCollection services, IConfiguration configuration)
         {
-            // Lee GrpcUrl primero; si no existe, cae en BaseUrl (compatibilidad)
+            // Lee GrpcUrl primero; si no existe, cae en BaseUrl (compatibilidad hacia atrás)
             var grpcUrl = configuration["ExternalServices:Authentication:GrpcUrl"]
                 ?? configuration["ExternalServices:Authentication:BaseUrl"]
-                ?? "http://localhost:5117";
+                ?? throw new InvalidOperationException(
+                    "Missing required configuration 'ExternalServices:Authentication:GrpcUrl'. " +
+                    "Add it to appsettings.json or set the environment variable " +
+                    "'ExternalServices__Authentication__GrpcUrl'.");
 
             var skipCertValidation = configuration.GetValue<bool>("ExternalServices:Authentication:SkipCertValidation");
 

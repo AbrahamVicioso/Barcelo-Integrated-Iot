@@ -186,7 +186,8 @@ services:
       AuditProducer__BootstrapServers: kafka:29092
       AuditProducer__Topic: audit.events
       AuditProducer__ClientId: authenticate-audit
-      ConfirmEmail__BaseUrl: http://localhost:5117
+      ConfirmEmail__BaseUrl: ${GATEWAY_PUBLIC_BASE_URL:-http://localhost:5019}
+      ConfirmEmail__PathPrefix: /api/auth
       Ntfy__BaseUrl: https://ntfy:443
       Ntfy__PublicBaseUrl: http://localhost:5019/ntfy
       Ntfy__IgnoreCertificateErrors: "true"

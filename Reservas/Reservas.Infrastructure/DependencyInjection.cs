@@ -27,8 +27,11 @@ namespace Reservas.Infrastructure
 
             // Registrar cliente gRPC → Usuarios.API
             var usuariosGrpcUrl = configuration["GrpcClients:Usuarios:GrpcUrl"]
-                ?? configuration["Apis:Usuarios:BaseUrl"]
-                ?? "http://localhost:5284";
+                ?? configuration["Apis:Usuarios:BaseUrl"]  // clave legada, compatibilidad hacia atrás
+                ?? throw new InvalidOperationException(
+                    "Missing required configuration 'GrpcClients:Usuarios:GrpcUrl'. " +
+                    "Add it to appsettings.json or set the environment variable " +
+                    "'GrpcClients__Usuarios__GrpcUrl'.");
 
             var skipCertValidation = configuration.GetValue<bool>("GrpcClients:Usuarios:SkipCertValidation");
 
