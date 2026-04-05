@@ -25,6 +25,10 @@ public class AuditEventConsumer : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        // Yield immediately so the host can finish startup (Kestrel, etc.)
+        // before this service blocks a thread with synchronous Kafka calls.
+        await Task.Yield();
+
         // Esperar a que Kafka esté disponible antes de iniciar
         await WaitForKafkaAsync(stoppingToken);
         if (stoppingToken.IsCancellationRequested) return;

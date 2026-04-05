@@ -319,6 +319,7 @@ services:
       - usuarios-api
       - reservas-api
       - dispositivos-api
+      - audit-worker
 
   # ── Workers ───────────────────────────────────────────────────────────────────
   notification-worker:
@@ -368,8 +369,12 @@ services:
       - nuget-cache:/root/.nuget/packages
       - ./docker/certs:/https:ro
       - audit-obj:/app/Audit.Worker/obj
+    ports:
+      - "5250:5250"
+      - "5251:5251"
     environment:
       <<: [*dotnet-env, *db-conn]
+      ASPNETCORE_URLS: "http://+:5250;https://+:5251"
       AuditConsumer__BootstrapServers: kafka:29092
       AuditConsumer__GroupId: audit-worker-group
       AuditConsumer__Topic: audit.events

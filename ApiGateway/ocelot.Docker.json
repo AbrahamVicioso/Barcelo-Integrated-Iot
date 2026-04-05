@@ -82,6 +82,34 @@
         "GET"
       ]
     },
+    {
+      "DownstreamPathTemplate": "/audit",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "audit-worker",
+          "Port": 5250
+        }
+      ],
+      "UpstreamPathTemplate": "/api/audit",
+      "UpstreamHttpMethod": [
+        "GET"
+      ]
+    },
+    {
+      "DownstreamPathTemplate": "/audit/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "audit-worker",
+          "Port": 5250
+        }
+      ],
+      "UpstreamPathTemplate": "/api/audit/{everything}",
+      "UpstreamHttpMethod": [
+        "GET"
+      ]
+    }
   ],
   "GlobalConfiguration": {
     "BaseUrl": "https://localhost:5020"

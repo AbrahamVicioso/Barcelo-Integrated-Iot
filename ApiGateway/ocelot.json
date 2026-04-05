@@ -87,6 +87,35 @@
         "GET"
       ]
     },
+    // Route for Audit Service
+    {
+      "DownstreamPathTemplate": "/audit",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 5250
+        }
+      ],
+      "UpstreamPathTemplate": "/api/audit",
+      "UpstreamHttpMethod": [
+        "GET"
+      ]
+    },
+    {
+      "DownstreamPathTemplate": "/audit/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 5250
+        }
+      ],
+      "UpstreamPathTemplate": "/api/audit/{everything}",
+      "UpstreamHttpMethod": [
+        "GET"
+      ]
+    }
   ],
   "IgnoreRoutes": [
     "/scalar/{everything}"
