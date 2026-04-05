@@ -117,9 +117,6 @@
       ]
     }
   ],
-  "IgnoreRoutes": [
-    "/scalar/{everything}"
-  ],
   "GlobalConfiguration": {
     "BaseUrl": "http://localhost:5019"
   }
