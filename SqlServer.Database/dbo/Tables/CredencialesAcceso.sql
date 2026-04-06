@@ -2,6 +2,7 @@
 	[CredencialId] [int] IDENTITY(1,1) NOT NULL,
 	[HuespedId] [int] NULL,
 	[PersonalId] [int] NULL,
+	[ReservaId] [int] NULL,
 	[CodigoPIN] [nvarchar](6) NOT NULL,
 	[HashPIN] [nvarchar](256) NOT NULL,
 	[FechaActivacion] [datetime2](7) NOT NULL,
@@ -29,6 +30,12 @@ REFERENCES [dbo].[Personal] ([PersonalId])
 GO
 
 ALTER TABLE [dbo].[CredencialesAcceso] CHECK CONSTRAINT [FK_Credenciales_Personal]
+GO
+ALTER TABLE [dbo].[CredencialesAcceso]  WITH CHECK ADD  CONSTRAINT [FK_Credenciales_Reservas] FOREIGN KEY([ReservaId])
+REFERENCES [dbo].[Reservas] ([ReservaId])
+GO
+
+ALTER TABLE [dbo].[CredencialesAcceso] CHECK CONSTRAINT [FK_Credenciales_Reservas]
 GO
 ALTER TABLE [dbo].[CredencialesAcceso] ADD  DEFAULT ((1)) FOR [EstaActiva]
 GO
@@ -69,4 +76,12 @@ CREATE NONCLUSTERED INDEX [IX_Credenciales_PersonalId] ON [dbo].[CredencialesAcc
 	[PersonalId] ASC
 )
 WHERE ([PersonalId] IS NOT NULL)
+WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+GO
+/****** Object:  Index [IX_Credenciales_ReservaId]    Script Date: 12/9/2025 8:27:24 AM ******/
+CREATE NONCLUSTERED INDEX [IX_Credenciales_ReservaId] ON [dbo].[CredencialesAcceso]
+(
+	[ReservaId] ASC
+)
+WHERE ([ReservaId] IS NOT NULL)
 WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]

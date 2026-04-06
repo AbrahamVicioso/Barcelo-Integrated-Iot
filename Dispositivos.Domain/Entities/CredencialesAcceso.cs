@@ -13,6 +13,8 @@ public partial class CredencialesAcceso
 
     public int? PersonalId { get; set; }
 
+    public int? ReservaId { get; set; }
+
     public string CodigoPin { get; set; }
 
     public string HashPin { get; set; }
