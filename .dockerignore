@@ -1,9 +1,73 @@
+# Excluir archivos innecesarios del contexto de build de Docker
+
+# Directorios de build y output
 **/bin/
 **/obj/
+**/out/
+**/publish/
+
+# Directorios de Visual Studio y VS Code
 **/.vs/
+**/.vscode/
+**/*.user
+**/*.suo
+**/*.userosscache
+**/*.sln.docstates
+
+# Archivos de NuGet
+**/*.nupkg
+**/*.snupkg
+**/packages/
+
+# Archivos de test
+**/TestResults/
+**/*.trx
+**/*.coverage
+
+# Git
 **/.git/
 **/.gitignore
+**/.gitattributes
+
+# Docker
+**/Dockerfile*
+**/docker-compose*
+**/.dockerignore
+
+# Documentación
+**/*.md
+**/docs/
+
+# Variables de entorno locales
+**/.env
+**/.env.local
+
+# Logs
+**/logs/
+**/*.log
+
+# Archivos de sistema
+**/.DS_Store
+**/Thumbs.db
+
+# Node modules
+**/node_modules/
+**/npm-debug.log
+
+# Certificados (se montan por volumen)
 docker/certs/
-*.user
-*.suo
-.DS_Store
+**/*.pfx
+**/*.crt
+**/*.key
+
+# Datos
+**/data/
+**/*.db
+**/*.sqlite
+
+# Archivos temporales
+**/tmp/
+**/temp/
+**/*.tmp
+**/*.swp
+**/*.swo

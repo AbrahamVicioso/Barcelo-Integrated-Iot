@@ -1,0 +1,121 @@
+# docker-compose.dev.yml - Configuración de desarrollo con hot reload
+# Uso: docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
+
+name: barcelo-iot
+
+volumes:
+  nuget-cache:
+  auth-obj:
+  usuarios-obj:
+  reservas-obj:
+  dispositivos-obj:
+  gateway-obj:
+  notification-obj:
+  audit-obj:
+
+# ── Anchors para desarrollo ──────────────────────────────────────────────────
+x-dotnet-sdk: &dotnet-sdk
+  image: mcr.microsoft.com/dotnet/sdk:9.0
+
+x-dotnet-dev-env: &dotnet-dev-env
+  DOTNET_USE_POLLING_FILE_WATCHER: "true"
+
+services:
+  # Override para modo desarrollo con hot reload
+  auth-api:
+    <<: *dotnet-sdk
+    build: null
+    image: null
+    working_dir: /app/Authenticate/Authentication.Api
+    command: dotnet watch run --no-launch-profile
+    volumes:
+      - .:/app
+      - nuget-cache:/root/.nuget/packages
+      - ./docker/certs:/https:ro
+      - auth-obj:/app/Authenticate/Authentication.Api/obj
+    environment:
+      <<: *dotnet-dev-env
+
+  usuarios-api:
+    <<: *dotnet-sdk
+    build: null
+    image: null
+    working_dir: /app/Usuarios/Usuarios.API
+    command: dotnet watch run --no-launch-profile
+    volumes:
+      - .:/app
+      - nuget-cache:/root/.nuget/packages
+      - ./docker/certs:/https:ro
+      - usuarios-obj:/app/Usuarios/Usuarios.API/obj
+    environment:
+      <<: *dotnet-dev-env
+
+  reservas-api:
+    <<: *dotnet-sdk
+    build: null
+    image: null
+    working_dir: /app/Reservas/Reservas.API
+    command: dotnet watch run --no-launch-profile
+    volumes:
+      - .:/app
+      - nuget-cache:/root/.nuget/packages
+      - ./docker/certs:/https:ro
+      - reservas-obj:/app/Reservas/Reservas.API/obj
+    environment:
+      <<: *dotnet-dev-env
+
+  dispositivos-api:
+    <<: *dotnet-sdk
+    build: null
+    image: null
+    working_dir: /app/Dispositivos.API
+    command: dotnet watch run --no-launch-profile
+    volumes:
+      - .:/app
+      - nuget-cache:/root/.nuget/packages
+      - ./docker/certs:/https:ro
+      - dispositivos-obj:/app/Dispositivos.API/obj
+    environment:
+      <<: *dotnet-dev-env
+
+  api-gateway:
+    <<: *dotnet-sdk
+    build: null
+    image: null
+    working_dir: /app/ApiGateway
+    command: dotnet watch run --no-launch-profile
+    volumes:
+      - .:/app
+      - nuget-cache:/root/.nuget/packages
+      - ./docker/certs:/https:ro
+      - gateway-obj:/app/ApiGateway/obj
+    environment:
+      <<: *dotnet-dev-env
+
+  notification-worker:
+    <<: *dotnet-sdk
+    build: null
+    image: null
+    working_dir: /app/Notification.Worker
+    command: dotnet watch run --no-launch-profile
+    volumes:
+      - .:/app
+      - nuget-cache:/root/.nuget/packages
+      - ./docker/certs:/https:ro
+      - notification-obj:/app/Notification.Worker/obj
+    environment:
+      <<: *dotnet-dev-env
+
+  audit-worker:
+    <<: *dotnet-sdk
+    build: null
+    image: null
+    working_dir: /app/Audit.Worker
+    command: dotnet watch run --no-launch-profile
+    volumes:
+      - .:/app
+      - nuget-cache:/root/.nuget/packages
+      - ./docker/certs:/https:ro
+      - audit-obj:/app/Audit.Worker/obj
+    environment:
+      <<: *dotnet-dev-env

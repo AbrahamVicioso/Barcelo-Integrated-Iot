@@ -6,7 +6,6 @@ networks:
 
 volumes:
   sqlserver-data:
-  nuget-cache:
   postgres-data:
     name: tb-postgres-data
     driver: local
@@ -14,25 +13,14 @@ volumes:
     name: tb-ce-kafka-data
     driver: local
   ntfy-data:
-  # obj/ y bin/ en filesystem Linux (mucho más rápido que NTFS en WSL2)
-  auth-obj:
-  usuarios-obj:
-  reservas-obj:
-  dispositivos-obj:
-  gateway-obj:
-  notification-obj:
-  audit-obj:
 
 # ── Anchors ──────────────────────────────────────────────────────────────────
-x-dotnet-sdk: &dotnet-sdk
-  image: mcr.microsoft.com/dotnet/sdk:9.0
-
 x-dotnet-env: &dotnet-env
-  DOTNET_USE_POLLING_FILE_WATCHER: "true"
   ASPNETCORE_ENVIRONMENT: Docker
   DOTNET_ENVIRONMENT: Docker
   DOTNET_CLI_TELEMETRY_OPTOUT: "1"
   DOTNET_NOLOGO: "1"
+  DOTNET_RUNNING_IN_CONTAINER: "true"
 
 x-db-conn: &db-conn
   ConnectionStrings__DefaultConnection: "Data source=sqlserver;Database=BarceloIoTDatabase;User Id=sa;Password=Testing1234;TrustServerCertificate=True"
@@ -165,15 +153,13 @@ services:
 
   # ── APIs ──────────────────────────────────────────────────────────────────────
   auth-api:
-    <<: *dotnet-sdk
+    build:
+      context: .
+      dockerfile: Authenticate/Authentication.Api/Dockerfile
+    image: barcelo-auth-api:latest
     container_name: barcelo-auth
-    working_dir: /app/Authenticate/Authentication.Api
-    command: dotnet watch run --no-launch-profile
     volumes:
-      - .:/app
-      - nuget-cache:/root/.nuget/packages
       - ./docker/certs:/https:ro
-      - auth-obj:/app/Authenticate/Authentication.Api/obj
     ports:
       - "5117:5117"
       - "5118:5118"
@@ -200,15 +186,13 @@ services:
         condition: service_started
 
   usuarios-api:
-    <<: *dotnet-sdk
+    build:
+      context: .
+      dockerfile: Usuarios/Usuarios.API/Dockerfile
+    image: barcelo-usuarios-api:latest
     container_name: barcelo-usuarios
-    working_dir: /app/Usuarios/Usuarios.API
-    command: dotnet watch run --no-launch-profile
     volumes:
-      - .:/app
-      - nuget-cache:/root/.nuget/packages
       - ./docker/certs:/https:ro
-      - usuarios-obj:/app/Usuarios/Usuarios.API/obj
     ports:
       - "5284:5284"
       - "5285:5285"
@@ -230,15 +214,13 @@ services:
         condition: service_started
 
   reservas-api:
-    <<: *dotnet-sdk
+    build:
+      context: .
+      dockerfile: Reservas/Reservas.API/Dockerfile
+    image: barcelo-reservas-api:latest
     container_name: barcelo-reservas
-    working_dir: /app/Reservas/Reservas.API
-    command: dotnet watch run --no-launch-profile
     volumes:
-      - .:/app
-      - nuget-cache:/root/.nuget/packages
       - ./docker/certs:/https:ro
-      - reservas-obj:/app/Reservas/Reservas.API/obj
     ports:
       - "5141:5141"
     environment:
@@ -264,15 +246,13 @@ services:
         condition: service_started
 
   dispositivos-api:
-    <<: *dotnet-sdk
+    build:
+      context: .
+      dockerfile: Dispositivos.API/Dockerfile
+    image: barcelo-dispositivos-api:latest
     container_name: barcelo-dispositivos
-    working_dir: /app/Dispositivos.API
-    command: dotnet watch run --no-launch-profile
     volumes:
-      - .:/app
-      - nuget-cache:/root/.nuget/packages
       - ./docker/certs:/https:ro
-      - dispositivos-obj:/app/Dispositivos.API/obj
     ports:
       - "5185:5185"
     environment:
@@ -294,15 +274,13 @@ services:
         condition: service_started
 
   api-gateway:
-    <<: *dotnet-sdk
+    build:
+      context: .
+      dockerfile: ApiGateway/Dockerfile
+    image: barcelo-api-gateway:latest
     container_name: barcelo-gateway
-    working_dir: /app/ApiGateway
-    command: dotnet watch run --no-launch-profile
     volumes:
-      - .:/app
-      - nuget-cache:/root/.nuget/packages
       - ./docker/certs:/https:ro
-      - gateway-obj:/app/ApiGateway/obj
     ports:
       - "5019:5019"
       - "5020:5020"
@@ -323,15 +301,13 @@ services:
 
   # ── Workers ───────────────────────────────────────────────────────────────────
   notification-worker:
-    <<: *dotnet-sdk
+    build:
+      context: .
+      dockerfile: Notification.Worker/Dockerfile
+    image: barcelo-notification-worker:latest
     container_name: barcelo-notification
-    working_dir: /app/Notification.Worker
-    command: dotnet watch run --no-launch-profile
     volumes:
-      - .:/app
-      - nuget-cache:/root/.nuget/packages
       - ./docker/certs:/https:ro
-      - notification-obj:/app/Notification.Worker/obj
     environment:
       <<: *dotnet-env
       KafkaConsumer__UserCreated__BootstrapServers: kafka:29092
@@ -360,15 +336,13 @@ services:
         condition: service_healthy
 
   audit-worker:
-    <<: *dotnet-sdk
+    build:
+      context: .
+      dockerfile: Audit.Worker/Dockerfile
+    image: barcelo-audit-worker:latest
     container_name: barcelo-audit
-    working_dir: /app/Audit.Worker
-    command: dotnet watch run --no-launch-profile
     volumes:
-      - .:/app
-      - nuget-cache:/root/.nuget/packages
       - ./docker/certs:/https:ro
-      - audit-obj:/app/Audit.Worker/obj
     ports:
       - "5250:5250"
       - "5251:5251"
