@@ -1,0 +1,14 @@
+#!/bin/bash
+echo "Building auth-api..."
+docker-compose build auth-api
+echo "Building usuarios-api..."
+docker-compose build usuarios-api
+echo "Building reservas-api..."
+docker-compose build reservas-api
+echo "Building dispositivos-api..."
+docker-compose build dispositivos-api
+echo "Building api-gateway..."
+docker-compose build api-gateway
+echo "Building workers..."
+docker-compose build notification-worker audit-worker
+echo "All services built successfully!"
