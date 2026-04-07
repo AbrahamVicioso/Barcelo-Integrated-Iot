@@ -31,6 +31,12 @@ public class UpdateReservaCommandHandler : IRequestHandler<UpdateReservaCommand,
             var fechaCheckIn = request.FechaCheckIn != default ? request.FechaCheckIn : reserva.FechaCheckIn;
             var fechaCheckOut = request.FechaCheckOut != default ? request.FechaCheckOut : reserva.FechaCheckOut;
 
+            if (fechaCheckOut <= fechaCheckIn)
+                return Result<ReservaDto>.Failure("La fecha de check-out debe ser posterior a la fecha de check-in.");
+
+            if (fechaCheckIn < DateTime.UtcNow.Date)
+                return Result<ReservaDto>.Failure("La fecha de check-in no puede ser en el pasado.");
+
             if (habitacionId.HasValue)
             {
                 var ocupada = await _unitOfWork.Reservas.IsHabitacionOcupadaAsync(
