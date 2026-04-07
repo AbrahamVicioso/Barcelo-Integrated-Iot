@@ -47,4 +47,25 @@ public class CredencialesAccesoService : ICredencialesAccesoService
         var result = await command.ExecuteScalarAsync(cancellationToken);
         return Convert.ToInt32(result) > 0;
     }
+
+    public async Task<bool> HabitacionTieneCerraduraActivaAsync(int habitacionId, CancellationToken cancellationToken = default)
+    {
+        var connection = _context.Database.GetDbConnection();
+        if (connection.State != ConnectionState.Open)
+            await connection.OpenAsync(cancellationToken);
+
+        using var command = connection.CreateCommand();
+        command.CommandText = @"
+            SELECT COUNT(1) FROM CerradurasInteligentes
+            WHERE HabitacionId = @habitacionId
+              AND EstaActiva = 1";
+
+        var pHabitacionId = command.CreateParameter();
+        pHabitacionId.ParameterName = "@habitacionId";
+        pHabitacionId.Value = habitacionId;
+        command.Parameters.Add(pHabitacionId);
+
+        var result = await command.ExecuteScalarAsync(cancellationToken);
+        return Convert.ToInt32(result) > 0;
+    }
 }

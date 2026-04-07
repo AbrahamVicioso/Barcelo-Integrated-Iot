@@ -41,6 +41,12 @@ public class UnlockDoorCommandHandler : IRequestHandler<UnlockDoorCommand, Resul
             if (!reserva.HabitacionId.HasValue)
                 return Result<string>.Failure("La reserva no tiene una habitación asignada.");
 
+            var tieneCerradura = await _credencialesService.HabitacionTieneCerraduraActivaAsync(
+                reserva.HabitacionId.Value, cancellationToken);
+
+            if (!tieneCerradura)
+                return Result<string>.Failure("La habitación no tiene una cerradura inteligente activa asociada.");
+
             var pinValido = await _credencialesService.ValidatePinForReservaAsync(
                 request.ReservaId, request.Pin, cancellationToken);
 
