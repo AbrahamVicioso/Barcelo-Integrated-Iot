@@ -6,4 +6,5 @@ namespace Reservas.Application.Features.Reservas.Commands;
 public class UnlockDoorCommand : IRequest<Result<string>>
 {
     public int ReservaId { get; set; }
+    public string Pin { get; set; } = string.Empty;
 }

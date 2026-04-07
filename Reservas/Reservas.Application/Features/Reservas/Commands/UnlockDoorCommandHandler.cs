@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using Notification.Domain.Events;
 using Reservas.Application.Common;
 using Reservas.Application.Interfaces;
+using Reservas.Domain.Entites;
 
 namespace Reservas.Application.Features.Reservas.Commands;
 
@@ -10,15 +11,18 @@ public class UnlockDoorCommandHandler : IRequestHandler<UnlockDoorCommand, Resul
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IReservaKafkaProducer _kafkaProducer;
+    private readonly ICredencialesAccesoService _credencialesService;
     private readonly ILogger<UnlockDoorCommandHandler> _logger;
 
     public UnlockDoorCommandHandler(
         IUnitOfWork unitOfWork,
         IReservaKafkaProducer kafkaProducer,
+        ICredencialesAccesoService credencialesService,
         ILogger<UnlockDoorCommandHandler> logger)
     {
         _unitOfWork = unitOfWork;
         _kafkaProducer = kafkaProducer;
+        _credencialesService = credencialesService;
         _logger = logger;
     }
 
@@ -31,8 +35,17 @@ public class UnlockDoorCommandHandler : IRequestHandler<UnlockDoorCommand, Resul
             if (reserva == null)
                 return Result<string>.Failure($"Reserva con ID {request.ReservaId} no encontrada.");
 
+            if (reserva.EstadoReservaId != EstadoReserva.Activa)
+                return Result<string>.Failure("La reserva no tiene el estado de check-in realizado.");
+
             if (!reserva.HabitacionId.HasValue)
                 return Result<string>.Failure("La reserva no tiene una habitación asignada.");
+
+            var pinValido = await _credencialesService.ValidatePinForReservaAsync(
+                request.ReservaId, request.Pin, cancellationToken);
+
+            if (!pinValido)
+                return Result<string>.Failure("PIN inválido o credencial de acceso no activa para esta reserva.");
 
             var unlockDoorEvent = new UnlockDoorEvent
             {

@@ -90,9 +90,9 @@ public class ReservasController : ControllerBase
     }
 
     [HttpPost("{id}/unlock-door")]
-    public async Task<IActionResult> UnlockDoor(int id)
+    public async Task<IActionResult> UnlockDoor(int id, [FromQuery] string pin)
     {
-        var result = await _mediator.Send(new UnlockDoorCommand { ReservaId = id });
+        var result = await _mediator.Send(new UnlockDoorCommand { ReservaId = id, Pin = pin });
         return result.IsSuccess ? Ok(result.Data) : BadRequest(result.ErrorMessage);
     }
 

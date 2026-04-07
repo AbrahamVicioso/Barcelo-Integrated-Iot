@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Reservas.Application.Interfaces;
 using Reservas.Persistence.Data;
 using Reservas.Persistence.Repositories;
+using Reservas.Persistence.Services;
 
 namespace Reservas.Persistence
 {
@@ -24,6 +25,9 @@ namespace Reservas.Persistence
             services.AddScoped<IReservaActividadRepository, ReservaActividadRepository>();
             services.AddScoped<IHotelRepository, HotelRepository>();
             services.AddScoped<IHuespedRepository, HuespedRepository>();
+
+            // Services
+            services.AddScoped<ICredencialesAccesoService, CredencialesAccesoService>();
 
             return services;
         }
