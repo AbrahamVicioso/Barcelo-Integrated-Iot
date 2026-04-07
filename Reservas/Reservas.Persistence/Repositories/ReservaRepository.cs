@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Reservas.Application.Interfaces;
 using Reservas.Domain.Entites;
+using static Reservas.Domain.Entites.EstadoReserva;
 
 
 using Reservas.Persistence.Data;
@@ -61,5 +62,16 @@ public class ReservaRepository : GenericRepository<Reserva>, IReservaRepository
             .Where(r => r.FechaCheckIn >= fechaInicio && r.FechaCheckOut <= fechaFin)
             .OrderBy(r => r.FechaCheckIn)
             .ToListAsync(cancellationToken);
+    }
+
+    public async Task<bool> IsHabitacionOcupadaAsync(int habitacionId, DateTime fechaCheckIn, DateTime fechaCheckOut, CancellationToken cancellationToken = default, int? excludeReservaId = null)
+    {
+        return await _dbSet.AnyAsync(r =>
+            r.HabitacionId == habitacionId &&
+            r.EstadoReservaId != EstadoReserva.Cancelada &&
+            r.FechaCheckIn < fechaCheckOut &&
+            r.FechaCheckOut > fechaCheckIn &&
+            (excludeReservaId == null || r.ReservaId != excludeReservaId),
+            cancellationToken);
     }
 }

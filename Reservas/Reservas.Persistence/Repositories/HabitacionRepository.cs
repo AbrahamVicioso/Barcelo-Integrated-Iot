@@ -42,6 +42,14 @@ public class HabitacionRepository : IHabitacionRepository
             .ToListAsync();
     }
 
+    public async Task<bool> ExistsAsync(int hotelId, string numeroHabitacion, CancellationToken cancellationToken = default, int? excludeHabitacionId = null)
+    {
+        return await _context.Habitaciones
+            .AnyAsync(h => h.HotelId == hotelId
+                        && h.NumeroHabitacion == numeroHabitacion
+                        && (excludeHabitacionId == null || h.HabitacionId != excludeHabitacionId), cancellationToken);
+    }
+
     public async Task AddAsync(Habitacion habitacion, CancellationToken cancellationToken = default)
     {
         await _context.Habitaciones.AddAsync(habitacion, cancellationToken);

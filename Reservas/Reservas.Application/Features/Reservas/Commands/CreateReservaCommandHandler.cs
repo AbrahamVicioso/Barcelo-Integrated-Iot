@@ -55,6 +55,16 @@ public class CreateReservaCommandHandler : IRequestHandler<CreateReservaCommand,
                         $"La habitación {habitacion.NumeroHabitacion} tiene capacidad máxima de {habitacion.CapacidadMaxima} persona(s), " +
                         $"pero la reserva incluye {totalHuespedes} huésped(es).");
 
+                var ocupada = await _unitOfWork.Reservas.IsHabitacionOcupadaAsync(
+                    request.HabitacionId.Value,
+                    request.FechaCheckIn,
+                    request.FechaCheckOut,
+                    cancellationToken);
+
+                if (ocupada)
+                    return Result<ReservaDto>.Failure(
+                        $"La habitación {habitacion.NumeroHabitacion} ya tiene una reserva en el rango de fechas seleccionado.");
+
                 habitacionNumero = $"Habitación {habitacion.NumeroHabitacion}";
                 hotelNombre = habitacion.Hotel?.Nombre ?? "Hotel Barcelo";
             }

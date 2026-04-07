@@ -24,9 +24,16 @@ public class UpdateHabitacionCommandHandler : IRequestHandler<UpdateHabitacionCo
             var habitacion = await _unitOfWork.Habitaciones.GetById(request.HabitacionId);
 
             if (habitacion == null)
-            {
                 return Result<HabitacionDto>.Failure($"Habitación con ID {request.HabitacionId} no encontrada.");
-            }
+
+            var existe = await _unitOfWork.Habitaciones.ExistsAsync(
+                request.HotelId,
+                request.NumeroHabitacion,
+                cancellationToken,
+                excludeHabitacionId: request.HabitacionId);
+
+            if (existe)
+                return Result<HabitacionDto>.Failure("Ya existe esta habitación en este hotel.");
 
             _mapper.Map(request, habitacion);
             habitacion.FechaActualizacion = DateTime.UtcNow;

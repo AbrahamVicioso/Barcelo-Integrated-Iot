@@ -22,6 +22,14 @@ public class CreateHabitacionCommandHandler : IRequestHandler<CreateHabitacionCo
     {
         try
         {
+            var existe = await _unitOfWork.Habitaciones.ExistsAsync(
+                request.Habitacion.HotelId,
+                request.Habitacion.NumeroHabitacion,
+                cancellationToken);
+
+            if (existe)
+                return Result<int>.Failure($"Ya existe esta habitación en este hotel.");
+
             var habitacion = _mapper.Map<Habitacion>(request.Habitacion);
             habitacion.FechaCreacion = DateTime.UtcNow;
 

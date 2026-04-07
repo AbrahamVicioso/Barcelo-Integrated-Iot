@@ -25,8 +25,27 @@ public class UpdateReservaCommandHandler : IRequestHandler<UpdateReservaCommand,
             var reserva = await _unitOfWork.Reservas.GetByIdAsync(request.ReservaId, cancellationToken);
 
             if (reserva == null)
-            {
                 return Result<ReservaDto>.Failure($"Reserva con ID {request.ReservaId} no encontrada.");
+
+            var habitacionId = request.HabitacionId ?? reserva.HabitacionId;
+            var fechaCheckIn = request.FechaCheckIn != default ? request.FechaCheckIn : reserva.FechaCheckIn;
+            var fechaCheckOut = request.FechaCheckOut != default ? request.FechaCheckOut : reserva.FechaCheckOut;
+
+            if (habitacionId.HasValue)
+            {
+                var ocupada = await _unitOfWork.Reservas.IsHabitacionOcupadaAsync(
+                    habitacionId.Value,
+                    fechaCheckIn,
+                    fechaCheckOut,
+                    cancellationToken,
+                    excludeReservaId: request.ReservaId);
+
+                if (ocupada)
+                {
+                    var habitacion = await _unitOfWork.Habitaciones.GetById(habitacionId.Value);
+                    return Result<ReservaDto>.Failure(
+                        $"La habitación {habitacion?.NumeroHabitacion ?? habitacionId.ToString()} ya tiene una reserva en el rango de fechas seleccionado.");
+                }
             }
 
             _mapper.Map(request, reserva);
@@ -38,10 +57,10 @@ public class UpdateReservaCommandHandler : IRequestHandler<UpdateReservaCommand,
                 var allHuespedIds = huespedes.Select(h => h.HuespedId).ToHashSet();
                 int totalHuespedes = allHuespedIds.Count;
 
-                int habitacionId = request.HabitacionId ?? reserva.HabitacionId ?? 0;
-                if (habitacionId > 0)
+                int habId = request.HabitacionId ?? reserva.HabitacionId ?? 0;
+                if (habId > 0)
                 {
-                    var habitacion = await _unitOfWork.Habitaciones.GetById(habitacionId);
+                    var habitacion = await _unitOfWork.Habitaciones.GetById(habId);
                     if (habitacion != null && habitacion.CapacidadMaxima < totalHuespedes)
                         return Result<ReservaDto>.Failure(
                             $"La habitación {habitacion.NumeroHabitacion} tiene capacidad máxima de {habitacion.CapacidadMaxima} persona(s), " +
@@ -63,10 +82,10 @@ public class UpdateReservaCommandHandler : IRequestHandler<UpdateReservaCommand,
             }
             else if (request.HabitacionId.HasValue || reserva.HabitacionId.HasValue)
             {
-                int habitacionId = request.HabitacionId ?? reserva.HabitacionId ?? 0;
-                if (habitacionId > 0)
+                int habId = request.HabitacionId ?? reserva.HabitacionId ?? 0;
+                if (habId > 0)
                 {
-                    var habitacion = await _unitOfWork.Habitaciones.GetById(habitacionId);
+                    var habitacion = await _unitOfWork.Habitaciones.GetById(habId);
                     int totalHuespedes = reserva.ReservaHuespedes.Count > 0
                         ? reserva.ReservaHuespedes.Count
                         : request.NumeroHuespedes;

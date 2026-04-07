@@ -44,7 +44,7 @@ namespace Reservas.API.Controllers
         public async Task<IActionResult> Create([FromBody] CreateHabitacionDto habitacionDto)
         {
             var result = await _mediator.Send(new CreateHabitacionCommand { Habitacion = habitacionDto });
-            return result.IsSuccess ? CreatedAtAction(nameof(GetById), new { id = result.Data }, result.Data) : BadRequest(result.ErrorMessage);
+            return result.IsSuccess ? CreatedAtAction(nameof(GetById), new { id = result.Data }, result.Data) : Conflict(result.ErrorMessage);
         }
 
         [HttpPut("{id}")]
@@ -56,7 +56,9 @@ namespace Reservas.API.Controllers
             }
 
             var result = await _mediator.Send(command);
-            return result.IsSuccess ? Ok(result.Data) : BadRequest(result.ErrorMessage);
+            if (!result.IsSuccess)
+                return result.ErrorMessage!.Contains("no encontrada") ? NotFound(result.ErrorMessage) : Conflict(result.ErrorMessage);
+            return Ok(result.Data);
         }
 
         [HttpDelete("{id}")]

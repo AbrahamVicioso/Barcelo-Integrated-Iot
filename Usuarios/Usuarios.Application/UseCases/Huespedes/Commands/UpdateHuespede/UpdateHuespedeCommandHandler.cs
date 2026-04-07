@@ -43,6 +43,12 @@ public class UpdateHuespedeCommandHandler : IRequestHandler<UpdateHuespedeComman
             huespede.UsuarioId = nuevoUsuarioIdStr;
         }
 
+        var existenteDocumento = await _unitOfWork.Huespedes.GetByDocumentoAsync(
+            request.Huespede.TipoDocumento,
+            request.Huespede.NumeroDocumento);
+        if (existenteDocumento != null && existenteDocumento.HuespedId != request.Huespede.HuespedId)
+            throw new ConflictException("Ya existe un huésped con ese número de documento");
+
         huespede.NombreCompleto = request.Huespede.NombreCompleto;
         huespede.TipoDocumento = request.Huespede.TipoDocumento;
         huespede.NumeroDocumento = request.Huespede.NumeroDocumento;
