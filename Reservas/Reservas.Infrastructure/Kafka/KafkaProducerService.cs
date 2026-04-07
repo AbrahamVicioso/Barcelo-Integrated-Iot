@@ -11,6 +11,7 @@ namespace Reservas.Infrastructure.Kafka
         private readonly IProducer<string, string> _producer;
         private readonly string _topic;
         private readonly string _unlockDoorTopic;
+        private readonly string _checkInRealizadoTopic;
         private readonly ILogger<ReservaKafkaProducer> _logger;
         private bool _disposed;
 
@@ -18,6 +19,7 @@ namespace Reservas.Infrastructure.Kafka
         {
             _topic = config.Topic;
             _unlockDoorTopic = config.UnlockDoorTopic;
+            _checkInRealizadoTopic = config.CheckInRealizadoTopic;
             _logger = logger;
 
             var producerConfig = new ProducerConfig
@@ -83,6 +85,32 @@ namespace Reservas.Infrastructure.Kafka
             }
         }
 
+        public async Task PublishCheckInRealizadoAsync(CheckInRealizadoEvent checkInEvent, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var message = new Message<string, string>
+                {
+                    Key = checkInEvent.NumeroReserva,
+                    Value = JsonSerializer.Serialize(checkInEvent, new JsonSerializerOptions
+                    {
+                        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                    })
+                };
+
+                var result = await _producer.ProduceAsync(_checkInRealizadoTopic, message, cancellationToken);
+
+                _logger.LogInformation(
+                    "Published CheckInRealizadoEvent for reserva {NumeroReserva} ({Count} huespedes) to partition {Partition} at offset {Offset}",
+                    checkInEvent.NumeroReserva, checkInEvent.HuespedIds.Count, result.Partition.Value, result.Offset.Value);
+            }
+            catch (ProduceException<string, string> ex)
+            {
+                _logger.LogError(ex, "Failed to publish CheckInRealizadoEvent for reserva {NumeroReserva}", checkInEvent.NumeroReserva);
+                throw;
+            }
+        }
+
         public void Dispose()
         {
             if (_disposed)
@@ -101,6 +129,7 @@ namespace Reservas.Infrastructure.Kafka
         public string BootstrapServers { get; set; } = string.Empty;
         public string Topic { get; set; } = "reservas";
         public string UnlockDoorTopic { get; set; } = "dispositivos.unlock-door";
+        public string CheckInRealizadoTopic { get; set; } = "reservas.checkin-realizado";
         public string? ClientId { get; set; }
     }
 }

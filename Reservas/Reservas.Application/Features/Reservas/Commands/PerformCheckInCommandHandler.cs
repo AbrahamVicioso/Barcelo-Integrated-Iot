@@ -1,5 +1,6 @@
 using MediatR;
 using Microsoft.Extensions.Logging;
+using Notification.Domain.Events;
 using Reservas.Application.Common;
 using Reservas.Application.DTOs;
 using Reservas.Application.Interfaces;
@@ -11,15 +12,18 @@ public class PerformCheckInCommandHandler : IRequestHandler<PerformCheckInComman
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IUsuariosApiService _usuariosApiService;
+    private readonly IReservaKafkaProducer _kafkaProducer;
     private readonly ILogger<PerformCheckInCommandHandler> _logger;
 
     public PerformCheckInCommandHandler(
         IUnitOfWork unitOfWork,
         IUsuariosApiService usuariosApiService,
+        IReservaKafkaProducer kafkaProducer,
         ILogger<PerformCheckInCommandHandler> logger)
     {
         _unitOfWork = unitOfWork;
         _usuariosApiService = usuariosApiService;
+        _kafkaProducer = kafkaProducer;
         _logger = logger;
     }
 
@@ -47,6 +51,13 @@ public class PerformCheckInCommandHandler : IRequestHandler<PerformCheckInComman
             if (reserva.CheckInRealizado.HasValue)
                 return Result<CheckInDto>.Failure("Ya existe un check-in registrado para esta reserva.");
 
+            // Verificar que la fecha actual esté dentro del rango de la reserva
+            var hoy = DateTime.UtcNow.Date;
+            if (hoy < reserva.FechaCheckIn.Date)
+                return Result<CheckInDto>.Failure($"El check-in no puede realizarse antes de la fecha de entrada: {reserva.FechaCheckIn:dd/MM/yyyy}.");
+            if (hoy > reserva.FechaCheckOut.Date)
+                return Result<CheckInDto>.Failure($"La reserva venció el {reserva.FechaCheckOut:dd/MM/yyyy}. No es posible realizar el check-in.");
+
             // RF-003: Validar identidad del huesped via email
             var huesped = await _usuariosApiService.GetHuespedByIdAsync(reserva.HuespedId, cancellationToken);
 
@@ -68,6 +79,28 @@ public class PerformCheckInCommandHandler : IRequestHandler<PerformCheckInComman
             _logger.LogInformation(
                 "Check-in completado para reserva {NumeroReserva}, huesped {HuespedId}.",
                 reserva.NumeroReserva, reserva.HuespedId);
+
+            // Recolectar todos los HuespedIds únicos (principal + adicionales)
+            var huespedIds = reserva.ReservaHuespedes
+                .Select(rh => rh.HuespedId)
+                .Append(reserva.HuespedId)
+                .Distinct()
+                .ToList();
+
+            var checkInEvent = new CheckInRealizadoEvent
+            {
+                ReservaId = reserva.ReservaId,
+                NumeroReserva = reserva.NumeroReserva,
+                HuespedIds = huespedIds,
+                FechaCheckIn = fechaCheckIn,
+                FechaCheckOut = reserva.FechaCheckOut
+            };
+
+            await _kafkaProducer.PublishCheckInRealizadoAsync(checkInEvent, cancellationToken);
+
+            _logger.LogInformation(
+                "CheckInRealizadoEvent publicado para reserva {NumeroReserva}, {Count} huespedes.",
+                reserva.NumeroReserva, huespedIds.Count);
 
             return Result<CheckInDto>.Success(new CheckInDto
             {

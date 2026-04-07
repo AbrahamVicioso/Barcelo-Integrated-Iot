@@ -231,6 +231,7 @@ services:
       KafkaProducer__BootstrapServers: kafka:29092
       KafkaProducer__Topic: reservas
       KafkaProducer__UnlockDoorTopic: dispositivos.unlock-door
+      KafkaProducer__CheckInRealizadoTopic: reservas.checkin-realizado
       KafkaProducer__ClientId: reservas-api
       AuditProducer__BootstrapServers: kafka:29092
       AuditProducer__Topic: audit.events
@@ -265,6 +266,9 @@ services:
       KafkaConsumer__UnlockDoor__BootstrapServers: kafka:29092
       KafkaConsumer__UnlockDoor__GroupId: dispositivos-unlock-door-group
       KafkaConsumer__UnlockDoor__Topic: dispositivos.unlock-door
+      KafkaConsumer__CheckInRealizado__BootstrapServers: kafka:29092
+      KafkaConsumer__CheckInRealizado__GroupId: dispositivos-checkin-group
+      KafkaConsumer__CheckInRealizado__Topic: reservas.checkin-realizado
     networks:
       - barcelo-net
     depends_on:

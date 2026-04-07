@@ -41,6 +41,12 @@ public static class DependencyInjection
         services.AddSingleton(unlockDoorConfig);
         services.AddHostedService<UnlockDoorKafkaConsumer>();
 
+        // Register Kafka consumer for check-in realizado events (auto-generates credentials)
+        var checkInConfig = new CheckInRealizadoKafkaConsumerConfig();
+        configuration.GetSection("KafkaConsumer:CheckInRealizado").Bind(checkInConfig);
+        services.AddSingleton(checkInConfig);
+        services.AddHostedService<CheckInRealizadoKafkaConsumer>();
+
         // Register Audit Kafka Producer
         var auditConfig = new AuditKafkaProducerConfig();
         configuration.GetSection("AuditProducer").Bind(auditConfig);

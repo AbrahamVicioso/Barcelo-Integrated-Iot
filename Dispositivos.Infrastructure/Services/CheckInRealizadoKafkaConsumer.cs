@@ -1,3 +1,5 @@
+using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json;
 using Confluent.Kafka;
 using Confluent.Kafka.Admin;
@@ -5,16 +7,15 @@ using Dispositivos.Application.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using Notification.Domain.Events;
 
 namespace Dispositivos.Infrastructure.Services;
 
-public class UnlockDoorKafkaConsumerConfig
+public class CheckInRealizadoKafkaConsumerConfig
 {
     public string BootstrapServers { get; set; } = string.Empty;
-    public string GroupId { get; set; } = "dispositivos-unlock-door-group";
-    public string Topic { get; set; } = "dispositivos.unlock-door";
+    public string GroupId { get; set; } = "dispositivos-checkin-group";
+    public string Topic { get; set; } = "reservas.checkin-realizado";
     public string AutoOffsetReset { get; set; } = "Earliest";
     public bool EnableAutoCommit { get; set; } = true;
     public int AutoCommitIntervalMs { get; set; } = 5000;
@@ -22,18 +23,18 @@ public class UnlockDoorKafkaConsumerConfig
     public int MaxPollIntervalMs { get; set; } = 300000;
 }
 
-public class UnlockDoorKafkaConsumer : BackgroundService
+public class CheckInRealizadoKafkaConsumer : BackgroundService
 {
-    private readonly UnlockDoorKafkaConsumerConfig _config;
+    private readonly CheckInRealizadoKafkaConsumerConfig _config;
     private readonly IServiceScopeFactory _scopeFactory;
-    private readonly ILogger<UnlockDoorKafkaConsumer> _logger;
+    private readonly ILogger<CheckInRealizadoKafkaConsumer> _logger;
     private IConsumer<string, string>? _consumer;
     private IAdminClient? _adminClient;
 
-    public UnlockDoorKafkaConsumer(
-        UnlockDoorKafkaConsumerConfig config,
+    public CheckInRealizadoKafkaConsumer(
+        CheckInRealizadoKafkaConsumerConfig config,
         IServiceScopeFactory scopeFactory,
-        ILogger<UnlockDoorKafkaConsumer> logger)
+        ILogger<CheckInRealizadoKafkaConsumer> logger)
     {
         _config = config;
         _scopeFactory = scopeFactory;
@@ -42,7 +43,7 @@ public class UnlockDoorKafkaConsumer : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        await Task.Yield(); // release startup thread immediately so the API can start
+        await Task.Yield();
 
         await WaitForKafkaAsync(stoppingToken);
         if (stoppingToken.IsCancellationRequested) return;
@@ -68,7 +69,7 @@ public class UnlockDoorKafkaConsumer : BackgroundService
         EnsureTopicExists();
 
         _consumer.Subscribe(_config.Topic);
-        _logger.LogInformation("UnlockDoorKafkaConsumer started. Listening on topic: {Topic}", _config.Topic);
+        _logger.LogInformation("CheckInRealizadoKafkaConsumer started. Listening on topic: {Topic}", _config.Topic);
 
         try
         {
@@ -94,11 +95,11 @@ public class UnlockDoorKafkaConsumer : BackgroundService
         }
         catch (OperationCanceledException)
         {
-            _logger.LogInformation("UnlockDoorKafkaConsumer stopping");
+            _logger.LogInformation("CheckInRealizadoKafkaConsumer stopping");
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error in UnlockDoorKafkaConsumer");
+            _logger.LogError(ex, "Unexpected error in CheckInRealizadoKafkaConsumer");
         }
         finally
         {
@@ -143,10 +144,7 @@ public class UnlockDoorKafkaConsumer : BackgroundService
                 _logger.LogInformation("Topic {Topic} created", _config.Topic);
             }
         }
-        catch (CreateTopicsException ex) when (ex.Results[0].Error.Code == ErrorCode.TopicAlreadyExists)
-        {
-            // Already exists, ignore
-        }
+        catch (CreateTopicsException ex) when (ex.Results[0].Error.Code == ErrorCode.TopicAlreadyExists) { }
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "Error ensuring topic exists. Will attempt to subscribe anyway.");
@@ -157,107 +155,83 @@ public class UnlockDoorKafkaConsumer : BackgroundService
     {
         try
         {
-            var unlockEvent = JsonSerializer.Deserialize<UnlockDoorEvent>(messageValue, new JsonSerializerOptions
+            var checkInEvent = JsonSerializer.Deserialize<CheckInRealizadoEvent>(messageValue, new JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true
             });
 
-            if (unlockEvent == null)
+            if (checkInEvent == null)
             {
-                _logger.LogWarning("Could not deserialize UnlockDoorEvent from message: {Message}", messageValue);
+                _logger.LogWarning("Could not deserialize CheckInRealizadoEvent: {Message}", messageValue);
                 return;
             }
 
-            await HandleUnlockDoorAsync(unlockEvent, cancellationToken);
+            await HandleCheckInRealizadoAsync(checkInEvent, cancellationToken);
         }
         catch (JsonException ex)
         {
-            _logger.LogError(ex, "Error deserializing unlock door message");
+            _logger.LogError(ex, "Error deserializing CheckInRealizadoEvent message");
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing unlock door event");
+            _logger.LogError(ex, "Error processing CheckInRealizadoEvent");
         }
     }
 
-    private async Task HandleUnlockDoorAsync(UnlockDoorEvent unlockEvent, CancellationToken cancellationToken)
+    private async Task HandleCheckInRealizadoAsync(CheckInRealizadoEvent checkInEvent, CancellationToken cancellationToken)
     {
         _logger.LogInformation(
-            "Processing UnlockDoorEvent for reserva {NumeroReserva}, habitacion {HabitacionId}",
-            unlockEvent.NumeroReserva, unlockEvent.HabitacionId);
+            "Procesando CheckInRealizadoEvent para reserva {NumeroReserva}, {Count} huespedes",
+            checkInEvent.NumeroReserva, checkInEvent.HuespedIds.Count);
 
         using var scope = _scopeFactory.CreateScope();
         var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
-        var tbDeviceService = scope.ServiceProvider.GetRequiredService<ITbDeviceService>();
 
-        var cerraduras = await unitOfWork.CerradurasInteligente.GetByHabitacionId(unlockEvent.HabitacionId);
-
-        var activeCerradura = cerraduras.FirstOrDefault(c => c.EstaActiva);
-        if (activeCerradura == null)
+        foreach (var huespedId in checkInEvent.HuespedIds)
         {
-            _logger.LogWarning(
-                "No se encontro cerradura activa para habitacion {HabitacionId}",
-                unlockEvent.HabitacionId);
-            return;
+            try
+            {
+                var pin = GenerarPin();
+                var credencial = new Dispositivos.Domain.Entities.CredencialesAcceso
+                {
+                    HuespedId = huespedId,
+                    ReservaId = checkInEvent.ReservaId,
+                    CodigoPin = pin,
+                    HashPin = GenerarHash(pin),
+                    FechaActivacion = checkInEvent.FechaCheckIn,
+                    FechaExpiracion = checkInEvent.FechaCheckOut,
+                    EstaActiva = true,
+                    TipoCredencial = "Huesped",
+                    CreadoPor = "Sistema",
+                    NumeroUsos = 0,
+                    FechaCreacion = DateTime.UtcNow
+                };
+
+                await unitOfWork.CredencialesAcceso.AddAsync(credencial, cancellationToken);
+
+                _logger.LogInformation(
+                    "Credencial generada para HuespedId {HuespedId}, reserva {NumeroReserva}, PIN: {Pin}",
+                    huespedId, checkInEvent.NumeroReserva, pin);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex,
+                    "Error al crear credencial para HuespedId {HuespedId}, reserva {NumeroReserva}",
+                    huespedId, checkInEvent.NumeroReserva);
+            }
         }
 
-        // ThingsBoard device name is the DispositivoId (set during device creation)
-        var tbDeviceName = activeCerradura.DispositivoId.ToString();
-        var tbDevice = await tbDeviceService.GetDeviceByNameAsync(tbDeviceName, cancellationToken);
-
-        if (tbDevice == null || string.IsNullOrEmpty(tbDevice.Id))
-        {
-            _logger.LogWarning(
-                "Dispositivo {DispositivoId} no encontrado en ThingsBoard para habitacion {HabitacionId}",
-                activeCerradura.DispositivoId, unlockEvent.HabitacionId);
-            return;
-        }
-
-        await tbDeviceService.SetSharedAttributesAsync(
-            tbDevice.Id,
-            new Dictionary<string, object> { { "lockState", "unlocked" } },
-            cancellationToken);
-
-        _logger.LogInformation(
-            "lockState=unlocked aplicado en ThingsBoard para dispositivo {DispositivoId} (habitacion {HabitacionId}, reserva {NumeroReserva})",
-            activeCerradura.DispositivoId, unlockEvent.HabitacionId, unlockEvent.NumeroReserva);
-
-        await RegistrarAccesoAsync(unitOfWork, activeCerradura.CerraduraId, unlockEvent, cancellationToken);
+        await unitOfWork.SaveChangesAsync(cancellationToken);
     }
 
-    private async Task RegistrarAccesoAsync(
-        IUnitOfWork unitOfWork,
-        int cerraduraId,
-        UnlockDoorEvent unlockEvent,
-        CancellationToken cancellationToken)
+    private static string GenerarPin()
+        => RandomNumberGenerator.GetInt32(100000, 1000000).ToString();
+
+    private static string GenerarHash(string texto)
     {
-        try
-        {
-            var registro = new Dispositivos.Domain.Entities.RegistrosAcceso
-            {
-                CerraduraId = cerraduraId,
-                CredencialId = unlockEvent.CredencialId,
-                UsuarioId = unlockEvent.UsuarioId,
-                FechaHoraAcceso = DateTime.UtcNow,
-                TipoAcceso = "PIN",
-                ResultadoAcceso = "Concedido",
-                MotivoAcceso = $"Desbloqueo de puerta - Reserva {unlockEvent.NumeroReserva}",
-                DireccionIp = unlockEvent.DireccionIp,
-                InfoDispositivo = unlockEvent.InfoDispositivo,
-                FueExitoso = true
-            };
-
-            await unitOfWork.RegistrosAcceso.AddAsync(registro, cancellationToken);
-            await unitOfWork.SaveChangesAsync(cancellationToken);
-
-            _logger.LogInformation(
-                "RegistrosAcceso creado para cerradura {CerraduraId}, reserva {NumeroReserva}",
-                cerraduraId, unlockEvent.NumeroReserva);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error al crear RegistrosAcceso para cerradura {CerraduraId}", cerraduraId);
-        }
+        using var sha256 = SHA256.Create();
+        var bytes = Encoding.UTF8.GetBytes(texto);
+        return Convert.ToBase64String(sha256.ComputeHash(bytes));
     }
 
     public override void Dispose()

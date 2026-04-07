@@ -1,9 +1,11 @@
 using MediatR;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Notification.Domain.Events;
 using Reservas.Application.Common;
 using Reservas.Application.Interfaces;
 using Reservas.Domain.Entites;
+using System.Security.Claims;
 
 namespace Reservas.Application.Features.Reservas.Commands;
 
@@ -12,17 +14,20 @@ public class UnlockDoorCommandHandler : IRequestHandler<UnlockDoorCommand, Resul
     private readonly IUnitOfWork _unitOfWork;
     private readonly IReservaKafkaProducer _kafkaProducer;
     private readonly ICredencialesAccesoService _credencialesService;
+    private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly ILogger<UnlockDoorCommandHandler> _logger;
 
     public UnlockDoorCommandHandler(
         IUnitOfWork unitOfWork,
         IReservaKafkaProducer kafkaProducer,
         ICredencialesAccesoService credencialesService,
+        IHttpContextAccessor httpContextAccessor,
         ILogger<UnlockDoorCommandHandler> logger)
     {
         _unitOfWork = unitOfWork;
         _kafkaProducer = kafkaProducer;
         _credencialesService = credencialesService;
+        _httpContextAccessor = httpContextAccessor;
         _logger = logger;
     }
 
@@ -47,17 +52,26 @@ public class UnlockDoorCommandHandler : IRequestHandler<UnlockDoorCommand, Resul
             if (!tieneCerradura)
                 return Result<string>.Failure("La habitación no tiene una cerradura inteligente activa asociada.");
 
-            var pinValido = await _credencialesService.ValidatePinForReservaAsync(
+            var credencialId = await _credencialesService.GetCredencialIdAsync(
                 request.ReservaId, request.Pin, cancellationToken);
 
-            if (!pinValido)
+            if (credencialId is null)
                 return Result<string>.Failure("PIN inválido o credencial de acceso no activa para esta reserva.");
+
+            var httpContext = _httpContextAccessor.HttpContext;
+            var usuarioId = httpContext?.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var direccionIp = httpContext?.Connection.RemoteIpAddress?.ToString();
+            var infoDispositivo = httpContext?.Request.Headers["User-Agent"].ToString();
 
             var unlockDoorEvent = new UnlockDoorEvent
             {
                 ReservaId = reserva.ReservaId,
                 HabitacionId = reserva.HabitacionId.Value,
-                NumeroReserva = reserva.NumeroReserva
+                NumeroReserva = reserva.NumeroReserva,
+                CredencialId = credencialId,
+                UsuarioId = usuarioId,
+                DireccionIp = direccionIp,
+                InfoDispositivo = infoDispositivo
             };
 
             await _kafkaProducer.PublishUnlockDoorAsync(unlockDoorEvent, cancellationToken);

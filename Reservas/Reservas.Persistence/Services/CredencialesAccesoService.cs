@@ -14,7 +14,7 @@ public class CredencialesAccesoService : ICredencialesAccesoService
         _context = context;
     }
 
-    public async Task<bool> ValidatePinForReservaAsync(int reservaId, string pin, CancellationToken cancellationToken = default)
+    public async Task<int?> GetCredencialIdAsync(int reservaId, string pin, CancellationToken cancellationToken = default)
     {
         var connection = _context.Database.GetDbConnection();
         if (connection.State != ConnectionState.Open)
@@ -22,7 +22,7 @@ public class CredencialesAccesoService : ICredencialesAccesoService
 
         using var command = connection.CreateCommand();
         command.CommandText = @"
-            SELECT COUNT(1) FROM CredencialesAcceso
+            SELECT TOP 1 CredencialId FROM CredencialesAcceso
             WHERE ReservaId = @reservaId
               AND CodigoPIN = @pin
               AND EstaActiva = 1
@@ -45,7 +45,7 @@ public class CredencialesAccesoService : ICredencialesAccesoService
         command.Parameters.Add(pNow);
 
         var result = await command.ExecuteScalarAsync(cancellationToken);
-        return Convert.ToInt32(result) > 0;
+        return result is null || result == DBNull.Value ? null : Convert.ToInt32(result);
     }
 
     public async Task<bool> HabitacionTieneCerraduraActivaAsync(int habitacionId, CancellationToken cancellationToken = default)
