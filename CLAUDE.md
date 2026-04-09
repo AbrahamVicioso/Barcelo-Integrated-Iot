@@ -167,22 +167,154 @@ Casos conocidos donde aplica:
 
 | Topic | Productor | Consumidor |
 |---|---|---|
-| `reservas` | Reservas.API | Notification.Worker |
-| `users` | Authenticate.API | Notification.Worker |
-| `email-confirmation` | Authenticate.API | Notification.Worker |
-| `dispositivos.unlock-door` | Reservas.API | Dispositivos.Infrastructure (BackgroundService) |
-| `reservas.checkin-realizado` | Reservas.API | Dispositivos.Infrastructure (BackgroundService) |
+| `reservas` | Reservas.API | Notification.Worker (`ReservaCreadaEventConsumer`) |
+| `users` | Authenticate.API | Notification.Worker (`UserCreatedEventConsumer`) |
+| `email-confirmation` | Authenticate.API | Notification.Worker (`EmailConfirmationEventConsumer`) |
+| `dispositivos.unlock-door` | Reservas.API | Dispositivos.Infrastructure (`UnlockDoorKafkaConsumer`) |
+| `reservas.checkin-realizado` | Reservas.API | Dispositivos.Infrastructure (`CheckInRealizadoKafkaConsumer`) |
+| `checkin.credenciales` | Dispositivos.Infrastructure | Notification.Worker (`CredencialesCheckInEventConsumer`) |
 | `audit.events` | Todos los APIs | Audit.Worker |
 
 **Flujo unlock-door:**
 1. `POST /reservas/{id}/unlock-door?pin=` → `UnlockDoorCommand`
-2. Handler valida reserva activa, habitación asignada, PIN correcto
+2. Handler valida reserva activa, habitación asignada, PIN correcto → `RegistrarUsoAsync` suma uso a la credencial
 3. Publica `UnlockDoorEvent` a `dispositivos.unlock-door`
 4. `UnlockDoorKafkaConsumer` (BackgroundService en Dispositivos):
    - Busca cerradura activa por `HabitacionId`
    - Obtiene device de ThingsBoard por nombre = `DispositivoId.ToString()`
    - Setea `lockState = "unlocked"` como shared attribute
    - Registra entrada en `RegistrosAcceso`
+
+**Flujo check-in + credenciales + email:**
+1. `POST /reservas/checkin` → `PerformCheckInCommand`
+2. Handler valida reserva, verifica email del huésped principal, obtiene email+nombre de **todos** los huéspedes vía `IUsuariosApiService`
+3. Publica `CheckInRealizadoEvent { Huespedes: [{HuespedId, Email, NombreCompleto}] }` a `reservas.checkin-realizado`
+4. `CheckInRealizadoKafkaConsumer` (Dispositivos):
+   - Genera PIN aleatorio por huésped con `RandomNumberGenerator.GetInt32(100000, 1000000)`
+   - Crea `CredencialesAcceso` (FechaActivacion=CheckIn, FechaExpiracion=CheckOut)
+   - Publica `CredencialesCheckInEvent { Credenciales: [{Email, NombreCompleto, CodigoPin}] }` a `checkin.credenciales`
+5. `CredencialesCheckInEventConsumer` (Notification.Worker):
+   - Por cada huésped con email: envía email HTML con el PIN + push notification
+
+---
+
+## Kafka — patrón para agregar un nuevo flujo de notificación
+
+Cuando necesites crear un nuevo flujo evento → notificación, sigue exactamente estos pasos:
+
+### Paso 1 — Evento en `Notification.Domain/Events/`
+```csharp
+public class MiNuevoEvent
+{
+    public Guid Id { get; set; } = Guid.NewGuid();
+    // campos del evento...
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+}
+```
+
+### Paso 2 — Config en `Notification.Kafka/Configuration/`
+```csharp
+public class MiNuevoConsumerConfig : KafkaConsumerConfig
+{
+    public MiNuevoConsumerConfig()
+    {
+        GroupId = "notification-mi-nuevo-group";
+        Topic = "mi.nuevo.topic";
+    }
+}
+```
+
+### Paso 3 — Consumer en `Notification.Kafka/Services/`
+
+Seguir el patrón de `ReservaCreadaEventConsumer` o `CredencialesCheckInEventConsumer`:
+- Constructor recibe: `Config`, `IEmailService`, `IPushNotificationService`, `ILogger`
+- `StartAsync` → `EnsureTopicExists()` → `_consumer.Subscribe` → lanza `Task.Run(ConsumeMessages)`
+- `ConsumeMessages` → loop → `ProcessMessageAsync`
+- `ProcessMessageAsync` → deserializa JSON → llama al método de negocio
+- `StopAsync` → cancela + `_consumer.Close()`
+- `Dispose` → libera consumer, adminClient, cts
+
+### Paso 4 — Registrar en `Notification.Worker/Program.cs`
+```csharp
+// En ConfigureServices:
+var miConfig = new MiNuevoConsumerConfig();
+context.Configuration.GetSection("KafkaConsumer:MiNuevo").Bind(miConfig);
+services.AddSingleton(miConfig);
+services.AddSingleton<MiNuevoEventConsumer>();
+services.AddHostedService<MiNuevoNotificationWorker>();
+
+// Al final del archivo, nuevo BackgroundService:
+public class MiNuevoNotificationWorker : BackgroundService
+{
+    private readonly MiNuevoEventConsumer _kafkaConsumer;
+    // ...igual que todos los otros workers del archivo
+}
+```
+
+### Paso 5 — `docker-compose.yml` — OBLIGATORIO
+
+Cada consumer necesita sus variables de entorno en el docker-compose. **Si no se agregan aquí, el worker usará `localhost:9092` en vez de `kafka:29092` y fallará en Docker.**
+
+En el bloque `notification-worker > environment`:
+```yaml
+KafkaConsumer__MiNuevo__BootstrapServers: kafka:29092
+KafkaConsumer__MiNuevo__GroupId: notification-mi-nuevo-group
+KafkaConsumer__MiNuevo__Topic: mi.nuevo.topic
+```
+
+Si el productor está en `dispositivos-api`, agregar en `dispositivos-api > environment`:
+```yaml
+KafkaConsumer__CheckInRealizado__CredencialesProducerTopic: mi.nuevo.topic
+```
+
+> ⚠️ En Docker la red interna usa `kafka:29092`. El `localhost:9092` solo funciona desde el host. El `appsettings.json` tiene `localhost:9092` para desarrollo local — el docker-compose lo sobreescribe con variables de entorno.
+
+### Paso 6 — `appsettings.json` de Notification.Worker
+```json
+"KafkaConsumer": {
+  "MiNuevo": {
+    "BootstrapServers": "localhost:9092",
+    "GroupId": "notification-mi-nuevo-group",
+    "Topic": "mi.nuevo.topic",
+    "AutoOffsetReset": "Earliest",
+    "EnableAutoCommit": true,
+    "AutoCommitIntervalMs": 5000,
+    "SessionTimeoutMs": 30000,
+    "MaxPollIntervalMs": 300000
+  }
+}
+```
+
+### Paso 6 — Si el productor es un BackgroundService en `Dispositivos.Infrastructure`
+
+Añadir `IProducer<string, string>` en el constructor del BackgroundService:
+```csharp
+_producer = new ProducerBuilder<string, string>(new ProducerConfig
+{
+    BootstrapServers = _config.BootstrapServers,
+    Acks = Acks.Leader
+}).Build();
+```
+Y en `Dispose`: `_producer?.Flush(TimeSpan.FromSeconds(5)); _producer?.Dispose();`
+
+El topic destino se configura como campo extra en la config del consumer:
+```csharp
+public string MiTopicProducerTopic { get; set; } = "mi.nuevo.topic";
+```
+Y en `appsettings.json` del servicio que produce:
+```json
+"KafkaConsumer:CheckInRealizado:MiTopicProducerTopic": "mi.nuevo.topic"
+```
+
+---
+
+## Credenciales de acceso (`CredencialesAcceso`)
+
+- **PIN generado**: `RandomNumberGenerator.GetInt32(100000, 1000000).ToString()` (6 dígitos)
+- **Hash**: SHA-256 en Base64 → guardado en `HashPin`
+- **Validación al usar unlock-door**: `ICredencialesAccesoService.GetCredencialIdAsync(reservaId, pin)` — compara `CodigoPIN` directo (no hash) con SQL raw
+- **Registro de uso**: `ICredencialesAccesoService.RegistrarUsoAsync(credencialId)` → `NumeroUsos + 1` y `UltimoUso = NOW`
+- **Constraint**: `CHK_Credenciales_Fechas` — `FechaExpiracion > FechaActivacion` (validar antes de insertar)
 
 ---
 

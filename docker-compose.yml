@@ -269,6 +269,7 @@ services:
       KafkaConsumer__CheckInRealizado__BootstrapServers: kafka:29092
       KafkaConsumer__CheckInRealizado__GroupId: dispositivos-checkin-group
       KafkaConsumer__CheckInRealizado__Topic: reservas.checkin-realizado
+      KafkaConsumer__CheckInRealizado__CredencialesProducerTopic: checkin.credenciales
     networks:
       - barcelo-net
     depends_on:
@@ -323,6 +324,9 @@ services:
       KafkaConsumer__EmailConfirmation__BootstrapServers: kafka:29092
       KafkaConsumer__EmailConfirmation__GroupId: notification-email-confirmation-group
       KafkaConsumer__EmailConfirmation__Topic: email-confirmation
+      KafkaConsumer__CredencialesCheckIn__BootstrapServers: kafka:29092
+      KafkaConsumer__CredencialesCheckIn__GroupId: notification-credenciales-checkin-group
+      KafkaConsumer__CredencialesCheckIn__Topic: checkin.credenciales
       EmailSettings__ConnectionString: ${AZURE_COMMUNICATION_CONNECTION_STRING:?EmailSettings__ConnectionString is required. Set AZURE_COMMUNICATION_CONNECTION_STRING in your .env file}
       EmailSettings__Username: ${AZURE_COMMUNICATION_SENDER_ADDRESS:?EmailSettings__Username is required. Set AZURE_COMMUNICATION_SENDER_ADDRESS in your .env file}
       Ntfy__BaseUrl: https://ntfy:443

@@ -58,6 +58,8 @@ public class UnlockDoorCommandHandler : IRequestHandler<UnlockDoorCommand, Resul
             if (credencialId is null)
                 return Result<string>.Failure("PIN inválido o credencial de acceso no activa para esta reserva.");
 
+            await _credencialesService.RegistrarUsoAsync(credencialId.Value, cancellationToken);
+
             var httpContext = _httpContextAccessor.HttpContext;
             var usuarioId = httpContext?.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             var direccionIp = httpContext?.Connection.RemoteIpAddress?.ToString();

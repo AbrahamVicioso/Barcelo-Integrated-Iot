@@ -102,7 +102,7 @@ namespace Reservas.Infrastructure.Kafka
 
                 _logger.LogInformation(
                     "Published CheckInRealizadoEvent for reserva {NumeroReserva} ({Count} huespedes) to partition {Partition} at offset {Offset}",
-                    checkInEvent.NumeroReserva, checkInEvent.HuespedIds.Count, result.Partition.Value, result.Offset.Value);
+                    checkInEvent.NumeroReserva, checkInEvent.Huespedes.Count, result.Partition.Value, result.Offset.Value);
             }
             catch (ProduceException<string, string> ex)
             {

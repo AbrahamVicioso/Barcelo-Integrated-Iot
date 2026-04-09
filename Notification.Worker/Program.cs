@@ -58,15 +58,22 @@ namespace Notification.Worker
                 context.Configuration.GetSection("KafkaConsumer:EmailConfirmation").Bind(emailConfirmationConsumerConfig);
                 services.AddSingleton(emailConfirmationConsumerConfig);
 
+                // Configure CredencialesCheckInConsumerConfig
+                var credencialesCheckInConsumerConfig = new CredencialesCheckInConsumerConfig();
+                context.Configuration.GetSection("KafkaConsumer:CredencialesCheckIn").Bind(credencialesCheckInConsumerConfig);
+                services.AddSingleton(credencialesCheckInConsumerConfig);
+
                 // Add Kafka Consumers as separate instances
                 services.AddSingleton<UserCreatedEventConsumer>();
                 services.AddSingleton<ReservaCreadaEventConsumer>();
                 services.AddSingleton<EmailConfirmationEventConsumer>();
+                services.AddSingleton<CredencialesCheckInEventConsumer>();
 
                 // Add Background Services for Kafka Consumers
                 services.AddHostedService<UserCreatedNotificationWorker>();
                 services.AddHostedService<ReservaCreadaNotificationWorker>();
                 services.AddHostedService<EmailConfirmationNotificationWorker>();
+                services.AddHostedService<CredencialesCheckInNotificationWorker>();
             });
 
             IHost host = builder.Build();
@@ -163,21 +170,44 @@ namespace Notification.Worker
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             _logger.LogInformation("Starting Email Confirmation Notification Worker...");
-
             await _kafkaConsumer.StartAsync(stoppingToken);
-
             while (!stoppingToken.IsCancellationRequested)
-            {
                 await Task.Delay(Timeout.Infinite, stoppingToken);
-            }
         }
 
         public override async Task StopAsync(CancellationToken cancellationToken)
         {
             _logger.LogInformation("Stopping Email Confirmation Notification Worker...");
-
             await _kafkaConsumer.StopAsync(cancellationToken);
+            await base.StopAsync(cancellationToken);
+        }
+    }
 
+    public class CredencialesCheckInNotificationWorker : BackgroundService
+    {
+        private readonly CredencialesCheckInEventConsumer _kafkaConsumer;
+        private readonly ILogger<CredencialesCheckInNotificationWorker> _logger;
+
+        public CredencialesCheckInNotificationWorker(
+            CredencialesCheckInEventConsumer kafkaConsumer,
+            ILogger<CredencialesCheckInNotificationWorker> logger)
+        {
+            _kafkaConsumer = kafkaConsumer;
+            _logger = logger;
+        }
+
+        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+        {
+            _logger.LogInformation("Starting Credenciales CheckIn Notification Worker...");
+            await _kafkaConsumer.StartAsync(stoppingToken);
+            while (!stoppingToken.IsCancellationRequested)
+                await Task.Delay(Timeout.Infinite, stoppingToken);
+        }
+
+        public override async Task StopAsync(CancellationToken cancellationToken)
+        {
+            _logger.LogInformation("Stopping Credenciales CheckIn Notification Worker...");
+            await _kafkaConsumer.StopAsync(cancellationToken);
             await base.StopAsync(cancellationToken);
         }
     }

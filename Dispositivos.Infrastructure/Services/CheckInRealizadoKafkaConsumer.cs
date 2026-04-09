@@ -21,6 +21,7 @@ public class CheckInRealizadoKafkaConsumerConfig
     public int AutoCommitIntervalMs { get; set; } = 5000;
     public int SessionTimeoutMs { get; set; } = 30000;
     public int MaxPollIntervalMs { get; set; } = 300000;
+    public string CredencialesProducerTopic { get; set; } = "checkin.credenciales";
 }
 
 public class CheckInRealizadoKafkaConsumer : BackgroundService
@@ -30,6 +31,7 @@ public class CheckInRealizadoKafkaConsumer : BackgroundService
     private readonly ILogger<CheckInRealizadoKafkaConsumer> _logger;
     private IConsumer<string, string>? _consumer;
     private IAdminClient? _adminClient;
+    private IProducer<string, string>? _producer;
 
     public CheckInRealizadoKafkaConsumer(
         CheckInRealizadoKafkaConsumerConfig config,
@@ -65,6 +67,12 @@ public class CheckInRealizadoKafkaConsumer : BackgroundService
 
         var adminConfig = new AdminClientConfig { BootstrapServers = _config.BootstrapServers };
         _adminClient = new AdminClientBuilder(adminConfig).Build();
+
+        _producer = new ProducerBuilder<string, string>(new ProducerConfig
+        {
+            BootstrapServers = _config.BootstrapServers,
+            Acks = Acks.Leader
+        }).Build();
 
         EnsureTopicExists();
 
@@ -182,19 +190,21 @@ public class CheckInRealizadoKafkaConsumer : BackgroundService
     {
         _logger.LogInformation(
             "Procesando CheckInRealizadoEvent para reserva {NumeroReserva}, {Count} huespedes",
-            checkInEvent.NumeroReserva, checkInEvent.HuespedIds.Count);
+            checkInEvent.NumeroReserva, checkInEvent.Huespedes.Count);
 
         using var scope = _scopeFactory.CreateScope();
         var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
 
-        foreach (var huespedId in checkInEvent.HuespedIds)
+        var credencialesGeneradas = new List<CredencialHuespedInfo>();
+
+        foreach (var huesped in checkInEvent.Huespedes)
         {
             try
             {
                 var pin = GenerarPin();
                 var credencial = new Dispositivos.Domain.Entities.CredencialesAcceso
                 {
-                    HuespedId = huespedId,
+                    HuespedId = huesped.HuespedId,
                     ReservaId = checkInEvent.ReservaId,
                     CodigoPin = pin,
                     HashPin = GenerarHash(pin),
@@ -209,19 +219,70 @@ public class CheckInRealizadoKafkaConsumer : BackgroundService
 
                 await unitOfWork.CredencialesAcceso.AddAsync(credencial, cancellationToken);
 
+                credencialesGeneradas.Add(new CredencialHuespedInfo
+                {
+                    HuespedId = huesped.HuespedId,
+                    Email = huesped.Email,
+                    NombreCompleto = huesped.NombreCompleto,
+                    CodigoPin = pin
+                });
+
                 _logger.LogInformation(
-                    "Credencial generada para HuespedId {HuespedId}, reserva {NumeroReserva}, PIN: {Pin}",
-                    huespedId, checkInEvent.NumeroReserva, pin);
+                    "Credencial generada para HuespedId {HuespedId}, reserva {NumeroReserva}",
+                    huesped.HuespedId, checkInEvent.NumeroReserva);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex,
                     "Error al crear credencial para HuespedId {HuespedId}, reserva {NumeroReserva}",
-                    huespedId, checkInEvent.NumeroReserva);
+                    huesped.HuespedId, checkInEvent.NumeroReserva);
             }
         }
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
+
+        // Publicar evento para que Notification.Worker envíe el PIN por email a cada huésped
+        if (credencialesGeneradas.Count > 0)
+            await PublicarCredencialesEventAsync(checkInEvent, credencialesGeneradas, cancellationToken);
+    }
+
+    private async Task PublicarCredencialesEventAsync(
+        CheckInRealizadoEvent checkInEvent,
+        List<CredencialHuespedInfo> credenciales,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var notifEvent = new CredencialesCheckInEvent
+            {
+                ReservaId = checkInEvent.ReservaId,
+                NumeroReserva = checkInEvent.NumeroReserva,
+                FechaCheckIn = checkInEvent.FechaCheckIn,
+                FechaCheckOut = checkInEvent.FechaCheckOut,
+                Credenciales = credenciales
+            };
+
+            var message = new Message<string, string>
+            {
+                Key = checkInEvent.NumeroReserva,
+                Value = JsonSerializer.Serialize(notifEvent, new JsonSerializerOptions
+                {
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                })
+            };
+
+            await _producer!.ProduceAsync(_config.CredencialesProducerTopic, message, cancellationToken);
+
+            _logger.LogInformation(
+                "CredencialesCheckInEvent publicado para reserva {NumeroReserva}, {Count} huespedes",
+                checkInEvent.NumeroReserva, credenciales.Count);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex,
+                "Error publicando CredencialesCheckInEvent para reserva {NumeroReserva}",
+                checkInEvent.NumeroReserva);
+        }
     }
 
     private static string GenerarPin()
@@ -236,6 +297,8 @@ public class CheckInRealizadoKafkaConsumer : BackgroundService
 
     public override void Dispose()
     {
+        _producer?.Flush(TimeSpan.FromSeconds(5));
+        _producer?.Dispose();
         _consumer?.Dispose();
         _adminClient?.Dispose();
         base.Dispose();

@@ -87,11 +87,32 @@ public class PerformCheckInCommandHandler : IRequestHandler<PerformCheckInComman
                 .Distinct()
                 .ToList();
 
+            // Obtener datos de cada huésped para incluir email en el evento
+            var huespedInfos = new List<HuespedCheckInInfo>();
+            foreach (var huespedId in huespedIds)
+            {
+                try
+                {
+                    var h = await _usuariosApiService.GetHuespedByIdAsync(huespedId, cancellationToken);
+                    huespedInfos.Add(new HuespedCheckInInfo
+                    {
+                        HuespedId = huespedId,
+                        Email = h?.CorreoElectronico ?? string.Empty,
+                        NombreCompleto = h?.NombreCompleto ?? string.Empty
+                    });
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "No se pudo obtener email del huésped {HuespedId}", huespedId);
+                    huespedInfos.Add(new HuespedCheckInInfo { HuespedId = huespedId });
+                }
+            }
+
             var checkInEvent = new CheckInRealizadoEvent
             {
                 ReservaId = reserva.ReservaId,
                 NumeroReserva = reserva.NumeroReserva,
-                HuespedIds = huespedIds,
+                Huespedes = huespedInfos,
                 FechaCheckIn = fechaCheckIn,
                 FechaCheckOut = reserva.FechaCheckOut
             };
