@@ -14,7 +14,7 @@ public class CreateCerradurasInteligenteCommandHandler : IRequestHandler<CreateC
     private readonly ICerradurasInteligenteRepository _cerraduraRepository;
 
     public CreateCerradurasInteligenteCommandHandler(
-        IMapper mapper, 
+        IMapper mapper,
         IUnitOfWork unitOfWork,
         ICerradurasInteligenteRepository cerraduraRepository)
     {
@@ -27,12 +27,36 @@ public class CreateCerradurasInteligenteCommandHandler : IRequestHandler<CreateC
     {
         try
         {
+            // Validar que el DispositivoId existe
+            var dispositivo = await _unitOfWork.Dispositivos.GetById(request.Cerradura.DispositivoId);
+            if (dispositivo == null)
+                return Result<int>.Failure($"Dispositivo con ID {request.Cerradura.DispositivoId} no encontrado.");
+
+            // Validar que el dispositivo no tenga ya una cerradura asignada
+            var cerradurasDispositivo = await _cerraduraRepository.GetByDispositivoId(request.Cerradura.DispositivoId);
+            if (cerradurasDispositivo.Any())
+                return Result<int>.Failure($"El dispositivo '{dispositivo.NumeroSerieDispositivo}' ya tiene una cerradura asignada.");
+
+            // Validar que la habitación no tenga ya una cerradura asignada
+            var cerradurasHabitacion = await _cerraduraRepository.GetByHabitacionId(request.Cerradura.HabitacionId);
+            if (cerradurasHabitacion.Any())
+                return Result<int>.Failure($"La habitación {request.Cerradura.HabitacionId} ya tiene una cerradura asignada.");
+
             var cerradura = _mapper.Map<CerraduraEntity>(request.Cerradura);
-            
+
             await _cerraduraRepository.AddAsync(cerradura, cancellationToken);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
             return Result<int>.Success(cerradura.CerraduraId);
+        }
+        catch (Exception ex) when (ex.GetType().Name == "DbUpdateException")
+        {
+            var inner = ex.InnerException?.Message ?? ex.Message;
+            if (inner.Contains("UQ_Cerraduras_Habitacion"))
+                return Result<int>.Failure($"La habitación {request.Cerradura.HabitacionId} ya tiene una cerradura asignada.");
+            if (inner.Contains("FK_Cerraduras_Dispositivos"))
+                return Result<int>.Failure($"Dispositivo con ID {request.Cerradura.DispositivoId} no encontrado.");
+            return Result<int>.Failure($"Error de base de datos al crear la cerradura: {inner}");
         }
         catch (Exception ex)
         {

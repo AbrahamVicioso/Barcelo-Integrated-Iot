@@ -34,8 +34,8 @@ public class UpdateReservaCommandHandler : IRequestHandler<UpdateReservaCommand,
             if (fechaCheckOut <= fechaCheckIn)
                 return Result<ReservaDto>.Failure("La fecha de check-out debe ser posterior a la fecha de check-in.");
 
-            if (fechaCheckIn < DateTime.UtcNow.Date)
-                return Result<ReservaDto>.Failure("La fecha de check-in no puede ser en el pasado.");
+            // if (fechaCheckIn < DateTime.UtcNow.Date)
+            //     return Result<ReservaDto>.Failure("La fecha de check-in no puede ser en el pasado.");
 
             if (habitacionId.HasValue)
             {

@@ -36,18 +36,27 @@ public class CreateCredencialesAccesoCommandHandler : IRequestHandler<CreateCred
     {
         try
         {
+            if (request.Credencial.FechaExpiracion <= request.Credencial.FechaActivacion)
+                return Result<int>.Failure("La fecha de expiración debe ser posterior a la fecha de activación.");
+
+            if (request.Credencial.FechaActivacion < DateTime.UtcNow.Date)
+                return Result<int>.Failure("La fecha de activación no puede ser en el pasado.");
+
             var credencial = _mapper.Map<CredencialEntity>(request.Credencial);
             credencial.FechaCreacion = DateTime.UtcNow;
+            credencial.HashPin = GenerarHash(credencial.CodigoPin);
 
-            // 🔥 Generar y asignar el hash
-                credencial.HashPin = GenerarHash(credencial.CodigoPin);
-
-
-            
             await _credencialRepository.AddAsync(credencial, cancellationToken);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
             return Result<int>.Success(credencial.CredencialId);
+        }
+        catch (Exception ex) when (ex.GetType().Name == "DbUpdateException")
+        {
+            var inner = ex.InnerException?.Message ?? ex.Message;
+            if (inner.Contains("CHK_Credenciales_Fechas"))
+                return Result<int>.Failure("La fecha de expiración debe ser posterior a la fecha de activación.");
+            return Result<int>.Failure($"Error de base de datos al crear la credencial: {inner}");
         }
         catch (Exception ex)
         {

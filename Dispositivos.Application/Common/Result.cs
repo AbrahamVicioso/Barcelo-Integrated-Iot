@@ -3,34 +3,29 @@ namespace Dispositivos.Application.Common;
 public class Result<T>
 {
     public bool IsSuccess { get; set; }
+    public bool IsNotFound { get; set; }
     public T? Data { get; set; }
     public string? ErrorMessage { get; set; }
     public List<string>? Errors { get; set; }
 
-    public static Result<T> Success(T data)
-    {
-        return new Result<T>
-        {
-            IsSuccess = true,
-            Data = data
-        };
-    }
+    public static Result<T> Success(T data) => new Result<T> { IsSuccess = true, Data = data };
 
-    public static Result<T> Failure(string errorMessage)
+    public static Result<T> NotFound(string errorMessage) => new Result<T>
     {
-        return new Result<T>
-        {
-            IsSuccess = false,
-            ErrorMessage = errorMessage
-        };
-    }
+        IsSuccess = false,
+        IsNotFound = true,
+        ErrorMessage = errorMessage
+    };
 
-    public static Result<T> Failure(List<string> errors)
+    public static Result<T> Failure(string errorMessage) => new Result<T>
     {
-        return new Result<T>
-        {
-            IsSuccess = false,
-            Errors = errors
-        };
-    }
+        IsSuccess = false,
+        ErrorMessage = errorMessage
+    };
+
+    public static Result<T> Failure(List<string> errors) => new Result<T>
+    {
+        IsSuccess = false,
+        Errors = errors
+    };
 }

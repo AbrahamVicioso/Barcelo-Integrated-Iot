@@ -30,17 +30,25 @@ public class UpdateCredencialesAccesoCommandHandler : IRequestHandler<UpdateCred
             var credencial = await _credencialRepository.GetById(request.Credencial.CredencialId);
 
             if (credencial == null)
-            {
-                return Result<CredencialesAccesoDto>.Failure($"Credencial con ID {request.Credencial.CredencialId} no encontrada.");
-            }
+                return Result<CredencialesAccesoDto>.NotFound($"Credencial con ID {request.Credencial.CredencialId} no encontrada.");
+
+            if (request.Credencial.FechaExpiracion <= request.Credencial.FechaActivacion)
+                return Result<CredencialesAccesoDto>.Failure("La fecha de expiración debe ser posterior a la fecha de activación.");
 
             _mapper.Map(request.Credencial, credencial);
-            
+
             await _credencialRepository.UpdateAsync(credencial, cancellationToken);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
             var credencialDto = _mapper.Map<CredencialesAccesoDto>(credencial);
             return Result<CredencialesAccesoDto>.Success(credencialDto);
+        }
+        catch (Exception ex) when (ex.GetType().Name == "DbUpdateException")
+        {
+            var inner = ex.InnerException?.Message ?? ex.Message;
+            if (inner.Contains("CHK_Credenciales_Fechas"))
+                return Result<CredencialesAccesoDto>.Failure("La fecha de expiración debe ser posterior a la fecha de activación.");
+            return Result<CredencialesAccesoDto>.Failure($"Error de base de datos al actualizar la credencial: {inner}");
         }
         catch (Exception ex)
         {
