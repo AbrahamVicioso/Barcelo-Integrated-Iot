@@ -6,14 +6,14 @@ using Dispositivos.Application.Interfaces;
 
 namespace Dispositivos.Application.Features.RegistrosAuditorium.Queries;
 
-public class GetAllRegistrosAuditoriumQueryHandler : IRequestHandler<GetAllRegistrosAuditoriumQuery, Result<IEnumerable<RegistrosAuditoriumDto>>>
+public class GetAllRegistrosAuditoriumQueryHandler : IRequestHandler<GetAllRegistrosAuditoriumQuery, Result<PagedResult<RegistrosAuditoriumDto>>>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
     private readonly IRegistrosAuditoriumRepository _registroRepository;
 
     public GetAllRegistrosAuditoriumQueryHandler(
-        IUnitOfWork unitOfWork, 
+        IUnitOfWork unitOfWork,
         IMapper mapper,
         IRegistrosAuditoriumRepository registroRepository)
     {
@@ -22,17 +22,23 @@ public class GetAllRegistrosAuditoriumQueryHandler : IRequestHandler<GetAllRegis
         _registroRepository = registroRepository;
     }
 
-    public async Task<Result<IEnumerable<RegistrosAuditoriumDto>>> Handle(GetAllRegistrosAuditoriumQuery request, CancellationToken cancellationToken)
+    public async Task<Result<PagedResult<RegistrosAuditoriumDto>>> Handle(GetAllRegistrosAuditoriumQuery request, CancellationToken cancellationToken)
     {
         try
         {
-            var registros = await _registroRepository.GetAllAsync();
-            var registrosDto = _mapper.Map<IEnumerable<RegistrosAuditoriumDto>>(registros);
-            return Result<IEnumerable<RegistrosAuditoriumDto>>.Success(registrosDto);
+            var todos = await _registroRepository.GetAllAsync();
+            var todosDto = _mapper.Map<IEnumerable<RegistrosAuditoriumDto>>(todos).ToList();
+            var totalCount = todosDto.Count;
+            var items = todosDto
+                .Skip((request.Page - 1) * request.PageSize)
+                .Take(request.PageSize)
+                .ToList();
+            return Result<PagedResult<RegistrosAuditoriumDto>>.Success(
+                new PagedResult<RegistrosAuditoriumDto>(items, request.Page, request.PageSize, totalCount));
         }
         catch (Exception ex)
         {
-            return Result<IEnumerable<RegistrosAuditoriumDto>>.Failure($"Error al obtener los registros de auditoría: {ex.Message}");
+            return Result<PagedResult<RegistrosAuditoriumDto>>.Failure($"Error al obtener los registros de auditoría: {ex.Message}");
         }
     }
 }

@@ -6,7 +6,7 @@ using Dispositivos.Application.Interfaces;
 
 namespace Dispositivos.Application.Features.Dispositivos.Queries;
 
-public class GetAllDispositivosQueryHandler : IRequestHandler<GetAllDispositivosQuery, Result<IEnumerable<DispositivoDto>>>
+public class GetAllDispositivosQueryHandler : IRequestHandler<GetAllDispositivosQuery, Result<PagedResult<DispositivoDto>>>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
@@ -17,17 +17,23 @@ public class GetAllDispositivosQueryHandler : IRequestHandler<GetAllDispositivos
         _mapper = mapper;
     }
 
-    public async Task<Result<IEnumerable<DispositivoDto>>> Handle(GetAllDispositivosQuery request, CancellationToken cancellationToken)
+    public async Task<Result<PagedResult<DispositivoDto>>> Handle(GetAllDispositivosQuery request, CancellationToken cancellationToken)
     {
         try
         {
-            var dispositivos = await _unitOfWork.Dispositivos.GetAll();
-            var dispositivosDto = _mapper.Map<IEnumerable<DispositivoDto>>(dispositivos);
-            return Result<IEnumerable<DispositivoDto>>.Success(dispositivosDto);
+            var todos = await _unitOfWork.Dispositivos.GetAll();
+            var todosDto = _mapper.Map<IEnumerable<DispositivoDto>>(todos).ToList();
+            var totalCount = todosDto.Count;
+            var items = todosDto
+                .Skip((request.Page - 1) * request.PageSize)
+                .Take(request.PageSize)
+                .ToList();
+            return Result<PagedResult<DispositivoDto>>.Success(
+                new PagedResult<DispositivoDto>(items, request.Page, request.PageSize, totalCount));
         }
         catch (Exception ex)
         {
-            return Result<IEnumerable<DispositivoDto>>.Failure($"Error al obtener los dispositivos: {ex.Message}");
+            return Result<PagedResult<DispositivoDto>>.Failure($"Error al obtener los dispositivos: {ex.Message}");
         }
     }
 }

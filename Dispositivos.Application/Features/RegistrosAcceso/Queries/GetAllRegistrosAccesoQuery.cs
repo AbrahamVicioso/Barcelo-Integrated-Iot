@@ -4,6 +4,8 @@ using Dispositivos.Application.DTOs;
 
 namespace Dispositivos.Application.Features.RegistrosAcceso.Queries;
 
-public class GetAllRegistrosAccesoQuery : IRequest<Result<IEnumerable<RegistrosAccesoDto>>>
+public class GetAllRegistrosAccesoQuery : IRequest<Result<PagedResult<RegistrosAccesoDto>>>
 {
+    public int Page { get; set; } = 1;
+    public int PageSize { get; set; } = 20;
 }

@@ -1,6 +1,7 @@
 using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Dispositivos.Application.Common;
 using Dispositivos.Application.DTOs;
 using Dispositivos.Application.Features.RegistrosAuditorium.Commands;
 using Dispositivos.Application.Features.RegistrosAuditorium.Queries;
@@ -19,10 +20,12 @@ public class RegistrosAuditoriumController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetAll()
+    public async Task<IActionResult> GetAll([FromQuery] PaginationParams pagination)
     {
-        var result = await _mediator.Send(new GetAllRegistrosAuditoriumQuery());
-        return result.IsSuccess ? Ok(result.Data) : BadRequest(result.ErrorMessage);
+        var result = await _mediator.Send(new GetAllRegistrosAuditoriumQuery { Page = pagination.Page, PageSize = pagination.PageSize });
+        if (!result.IsSuccess)
+            return result.IsNotFound ? NotFound(new { error = result.ErrorMessage }) : BadRequest(new { error = result.ErrorMessage });
+        return Ok(result.Data);
     }
 
     [HttpGet("{id}")]

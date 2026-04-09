@@ -1,6 +1,7 @@
 using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Dispositivos.Application.Common;
 using Dispositivos.Application.DTOs;
 using Dispositivos.Application.Features.CerradurasInteligente.Commands;
 using Dispositivos.Application.Features.CerradurasInteligente.Queries;
@@ -19,9 +20,9 @@ public class CerradurasInteligenteController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetAll()
+    public async Task<IActionResult> GetAll([FromQuery] PaginationParams pagination)
     {
-        var result = await _mediator.Send(new GetAllCerradurasInteligenteQuery());
+        var result = await _mediator.Send(new GetAllCerradurasInteligenteQuery { Page = pagination.Page, PageSize = pagination.PageSize });
         if (!result.IsSuccess)
             return result.IsNotFound ? NotFound(new { error = result.ErrorMessage }) : BadRequest(new { error = result.ErrorMessage });
         return Ok(result.Data);

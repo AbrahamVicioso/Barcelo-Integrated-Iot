@@ -6,27 +6,24 @@ using Dispositivos.Application.Interfaces;
 
 namespace Dispositivos.Application.Features.CredencialesAcceso.Queries;
 
-public class GetAllCredencialesAccesoQueryHandler : IRequestHandler<GetAllCredencialesAccesoQuery, Result<PagedResult<CredencialesAccesoDto>>>
+public class GetCredencialesByHuespedIdQueryHandler : IRequestHandler<GetCredencialesByHuespedIdQuery, Result<PagedResult<CredencialesAccesoDto>>>
 {
-    private readonly IUnitOfWork _unitOfWork;
-    private readonly IMapper _mapper;
     private readonly ICredencialesAccesoRepository _credencialRepository;
+    private readonly IMapper _mapper;
 
-    public GetAllCredencialesAccesoQueryHandler(
-        IUnitOfWork unitOfWork,
-        IMapper mapper,
-        ICredencialesAccesoRepository credencialRepository)
+    public GetCredencialesByHuespedIdQueryHandler(
+        ICredencialesAccesoRepository credencialRepository,
+        IMapper mapper)
     {
-        _unitOfWork = unitOfWork;
-        _mapper = mapper;
         _credencialRepository = credencialRepository;
+        _mapper = mapper;
     }
 
-    public async Task<Result<PagedResult<CredencialesAccesoDto>>> Handle(GetAllCredencialesAccesoQuery request, CancellationToken cancellationToken)
+    public async Task<Result<PagedResult<CredencialesAccesoDto>>> Handle(GetCredencialesByHuespedIdQuery request, CancellationToken cancellationToken)
     {
         try
         {
-            var todos = await _credencialRepository.GetAll();
+            var todos = await _credencialRepository.GetByHuespedId(request.HuespedId);
             var todosDto = _mapper.Map<IEnumerable<CredencialesAccesoDto>>(todos).ToList();
             var totalCount = todosDto.Count;
             var items = todosDto
@@ -38,7 +35,7 @@ public class GetAllCredencialesAccesoQueryHandler : IRequestHandler<GetAllCreden
         }
         catch (Exception ex)
         {
-            return Result<PagedResult<CredencialesAccesoDto>>.Failure($"Error al obtener las credenciales de acceso: {ex.Message}");
+            return Result<PagedResult<CredencialesAccesoDto>>.Failure($"Error al obtener las credenciales del huésped: {ex.Message}");
         }
     }
 }

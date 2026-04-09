@@ -6,14 +6,14 @@ using Dispositivos.Application.Interfaces;
 
 namespace Dispositivos.Application.Features.MantenimientoCerradura.Queries;
 
-public class GetAllMantenimientoCerraduraQueryHandler : IRequestHandler<GetAllMantenimientoCerraduraQuery, Result<IEnumerable<MantenimientoCerraduraDto>>>
+public class GetAllMantenimientoCerraduraQueryHandler : IRequestHandler<GetAllMantenimientoCerraduraQuery, Result<PagedResult<MantenimientoCerraduraDto>>>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
     private readonly IMantenimientoCerraduraRepository _mantenimientoRepository;
 
     public GetAllMantenimientoCerraduraQueryHandler(
-        IUnitOfWork unitOfWork, 
+        IUnitOfWork unitOfWork,
         IMapper mapper,
         IMantenimientoCerraduraRepository mantenimientoRepository)
     {
@@ -22,17 +22,23 @@ public class GetAllMantenimientoCerraduraQueryHandler : IRequestHandler<GetAllMa
         _mantenimientoRepository = mantenimientoRepository;
     }
 
-    public async Task<Result<IEnumerable<MantenimientoCerraduraDto>>> Handle(GetAllMantenimientoCerraduraQuery request, CancellationToken cancellationToken)
+    public async Task<Result<PagedResult<MantenimientoCerraduraDto>>> Handle(GetAllMantenimientoCerraduraQuery request, CancellationToken cancellationToken)
     {
         try
         {
-            var mantenimientos = await _mantenimientoRepository.GetAll();
-            var mantenimientosDto = _mapper.Map<IEnumerable<MantenimientoCerraduraDto>>(mantenimientos);
-            return Result<IEnumerable<MantenimientoCerraduraDto>>.Success(mantenimientosDto);
+            var todos = await _mantenimientoRepository.GetAll();
+            var todosDto = _mapper.Map<IEnumerable<MantenimientoCerraduraDto>>(todos).ToList();
+            var totalCount = todosDto.Count;
+            var items = todosDto
+                .Skip((request.Page - 1) * request.PageSize)
+                .Take(request.PageSize)
+                .ToList();
+            return Result<PagedResult<MantenimientoCerraduraDto>>.Success(
+                new PagedResult<MantenimientoCerraduraDto>(items, request.Page, request.PageSize, totalCount));
         }
         catch (Exception ex)
         {
-            return Result<IEnumerable<MantenimientoCerraduraDto>>.Failure($"Error al obtener los mantenimientos de cerradura: {ex.Message}");
+            return Result<PagedResult<MantenimientoCerraduraDto>>.Failure($"Error al obtener los mantenimientos de cerradura: {ex.Message}");
         }
     }
 }

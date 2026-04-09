@@ -2,9 +2,115 @@
 
 ## Instrucción de trabajo
 
-- A medida que el usuario pida cambios o correcciones, ir descubriendo el estado real de la API leyendo el código relevante.
+- Leer este archivo completo al inicio de cada sesión. Contiene todo el contexto necesario.
+- **Antes de leer código**, consultar aquí si el patrón ya está documentado. Solo leer archivos si hay duda sobre el estado real o si el patrón no está cubierto.
+- Cuando se toque un archivo, leer **solo ese archivo** y los directamente relacionados — no explorar el proyecto completo.
+- Si durante el trabajo se descubre algo importante no documentado (patrón, convención, constraint, comportamiento inesperado), **agregarlo a este CLAUDE.md inmediatamente**.
 - Aplicar siempre las reglas de este archivo al tocar cualquier parte del código.
-- Si durante el trabajo se descubre algo importante que no está documentado aquí (un patrón, una convención, un constraint, un comportamiento inesperado), **agregarlo a este CLAUDE.md** para que quede como referencia futura.
+
+---
+
+## Estructura del proyecto
+
+```
+Barcelo-Integrated-Iot/
+├── Reservas/
+│   ├── Reservas.API/                         Controllers, Program.cs
+│   ├── Reservas.Application/
+│   │   ├── Common/Result.cs                  Result<T> (versión antigua, sin NotFound)
+│   │   ├── DTOs/                             CreateXxxDto, UpdateXxxDto, XxxDto
+│   │   ├── Features/{Entidad}/
+│   │   │   ├── Commands/                     XxxCommand.cs + XxxCommandHandler.cs
+│   │   │   └── Queries/                      XxxQuery.cs + XxxQueryHandler.cs
+│   │   ├── Interfaces/                       IXxxRepository, IUnitOfWork
+│   │   └── Mappings/MappingProfile.cs
+│   ├── Reservas.Domain/Entities/
+│   └── Reservas.Persistence/
+│       ├── Repositories/
+│       └── Services/                         CredencialesAccesoService (SQL raw)
+│
+├── Dispositivos.API/                         Controllers/
+├── Dispositivos.Application/
+│   ├── Common/
+│   │   ├── Result.cs                         Result<T> con IsNotFound + NotFound()
+│   │   ├── PagedResult.cs                    Respuesta paginada estándar
+│   │   └── PaginationParams.cs               Binding [FromQuery], normaliza Page/PageSize
+│   ├── DTOs/
+│   ├── Features/{Entidad}/
+│   │   ├── Commands/
+│   │   └── Queries/
+│   ├── Interfaces/                           IXxxRepository, IUnitOfWork
+│   └── Mappings/MappingProfile.cs
+├── Dispositivos.Domain/Entities/
+├── Dispositivos.Infrastructure/              Kafka consumers (BackgroundService)
+│   └── Kafka/Consumers/
+└── Dispositivos.Persistence/
+    ├── Data/Configurations/                  EF Core entity configs + constraints
+    └── Repositories/
+│
+├── Usuarios/
+│   ├── Usuarios.API/                         Controllers, ExceptionHandlingMiddleware
+│   ├── Usuarios.Application/
+│   │   ├── Features/{Entidad}/Commands|Queries/
+│   │   └── Exceptions/                       NotFoundException, ConflictException, BusinessException
+│   └── Usuarios.Persistence/
+│
+├── Authenticate/
+│   └── Authentication.Api/
+│       ├── Handlers/                         LoginUserHandler, RegisterUserHandler (estáticos)
+│       └── DTOs/UserManagementDtos.cs        Incluye PagedResult<T> local
+│
+├── Notification.Worker/                      Program.cs con todos los BackgroundServices
+├── Notification.Domain/Events/               Eventos de dominio para Kafka
+├── Notification.Kafka/
+│   ├── Configuration/                        XxxConsumerConfig (hereda KafkaConsumerConfig)
+│   └── Services/                             XxxEventConsumer (IHostedService)
+│
+├── Audit.Worker/                             Consume audit.events, escribe a DB
+│   └── Models/                               PagedResult<T>, AuditQueryParams
+│
+└── ApiGateway/                               Ocelot
+```
+
+### Convención de nombres de archivos (Dispositivos/Reservas)
+
+| Tipo | Ruta |
+|---|---|
+| Entidad | `{Svc}.Domain/Entities/{Entidad}.cs` |
+| DTO | `{Svc}.Application/DTOs/{Entidad}Dto.cs` |
+| Repositorio interfaz | `{Svc}.Application/Interfaces/I{Entidad}Repository.cs` |
+| Repositorio impl | `{Svc}.Persistence/Repositories/{Entidad}Repository.cs` |
+| Query | `{Svc}.Application/Features/{Entidad}/Queries/Get{Entidad}By{Campo}Query.cs` |
+| Handler query | `{Svc}.Application/Features/{Entidad}/Queries/Get{Entidad}By{Campo}QueryHandler.cs` |
+| Command | `{Svc}.Application/Features/{Entidad}/Commands/{Accion}{Entidad}Command.cs` |
+| Handler command | `{Svc}.Application/Features/{Entidad}/Commands/{Accion}{Entidad}CommandHandler.cs` |
+| Controller | `{Svc}.API/Controllers/{Entidad}Controller.cs` |
+| EF Config | `{Svc}.Persistence/Data/Configurations/{Entidad}Configuration.cs` |
+
+---
+
+## Eficiencia — cómo trabajar reduciendo tokens
+
+**Regla principal:** los patrones están documentados aquí. No releer archivos para confirmar lo que ya está en el CLAUDE.md.
+
+### Cuándo NO leer archivos
+- Para crear un nuevo endpoint GetAll con paginación → seguir la plantilla de "Estándar de paginación" directamente.
+- Para crear un command handler → seguir "Regla obligatoria: manejo de errores en handlers" directamente.
+- Para saber qué métodos tiene un repositorio → ver la sección "Repositorios disponibles".
+- Para saber los constraints de DB → ver la lista en "Capturar DbUpdateException".
+
+### Cuándo SÍ leer archivos (mínimo necesario)
+- Al crear código nuevo en una entidad que aún no se ha tocado → leer **solo** el archivo de la entidad más cercana al cambio (el mismo controller, el mismo handler del mismo feature).
+- Al modificar código existente → leer **solo el archivo a modificar** antes de editarlo.
+- Al dudar si un método existe en un repositorio → leer solo `I{Entidad}Repository.cs`.
+- Nunca usar el agente Explore para tareas simples; usar Grep o Glob directos.
+
+### Orden óptimo al agregar una feature nueva en Dispositivos/Reservas
+
+1. Leer `I{Entidad}Repository.cs` si el método que se necesita no está en el CLAUDE.md.
+2. Escribir Query → Handler → endpoint en Controller. (No leer otros archivos si el patrón está aquí.)
+3. Si hay duda sobre el DTO existente, leer solo `{Entidad}Dto.cs`.
+4. Si hay nueva constraint DB, agregarla a CLAUDE.md en la lista de constraints conocidos.
 
 ---
 
@@ -66,6 +172,103 @@ Respuesta del middleware:
 ### Authenticate — Sin MediatR
 
 Usa métodos estáticos: `LoginUserHandler`, `RegisterUserHandler`, `CreateUserWithRandomPasswordHandler`. La auditoría se publica directamente en `AuthController`, no por pipeline.
+
+---
+
+## Estándar de paginación
+
+Aplicar en **todos los endpoints `GetAll` y cualquier endpoint que devuelva `IEnumerable<T>`** en Dispositivos.API (y futuras APIs que usen MediatR + CQRS).
+
+### Clases en `{Servicio}.Application/Common/`
+
+```csharp
+// PaginationParams.cs — se usa como [FromQuery] en el controller
+public class PaginationParams
+{
+    private int _page = 1;
+    private int _pageSize = 20;
+    public int Page   { get => _page;     set => _page     = value < 1 ? 1 : value; }
+    public int PageSize { get => _pageSize; set => _pageSize = value < 1 ? 20 : value > 100 ? 100 : value; }
+}
+
+// PagedResult<T>.cs — envuelve la respuesta paginada
+public class PagedResult<T>
+{
+    public IReadOnlyList<T> Items     { get; init; }
+    public int TotalCount             { get; init; }
+    public int Page                   { get; init; }
+    public int PageSize               { get; init; }
+    public int TotalPages             => (int)Math.Ceiling(TotalCount / (double)PageSize);
+    public bool HasNextPage           => Page < TotalPages;
+    public bool HasPreviousPage       => Page > 1;
+    public PagedResult(IReadOnlyList<T> items, int page, int pageSize, int totalCount) { ... }
+}
+```
+
+### Query
+
+```csharp
+public class GetAllXxxQuery : IRequest<Result<PagedResult<XxxDto>>>
+{
+    public int Page { get; set; } = 1;
+    public int PageSize { get; set; } = 20;
+}
+```
+
+### Handler
+
+```csharp
+public async Task<Result<PagedResult<XxxDto>>> Handle(GetAllXxxQuery request, CancellationToken ct)
+{
+    var todos = await _repo.GetAll();
+    var todosDto = _mapper.Map<IEnumerable<XxxDto>>(todos).ToList();
+    var totalCount = todosDto.Count;
+    var items = todosDto
+        .Skip((request.Page - 1) * request.PageSize)
+        .Take(request.PageSize)
+        .ToList();
+    return Result<PagedResult<XxxDto>>.Success(
+        new PagedResult<XxxDto>(items, request.Page, request.PageSize, totalCount));
+}
+```
+
+### Controller
+
+```csharp
+[HttpGet]
+public async Task<IActionResult> GetAll([FromQuery] PaginationParams pagination)
+{
+    var result = await _mediator.Send(new GetAllXxxQuery { Page = pagination.Page, PageSize = pagination.PageSize });
+    if (!result.IsSuccess)
+        return result.IsNotFound ? NotFound(new { error = result.ErrorMessage }) : BadRequest(new { error = result.ErrorMessage });
+    return Ok(result.Data);
+}
+```
+
+### Respuesta JSON
+
+```json
+{
+  "items": [...],
+  "totalCount": 150,
+  "page": 2,
+  "pageSize": 20,
+  "totalPages": 8,
+  "hasNextPage": true,
+  "hasPreviousPage": true
+}
+```
+
+### Uso
+
+```
+GET /dispositivo?page=1&pageSize=20
+GET /credencialesacceso/huesped/42?page=1&pageSize=10
+```
+
+- `page` mínimo: 1 (normalizado automáticamente)
+- `pageSize` mínimo: 1, máximo: 100 (normalizado automáticamente)
+- Parámetros opcionales — sin ellos usa defaults (página 1, 20 registros)
 
 ---
 

@@ -6,7 +6,7 @@ using Dispositivos.Application.Interfaces;
 
 namespace Dispositivos.Application.Features.EstadosDispositivo.Queries;
 
-public class GetAllEstadosDispositivoQueryHandler : IRequestHandler<GetAllEstadosDispositivoQuery, Result<IEnumerable<EstadoDispositivoDto>>>
+public class GetAllEstadosDispositivoQueryHandler : IRequestHandler<GetAllEstadosDispositivoQuery, Result<PagedResult<EstadoDispositivoDto>>>
 {
     private readonly IMapper _mapper;
     private readonly IUnitOfWork _unitOfWork;
@@ -17,17 +17,23 @@ public class GetAllEstadosDispositivoQueryHandler : IRequestHandler<GetAllEstado
         _unitOfWork = unitOfWork;
     }
 
-    public async Task<Result<IEnumerable<EstadoDispositivoDto>>> Handle(GetAllEstadosDispositivoQuery request, CancellationToken cancellationToken)
+    public async Task<Result<PagedResult<EstadoDispositivoDto>>> Handle(GetAllEstadosDispositivoQuery request, CancellationToken cancellationToken)
     {
         try
         {
-            var estados = await _unitOfWork.EstadosDispositivo.GetAll();
-            var estadosDto = _mapper.Map<IEnumerable<EstadoDispositivoDto>>(estados);
-            return Result<IEnumerable<EstadoDispositivoDto>>.Success(estadosDto);
+            var todos = await _unitOfWork.EstadosDispositivo.GetAll();
+            var todosDto = _mapper.Map<IEnumerable<EstadoDispositivoDto>>(todos).ToList();
+            var totalCount = todosDto.Count;
+            var items = todosDto
+                .Skip((request.Page - 1) * request.PageSize)
+                .Take(request.PageSize)
+                .ToList();
+            return Result<PagedResult<EstadoDispositivoDto>>.Success(
+                new PagedResult<EstadoDispositivoDto>(items, request.Page, request.PageSize, totalCount));
         }
         catch (Exception ex)
         {
-            return Result<IEnumerable<EstadoDispositivoDto>>.Failure($"Error al obtener los estados: {ex.Message}");
+            return Result<PagedResult<EstadoDispositivoDto>>.Failure($"Error al obtener los estados: {ex.Message}");
         }
     }
 }

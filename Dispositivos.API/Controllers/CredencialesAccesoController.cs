@@ -1,6 +1,7 @@
 using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Dispositivos.Application.Common;
 using Dispositivos.Application.DTOs;
 using Dispositivos.Application.Features.CredencialesAcceso.Commands;
 using Dispositivos.Application.Features.CredencialesAcceso.Queries;
@@ -19,9 +20,18 @@ public class CredencialesAccesoController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetAll()
+    public async Task<IActionResult> GetAll([FromQuery] PaginationParams pagination)
     {
-        var result = await _mediator.Send(new GetAllCredencialesAccesoQuery());
+        var result = await _mediator.Send(new GetAllCredencialesAccesoQuery { Page = pagination.Page, PageSize = pagination.PageSize });
+        if (!result.IsSuccess)
+            return result.IsNotFound ? NotFound(new { error = result.ErrorMessage }) : BadRequest(new { error = result.ErrorMessage });
+        return Ok(result.Data);
+    }
+
+    [HttpGet("huesped/{huespedId}")]
+    public async Task<IActionResult> GetByHuespedId(int huespedId, [FromQuery] PaginationParams pagination)
+    {
+        var result = await _mediator.Send(new GetCredencialesByHuespedIdQuery { HuespedId = huespedId, Page = pagination.Page, PageSize = pagination.PageSize });
         if (!result.IsSuccess)
             return result.IsNotFound ? NotFound(new { error = result.ErrorMessage }) : BadRequest(new { error = result.ErrorMessage });
         return Ok(result.Data);

@@ -6,14 +6,14 @@ using Dispositivos.Application.Interfaces;
 
 namespace Dispositivos.Application.Features.RegistrosAcceso.Queries;
 
-public class GetAllRegistrosAccesoQueryHandler : IRequestHandler<GetAllRegistrosAccesoQuery, Result<IEnumerable<RegistrosAccesoDto>>>
+public class GetAllRegistrosAccesoQueryHandler : IRequestHandler<GetAllRegistrosAccesoQuery, Result<PagedResult<RegistrosAccesoDto>>>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
     private readonly IRegistrosAccesoRepository _registroRepository;
 
     public GetAllRegistrosAccesoQueryHandler(
-        IUnitOfWork unitOfWork, 
+        IUnitOfWork unitOfWork,
         IMapper mapper,
         IRegistrosAccesoRepository registroRepository)
     {
@@ -22,17 +22,23 @@ public class GetAllRegistrosAccesoQueryHandler : IRequestHandler<GetAllRegistros
         _registroRepository = registroRepository;
     }
 
-    public async Task<Result<IEnumerable<RegistrosAccesoDto>>> Handle(GetAllRegistrosAccesoQuery request, CancellationToken cancellationToken)
+    public async Task<Result<PagedResult<RegistrosAccesoDto>>> Handle(GetAllRegistrosAccesoQuery request, CancellationToken cancellationToken)
     {
         try
         {
-            var registros = await _registroRepository.GetAllAsync();
-            var registrosDto = _mapper.Map<IEnumerable<RegistrosAccesoDto>>(registros);
-            return Result<IEnumerable<RegistrosAccesoDto>>.Success(registrosDto);
+            var todos = await _registroRepository.GetAllAsync();
+            var todosDto = _mapper.Map<IEnumerable<RegistrosAccesoDto>>(todos).ToList();
+            var totalCount = todosDto.Count;
+            var items = todosDto
+                .Skip((request.Page - 1) * request.PageSize)
+                .Take(request.PageSize)
+                .ToList();
+            return Result<PagedResult<RegistrosAccesoDto>>.Success(
+                new PagedResult<RegistrosAccesoDto>(items, request.Page, request.PageSize, totalCount));
         }
         catch (Exception ex)
         {
-            return Result<IEnumerable<RegistrosAccesoDto>>.Failure($"Error al obtener los registros de acceso: {ex.Message}");
+            return Result<PagedResult<RegistrosAccesoDto>>.Failure($"Error al obtener los registros de acceso: {ex.Message}");
         }
     }
 }
