@@ -60,6 +60,27 @@ public class DispositivoRepository : IDispositivoRepository
             .ToListAsync();
     }
 
+    public async Task<Dispositivo?> GetByNumeroSerie(string numeroSerie)
+    {
+        return await _context.Dispositivos
+            .AsNoTracking()
+            .FirstOrDefaultAsync(d => d.NumeroSerieDispositivo == numeroSerie);
+    }
+
+    public async Task<Dispositivo?> GetByDireccionMAC(string mac)
+    {
+        return await _context.Dispositivos
+            .AsNoTracking()
+            .FirstOrDefaultAsync(d => d.DireccionMac == mac);
+    }
+
+    public async Task<Dispositivo?> GetByIpDispositivo(string ip)
+    {
+        return await _context.Dispositivos
+            .AsNoTracking()
+            .FirstOrDefaultAsync(d => d.Ipdispositivo == ip);
+    }
+
     public async Task AddAsync(Dispositivo dispositivo, CancellationToken cancellationToken = default)
     {
         await _context.Dispositivos.AddAsync(dispositivo, cancellationToken);

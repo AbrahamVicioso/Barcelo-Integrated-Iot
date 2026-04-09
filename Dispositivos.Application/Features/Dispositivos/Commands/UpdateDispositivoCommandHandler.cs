@@ -28,114 +28,108 @@ public class UpdateDispositivoCommandHandler : IRequestHandler<UpdateDispositivo
     {
         try
         {
-            var dispositivo = await _unitOfWork.Dispositivos.GetById(request.DispositivoId);
+            var dto = request.Dispositivo;
 
+            // Verificar que el dispositivo existe
+            var dispositivo = await _unitOfWork.Dispositivos.GetById(request.DispositivoId);
             if (dispositivo == null)
+                return Result<DispositivoDto>.NotFound($"Dispositivo con ID {request.DispositivoId} no encontrado.");
+
+            // CHECK: NivelBateria 0-100
+            if (dto.NivelBateria < 0 || dto.NivelBateria > 100)
+                return Result<DispositivoDto>.Failure("El nivel de batería debe estar entre 0 y 100.");
+
+            // FK: TipoDispositivoId debe existir
+            var tipo = await _unitOfWork.TiposDispositivo.GetById(dto.TipoDispositivoId);
+            if (tipo == null)
+                return Result<DispositivoDto>.Failure($"El tipo de dispositivo con ID {dto.TipoDispositivoId} no existe.");
+
+            // FK: EstadoDispositivoId debe existir
+            var estado = await _unitOfWork.EstadosDispositivo.GetById(dto.EstadoDispositivoId);
+            if (estado == null)
+                return Result<DispositivoDto>.Failure($"El estado de dispositivo con ID {dto.EstadoDispositivoId} no existe.");
+
+            // UNIQUE: NumeroSerieDispositivo — excluir el propio registro
+            var existenteSerie = await _unitOfWork.Dispositivos.GetByNumeroSerie(dto.NumeroSerieDispositivo);
+            if (existenteSerie != null && existenteSerie.DispositivoId != request.DispositivoId)
+                return Result<DispositivoDto>.Failure($"Ya existe otro dispositivo con el número de serie '{dto.NumeroSerieDispositivo}'.");
+
+            // UNIQUE: DireccionMAC — excluir el propio registro
+            var existenteMAC = await _unitOfWork.Dispositivos.GetByDireccionMAC(dto.DireccionMac);
+            if (existenteMAC != null && existenteMAC.DispositivoId != request.DispositivoId)
+                return Result<DispositivoDto>.Failure($"Ya existe otro dispositivo con la dirección MAC '{dto.DireccionMac}'.");
+
+            // UNIQUE: IpDispositivo — excluir el propio registro (si se envía)
+            if (!string.IsNullOrWhiteSpace(dto.Ipdispositivo))
             {
-                return Result<DispositivoDto>.Failure($"Dispositivo con ID {request.DispositivoId} no encontrado.");
+                var existenteIp = await _unitOfWork.Dispositivos.GetByIpDispositivo(dto.Ipdispositivo);
+                if (existenteIp != null && existenteIp.DispositivoId != request.DispositivoId)
+                    return Result<DispositivoDto>.Failure($"Ya existe otro dispositivo con la dirección IP '{dto.Ipdispositivo}'.");
             }
 
-            // Store old type for comparison
-            var oldTipoDispositivo = dispositivo.TipoDispositivo;
-
-            _mapper.Map(request.Dispositivo, dispositivo);
+            _mapper.Map(dto, dispositivo);
             dispositivo.FechaActualizacion = DateTime.UtcNow;
 
             await _unitOfWork.Dispositivos.UpdateAsync(dispositivo, cancellationToken);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-            // Sync with Thingsboard if device exists
-            if (!string.IsNullOrEmpty(dispositivo.NumeroSerieDispositivo))
+            // Sincronizar con ThingsBoard (el nombre del device = DispositivoId)
+            try
             {
-                try
+                var tbDevice = await _tbDeviceService.GetDeviceByNameAsync(
+                    dispositivo.DispositivoId.ToString(), cancellationToken);
+
+                if (tbDevice != null && !string.IsNullOrEmpty(tbDevice.Id))
                 {
-                    // Use the device ID as the Thingsboard identifier
                     await _tbDeviceService.UpdateDeviceAsync(
+                        tbDevice.Id,
                         dispositivo.DispositivoId.ToString(),
-                        dispositivo.DispositivoId.ToString(),
-                        dispositivo.TipoDispositivo?.Nombre,
+                        tipo.Nombre,
                         dispositivo.NumeroSerieDispositivo,
                         cancellationToken);
                 }
-                catch (HttpRequestException ex)
+                else
                 {
-                    // If device doesn't exist in Thingsboard by ID (404), try to find by name and update
-                    if (ex.Message.Contains("404") || ex.Message.Contains("NotFound"))
-                    {
-                        try
-                        {
-                            // Try to find device by name
-                            var existingDevice = await _tbDeviceService.GetDeviceByNameAsync(
-                                dispositivo.DispositivoId.ToString(),
-                                cancellationToken);
-
-                            if (existingDevice != null)
-                            {
-                                // Device exists with different ID - update using found ID
-                                await _tbDeviceService.UpdateDeviceAsync(
-                                    existingDevice.Id,
-                                    dispositivo.DispositivoId.ToString(),
-                                    dispositivo.TipoDispositivo?.Nombre,
-                                    dispositivo.NumeroSerieDispositivo,
-                                    cancellationToken);
-                            }
-                            else
-                            {
-                                // Device doesn't exist at all - create it
-                                await _tbDeviceService.CreateOrUpdateDeviceAsync(
-                                    null,
-                                    dispositivo.DispositivoId.ToString(),
-                                    dispositivo.TipoDispositivo?.Nombre,
-                                    dispositivo.NumeroSerieDispositivo,
-                                    dispositivo.DispositivoId.ToString(),
-                                    cancellationToken);
-                            }
-                        }
-                        catch (HttpRequestException findEx)
-                        {
-                            return Result<DispositivoDto>.Failure(
-                                $"Dispositivo actualizado localmente pero falló la sincronización con Thingsboard: {findEx.Message}");
-                        }
-                    }
-                    // If device name already exists (400), find by name and update
-                    else if (ex.Message.Contains("name already exists") || ex.Message.Contains("400"))
-                    {
-                        try
-                        {
-                            var existingDevice = await _tbDeviceService.GetDeviceByNameAsync(
-                                dispositivo.DispositivoId.ToString(),
-                                cancellationToken);
-
-                            if (existingDevice != null)
-                            {
-                                await _tbDeviceService.UpdateDeviceAsync(
-                                    existingDevice.Id,
-                                    dispositivo.DispositivoId.ToString(),
-                                    dispositivo.TipoDispositivo?.Nombre,
-                                    dispositivo.NumeroSerieDispositivo,
-                                    cancellationToken);
-                            }
-                        }
-                        catch (HttpRequestException findEx)
-                        {
-                            return Result<DispositivoDto>.Failure(
-                                $"Dispositivo actualizado localmente pero falló la sincronización con Thingsboard: {findEx.Message}");
-                        }
-                    }
-                    else
-                    {
-                        return Result<DispositivoDto>.Failure(
-                            $"Dispositivo actualizado localmente pero falló la sincronización con Thingsboard: {ex.Message}");
-                    }
+                    await _tbDeviceService.CreateOrUpdateDeviceAsync(
+                        null,
+                        dispositivo.DispositivoId.ToString(),
+                        tipo.Nombre,
+                        dispositivo.NumeroSerieDispositivo,
+                        null,
+                        cancellationToken);
                 }
+            }
+            catch (HttpRequestException ex)
+            {
+                return Result<DispositivoDto>.Failure(
+                    $"Dispositivo actualizado localmente pero falló la sincronización con ThingsBoard: {ex.Message}");
             }
 
             var dispositivoDto = _mapper.Map<DispositivoDto>(dispositivo);
             return Result<DispositivoDto>.Success(dispositivoDto);
         }
+        catch (Exception ex) when (ex.GetType().Name == "DbUpdateException")
+        {
+            var inner = ex.InnerException?.Message ?? ex.Message;
+            if (inner.Contains("UQ_Dispositivos_NumeroSerie"))
+                return Result<DispositivoDto>.Failure($"Ya existe otro dispositivo con el número de serie '{request.Dispositivo.NumeroSerieDispositivo}'.");
+            if (inner.Contains("UQ_Dispositivos_MAC"))
+                return Result<DispositivoDto>.Failure($"Ya existe otro dispositivo con la dirección MAC '{request.Dispositivo.DireccionMac}'.");
+            if (inner.Contains("UQ_Dispositivos_IP"))
+                return Result<DispositivoDto>.Failure($"Ya existe otro dispositivo con la dirección IP '{request.Dispositivo.Ipdispositivo}'.");
+            if (inner.Contains("FK_Dispositivos_TiposDispositivo"))
+                return Result<DispositivoDto>.Failure($"El tipo de dispositivo con ID {request.Dispositivo.TipoDispositivoId} no existe.");
+            if (inner.Contains("FK_Dispositivos_EstadosDispositivo"))
+                return Result<DispositivoDto>.Failure($"El estado de dispositivo con ID {request.Dispositivo.EstadoDispositivoId} no existe.");
+            if (inner.Contains("FK_Dispositivos_Hoteles"))
+                return Result<DispositivoDto>.Failure($"El hotel con ID {request.Dispositivo.HotelId} no existe.");
+            if (inner.Contains("CHK_Dispositivos_Bateria"))
+                return Result<DispositivoDto>.Failure("El nivel de batería debe estar entre 0 y 100.");
+            return Result<DispositivoDto>.Failure($"Error de base de datos: {inner}");
+        }
         catch (Exception ex)
         {
-            return Result<DispositivoDto>.Failure($"Error al actualizar el dispositivo: {ex.Message}");
+            return Result<DispositivoDto>.Failure($"Error inesperado al actualizar el dispositivo: {ex.Message}");
         }
     }
 }

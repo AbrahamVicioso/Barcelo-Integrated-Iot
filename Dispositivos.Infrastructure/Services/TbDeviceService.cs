@@ -88,6 +88,16 @@ public class TbDeviceService : ITbDeviceService
         if (!response.IsSuccessStatusCode)
         {
             var errorContent = await response.Content.ReadAsStringAsync(cancellationToken);
+
+            // Si ThingsBoard dice que el device ya existe, recuperarlo por nombre (operación idempotente)
+            if (response.StatusCode == System.Net.HttpStatusCode.BadRequest
+                && errorContent.Contains("already exists"))
+            {
+                var existing = await GetDeviceByNameAsync(deviceName, cancellationToken);
+                if (existing != null)
+                    return existing;
+            }
+
             throw new HttpRequestException(
                 $"Failed to create/update device in Thingsboard. Status: {response.StatusCode}, Error: {errorContent}");
         }

@@ -9,6 +9,9 @@ public interface IDispositivoRepository
     Task<IEnumerable<Dispositivo>> GetByHotelId(int hotelId);
     Task<IEnumerable<Dispositivo>> GetByTipoDispositivo(int tipoDispositivoId);
     Task<IEnumerable<Dispositivo>> GetByEstaEnLinea(bool estaEnLinea);
+    Task<Dispositivo?> GetByNumeroSerie(string numeroSerie);
+    Task<Dispositivo?> GetByDireccionMAC(string mac);
+    Task<Dispositivo?> GetByIpDispositivo(string ip);
     Task AddAsync(Dispositivo dispositivo, CancellationToken cancellationToken = default);
     Task UpdateAsync(Dispositivo dispositivo, CancellationToken cancellationToken = default);
     Task DeleteAsync(Dispositivo dispositivo, CancellationToken cancellationToken = default);

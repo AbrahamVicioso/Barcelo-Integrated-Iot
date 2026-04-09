@@ -1,5 +1,13 @@
 # CLAUDE.md — Barcelo Integrated IoT
 
+## Instrucción de trabajo
+
+- A medida que el usuario pida cambios o correcciones, ir descubriendo el estado real de la API leyendo el código relevante.
+- Aplicar siempre las reglas de este archivo al tocar cualquier parte del código.
+- Si durante el trabajo se descubre algo importante que no está documentado aquí (un patrón, una convención, un constraint, un comportamiento inesperado), **agregarlo a este CLAUDE.md** para que quede como referencia futura.
+
+---
+
 ## Infraestructura
 
 - **.NET 9** · SQL Server (sqlserver:1433) · Kafka (kafka:9092) · ThingsBoard CE (thingsboard-ce:8080)
@@ -107,6 +115,13 @@ Nombres de constraints conocidos:
 - `UQ_Cerraduras_Habitacion` — una sola cerradura por habitación
 - `FK_Cerraduras_Dispositivos` — DispositivoId debe existir en Dispositivos
 - `CHK_Credenciales_Fechas` — FechaExpiracion debe ser posterior a FechaActivacion
+- `UQ_Dispositivos_NumeroSerie` — número de serie único por dispositivo
+- `UQ_Dispositivos_MAC` — dirección MAC única por dispositivo → campo en entidad: `DireccionMac` (no `DireccionMAC`)
+- `UQ_Dispositivos_IP` — IP única por dispositivo (filtered index, permite múltiples NULL)
+- `FK_Dispositivos_TiposDispositivo` — TipoDispositivoId debe existir en TiposDispositivo
+- `FK_Dispositivos_EstadosDispositivo` — EstadoDispositivoId debe existir en EstadosDispositivo
+- `FK_Dispositivos_Hoteles` — HotelId debe existir en Hoteles (sin repo propio, solo fallback por constraint name)
+- `CHK_Dispositivos_Bateria` — NivelBateria entre 0 y 100
 
 ### 3. Usar `Result<T>.NotFound()` para entidades no encontradas
 
@@ -328,6 +343,7 @@ POST /api/plugins/telemetry/DEVICE/{id}/SHARED_SCOPE → setear atributos compar
 - El nombre del device en ThingsBoard = `CerradurasInteligente.DispositivoId.ToString()`
 - Auth: JWT obtenido con credenciales de tenant (cacheado 60 min)
 - **No usar** `/api/device?name=...` (incorrecto)
+- `POST /api/device` sin ID crea device; si ya existe devuelve 400 `"already exists"` → recuperar con `GetDeviceByNameAsync` (idempotente)
 
 ---
 
