@@ -28,6 +28,15 @@ public class RegistrosAccesoController : ControllerBase
         return Ok(result.Data);
     }
 
+    [HttpGet("usuario/{usuarioId}")]
+    public async Task<IActionResult> GetByUsuarioId(string usuarioId, [FromQuery] PaginationParams pagination)
+    {
+        var result = await _mediator.Send(new GetRegistrosAccesoByUsuarioIdQuery { UsuarioId = usuarioId, Page = pagination.Page, PageSize = pagination.PageSize });
+        if (!result.IsSuccess)
+            return result.IsNotFound ? NotFound(new { error = result.ErrorMessage }) : BadRequest(new { error = result.ErrorMessage });
+        return Ok(result.Data);
+    }
+
     [HttpGet("{id}")]
     public async Task<IActionResult> GetById(int id)
     {
