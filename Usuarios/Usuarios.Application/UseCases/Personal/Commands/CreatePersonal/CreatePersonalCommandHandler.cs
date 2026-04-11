@@ -31,6 +31,14 @@ public class CreatePersonalCommandHandler : IRequestHandler<CreatePersonalComman
             throw new ConflictException("Ya existe personal con ese número de empleado");
         }
 
+        var puesto = await _unitOfWork.Puestos.GetByIdAsync(request.Personal.PuestoId);
+        if (puesto == null || !puesto.EstaActivo)
+            throw new NotFoundException($"Puesto con ID {request.Personal.PuestoId} no encontrado o inactivo");
+
+        var departamento = await _unitOfWork.Departamentos.GetByIdAsync(request.Personal.DepartamentoId);
+        if (departamento == null || !departamento.EstaActivo)
+            throw new NotFoundException($"Departamento con ID {request.Personal.DepartamentoId} no encontrado o inactivo");
+
         if (request.Personal.Supervisor.HasValue)
         {
             var supervisor = await _unitOfWork.Personal.GetByIdAsync(request.Personal.Supervisor.Value);

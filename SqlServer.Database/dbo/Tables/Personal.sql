@@ -3,8 +3,8 @@
 	[UsuarioId] [nvarchar](450) NOT NULL,
 	[HotelId] [int] NOT NULL,
 	[NombreCompleto] [nvarchar](200) NOT NULL,
-	[Puesto] [nvarchar](100) NOT NULL,
-	[Departamento] [nvarchar](100) NOT NULL,
+	[PuestoId] [int] NOT NULL,
+	[DepartamentoId] [int] NOT NULL,
 	[NumeroEmpleado] [nvarchar](50) NOT NULL,
 	[FechaContratacion] [date] NOT NULL,
 	[EstaActivo] [bit] NOT NULL,
@@ -46,3 +46,15 @@ GO
 ALTER TABLE [dbo].[Personal] ADD  DEFAULT ((1)) FOR [EstaActivo]
 GO
 ALTER TABLE [dbo].[Personal] ADD  DEFAULT (getutcdate()) FOR [FechaCreacion]
+GO
+ALTER TABLE [dbo].[Personal]  WITH CHECK ADD  CONSTRAINT [FK_Personal_Puestos] FOREIGN KEY([PuestoId])
+REFERENCES [dbo].[Puestos] ([PuestoId])
+GO
+
+ALTER TABLE [dbo].[Personal] CHECK CONSTRAINT [FK_Personal_Puestos]
+GO
+ALTER TABLE [dbo].[Personal]  WITH CHECK ADD  CONSTRAINT [FK_Personal_Departamentos] FOREIGN KEY([DepartamentoId])
+REFERENCES [dbo].[Departamentos] ([DepartamentoId])
+GO
+
+ALTER TABLE [dbo].[Personal] CHECK CONSTRAINT [FK_Personal_Departamentos]

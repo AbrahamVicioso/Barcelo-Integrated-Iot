@@ -1,7 +1,9 @@
 using AutoMapper;
+using Usuarios.Application.DTOs.Departamento;
 using Usuarios.Application.DTOs.Huespedes;
 using Usuarios.Application.DTOs.PermisosPersonal;
 using Usuarios.Application.DTOs.Personal;
+using Usuarios.Application.DTOs.Puesto;
 using Usuarios.Domain.Entities;
 
 namespace Usuarios.Application.Mappings;
@@ -18,9 +20,43 @@ public class MappingProfile : Profile
             .ForMember(dest => dest.UsuarioId, opt => opt.Ignore());
 
         // Personal Mappings
-        CreateMap<Personal, PersonalDto>();
-        CreateMap<CreatePersonalDto, Personal>();
-        CreateMap<UpdatePersonalDto, Personal>();
+        CreateMap<Personal, PersonalDto>()
+            .ForMember(dest => dest.NombrePuesto,
+                opt => opt.MapFrom(src => src.PuestoNavigation != null ? src.PuestoNavigation.Nombre : string.Empty))
+            .ForMember(dest => dest.NombreDepartamento,
+                opt => opt.MapFrom(src => src.DepartamentoNavigation != null ? src.DepartamentoNavigation.Nombre : string.Empty));
+        CreateMap<CreatePersonalDto, Personal>()
+            .ForMember(dest => dest.PuestoNavigation, opt => opt.Ignore())
+            .ForMember(dest => dest.DepartamentoNavigation, opt => opt.Ignore());
+        CreateMap<UpdatePersonalDto, Personal>()
+            .ForMember(dest => dest.PuestoNavigation, opt => opt.Ignore())
+            .ForMember(dest => dest.DepartamentoNavigation, opt => opt.Ignore());
+
+        // Puesto Mappings
+        CreateMap<Puesto, PuestoDto>();
+        CreateMap<CreatePuestoDto, Puesto>()
+            .ForMember(dest => dest.PuestoId, opt => opt.Ignore())
+            .ForMember(dest => dest.EstaActivo, opt => opt.Ignore())
+            .ForMember(dest => dest.FechaCreacion, opt => opt.Ignore())
+            .ForMember(dest => dest.EliminadoEn, opt => opt.Ignore())
+            .ForMember(dest => dest.Personals, opt => opt.Ignore());
+        CreateMap<UpdatePuestoDto, Puesto>()
+            .ForMember(dest => dest.FechaCreacion, opt => opt.Ignore())
+            .ForMember(dest => dest.EliminadoEn, opt => opt.Ignore())
+            .ForMember(dest => dest.Personals, opt => opt.Ignore());
+
+        // Departamento Mappings
+        CreateMap<Departamento, DepartamentoDto>();
+        CreateMap<CreateDepartamentoDto, Departamento>()
+            .ForMember(dest => dest.DepartamentoId, opt => opt.Ignore())
+            .ForMember(dest => dest.EstaActivo, opt => opt.Ignore())
+            .ForMember(dest => dest.FechaCreacion, opt => opt.Ignore())
+            .ForMember(dest => dest.EliminadoEn, opt => opt.Ignore())
+            .ForMember(dest => dest.Personals, opt => opt.Ignore());
+        CreateMap<UpdateDepartamentoDto, Departamento>()
+            .ForMember(dest => dest.FechaCreacion, opt => opt.Ignore())
+            .ForMember(dest => dest.EliminadoEn, opt => opt.Ignore())
+            .ForMember(dest => dest.Personals, opt => opt.Ignore());
 
         // PermisosPersonal Mappings
         CreateMap<PermisosPersonal, PermisosPersonalDto>()

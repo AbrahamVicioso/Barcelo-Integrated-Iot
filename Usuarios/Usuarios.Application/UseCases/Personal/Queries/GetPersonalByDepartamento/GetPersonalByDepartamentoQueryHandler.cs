@@ -18,8 +18,7 @@ public class GetPersonalByDepartamentoQueryHandler : IRequestHandler<GetPersonal
 
     public async Task<IEnumerable<PersonalDto>> Handle(GetPersonalByDepartamentoQuery request, CancellationToken cancellationToken)
     {
-        var personal = await _unitOfWork.Personal.GetByDepartamentoAsync(request.Departamento);
-        var personalDto = _mapper.Map<IEnumerable<PersonalDto>>(personal);
-        return personalDto;
+        var personal = await _unitOfWork.Personal.GetByDepartamentoIdAsync(request.DepartamentoId);
+        return _mapper.Map<IEnumerable<PersonalDto>>(personal);
     }
 }

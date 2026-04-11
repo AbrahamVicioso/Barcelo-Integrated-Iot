@@ -20,6 +20,10 @@ public partial class BarceloIoTSystemContext : DbContext
 
     public virtual DbSet<Personal> Personals { get; set; }
 
+    public virtual DbSet<Puesto> Puestos { get; set; }
+
+    public virtual DbSet<Departamento> Departamentos { get; set; }
+
     public virtual DbSet<HabitacionLookup> Habitaciones { get; set; }
 
     public virtual DbSet<ActividadLookup> ActividadesRecreativas { get; set; }
@@ -102,6 +106,32 @@ public partial class BarceloIoTSystemContext : DbContext
                 .HasConstraintName("FK_PermisosPersonal_OtorgadoPor");
         });
 
+        modelBuilder.Entity<Puesto>(entity =>
+        {
+            entity.HasKey(e => e.PuestoId);
+            entity.ToTable("Puestos");
+
+            entity.HasIndex(e => e.Nombre, "UQ_Puestos_Nombre").IsUnique();
+
+            entity.Property(e => e.Nombre).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.Descripcion).HasMaxLength(500);
+            entity.Property(e => e.EstaActivo).HasDefaultValue(true);
+            entity.Property(e => e.FechaCreacion).HasDefaultValueSql("(getutcdate())");
+        });
+
+        modelBuilder.Entity<Departamento>(entity =>
+        {
+            entity.HasKey(e => e.DepartamentoId);
+            entity.ToTable("Departamentos");
+
+            entity.HasIndex(e => e.Nombre, "UQ_Departamentos_Nombre").IsUnique();
+
+            entity.Property(e => e.Nombre).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.Descripcion).HasMaxLength(500);
+            entity.Property(e => e.EstaActivo).HasDefaultValue(true);
+            entity.Property(e => e.FechaCreacion).HasDefaultValueSql("(getutcdate())");
+        });
+
         modelBuilder.Entity<Personal>(entity =>
         {
             entity.ToTable("Personal");
@@ -110,27 +140,27 @@ public partial class BarceloIoTSystemContext : DbContext
 
             entity.HasIndex(e => e.UsuarioId, "UQ_Personal_Usuario").IsUnique();
 
-            entity.Property(e => e.Departamento)
-                .IsRequired()
-                .HasMaxLength(100);
             entity.Property(e => e.EstaActivo).HasDefaultValue(true);
             entity.Property(e => e.FechaContratacion).HasColumnType("date");
             entity.Property(e => e.FechaCreacion).HasDefaultValueSql("(getutcdate())");
-            entity.Property(e => e.NombreCompleto)
-                .IsRequired()
-                .HasMaxLength(200);
-            entity.Property(e => e.NumeroEmpleado)
-                .IsRequired()
-                .HasMaxLength(50);
-            entity.Property(e => e.Puesto)
-                .IsRequired()
-                .HasMaxLength(100);
+            entity.Property(e => e.NombreCompleto).IsRequired().HasMaxLength(200);
+            entity.Property(e => e.NumeroEmpleado).IsRequired().HasMaxLength(50);
             entity.Property(e => e.Turno).HasMaxLength(20);
             entity.Property(e => e.UsuarioId).IsRequired();
 
             entity.HasOne(d => d.SupervisorNavigation).WithMany(p => p.InverseSupervisorNavigation)
                 .HasForeignKey(d => d.Supervisor)
                 .HasConstraintName("FK_Personal_Supervisor");
+
+            entity.HasOne(d => d.PuestoNavigation).WithMany(p => p.Personals)
+                .HasForeignKey(d => d.PuestoId)
+                .OnDelete(DeleteBehavior.Restrict)
+                .HasConstraintName("FK_Personal_Puestos");
+
+            entity.HasOne(d => d.DepartamentoNavigation).WithMany(p => p.Personals)
+                .HasForeignKey(d => d.DepartamentoId)
+                .OnDelete(DeleteBehavior.Restrict)
+                .HasConstraintName("FK_Personal_Departamentos");
         });
 
         modelBuilder.Entity<HabitacionLookup>(entity =>

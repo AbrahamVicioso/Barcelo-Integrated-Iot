@@ -25,6 +25,14 @@ public class UpdatePersonalCommandHandler : IRequestHandler<UpdatePersonalComman
             throw new NotFoundException("Personal no encontrado");
         }
 
+        var puesto = await _unitOfWork.Puestos.GetByIdAsync(request.Personal.PuestoId);
+        if (puesto == null || !puesto.EstaActivo)
+            throw new NotFoundException($"Puesto con ID {request.Personal.PuestoId} no encontrado o inactivo");
+
+        var departamento = await _unitOfWork.Departamentos.GetByIdAsync(request.Personal.DepartamentoId);
+        if (departamento == null || !departamento.EstaActivo)
+            throw new NotFoundException($"Departamento con ID {request.Personal.DepartamentoId} no encontrado o inactivo");
+
         if (request.Personal.Supervisor.HasValue)
         {
             var supervisor = await _unitOfWork.Personal.GetByIdAsync(request.Personal.Supervisor.Value);
@@ -40,8 +48,8 @@ public class UpdatePersonalCommandHandler : IRequestHandler<UpdatePersonalComman
         }
 
         personal.NombreCompleto = request.Personal.NombreCompleto;
-        personal.Puesto = request.Personal.Puesto;
-        personal.Departamento = request.Personal.Departamento;
+        personal.PuestoId = request.Personal.PuestoId;
+        personal.DepartamentoId = request.Personal.DepartamentoId;
         personal.EstaActivo = request.Personal.EstaActivo;
         personal.Turno = request.Personal.Turno;
         personal.Supervisor = request.Personal.Supervisor;

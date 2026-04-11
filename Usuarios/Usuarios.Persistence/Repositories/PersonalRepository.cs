@@ -26,9 +26,9 @@ public class PersonalRepository : GenericRepository<Personal>, IPersonalReposito
         return await _dbSet.Where(p => p.HotelId == hotelId).ToListAsync();
     }
 
-    public async Task<IEnumerable<Personal>> GetByDepartamentoAsync(string departamento)
+    public async Task<IEnumerable<Personal>> GetByDepartamentoIdAsync(int departamentoId)
     {
-        return await _dbSet.Where(p => p.Departamento == departamento).ToListAsync();
+        return await _dbSet.Where(p => p.DepartamentoId == departamentoId).ToListAsync();
     }
 
     public async Task<IEnumerable<Personal>> GetPersonalActivoAsync()

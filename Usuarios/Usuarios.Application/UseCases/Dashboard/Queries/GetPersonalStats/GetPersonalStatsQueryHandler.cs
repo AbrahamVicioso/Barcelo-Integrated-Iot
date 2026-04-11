@@ -25,16 +25,19 @@ public class GetPersonalStatsQueryHandler : IRequestHandler<GetPersonalStatsQuer
 
         var personalList = personal.ToList();
 
+        var departamentos = await _unitOfWork.Departamentos.GetAllAsync();
+        var nombreDepartamento = departamentos.ToDictionary(d => d.DepartamentoId, d => d.Nombre);
+
         var stats = new PersonalStatsDto
         {
             Total = personalList.Count,
             Activos = personalList.Count(p => p.EstaActivo),
             Inactivos = personalList.Count(p => !p.EstaActivo),
             PorDepartamento = personalList
-                .GroupBy(p => p.Departamento ?? "Sin departamento")
+                .GroupBy(p => p.DepartamentoId)
                 .Select(g => new PersonalPorDepartamentoDto
                 {
-                    Departamento = g.Key,
+                    Departamento = nombreDepartamento.TryGetValue(g.Key, out var nombre) ? nombre : g.Key.ToString(),
                     Cantidad = g.Count()
                 })
                 .OrderByDescending(x => x.Cantidad)

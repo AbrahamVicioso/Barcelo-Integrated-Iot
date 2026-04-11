@@ -43,10 +43,10 @@ public class PersonalController : ControllerBase
         return Ok(result);
     }
 
-    [HttpGet("departamento/{departamento}")]
-    public async Task<IActionResult> GetByDepartamento(string departamento)
+    [HttpGet("departamento/{departamentoId:int}")]
+    public async Task<IActionResult> GetByDepartamento(int departamentoId)
     {
-        var result = await _mediator.Send(new GetPersonalByDepartamentoQuery(departamento));
+        var result = await _mediator.Send(new GetPersonalByDepartamentoQuery(departamentoId));
         return Ok(result);
     }
 

@@ -10,3 +10,5 @@
 :r .\Seed_EstadosHabitacion.sql
 :r .\Seed_TiposHabitacion.sql
 :r .\Seed_EstadosReserva.sql
+:r .\Seed_Puestos.sql
+:r .\Seed_Departamentos.sql

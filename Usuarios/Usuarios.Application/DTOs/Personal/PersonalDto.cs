@@ -6,8 +6,10 @@ public class PersonalDto
     public string UsuarioId { get; set; } = string.Empty;
     public int HotelId { get; set; }
     public string NombreCompleto { get; set; } = string.Empty;
-    public string Puesto { get; set; } = string.Empty;
-    public string Departamento { get; set; } = string.Empty;
+    public int PuestoId { get; set; }
+    public string NombrePuesto { get; set; } = string.Empty;
+    public int DepartamentoId { get; set; }
+    public string NombreDepartamento { get; set; } = string.Empty;
     public string NumeroEmpleado { get; set; } = string.Empty;
     public DateTime FechaContratacion { get; set; }
     public bool EstaActivo { get; set; }

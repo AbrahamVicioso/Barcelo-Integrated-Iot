@@ -130,6 +130,13 @@ Result<T>.Failure("msg")       // → 400
 
 **Reservas** (`Reservas.Application/Common/Result.cs`) — versión antigua: sin `IsNotFound`/`NotFound()` ← pendiente migrar
 
+### Entidades de catálogo con soft delete (Puesto, Departamento)
+
+- Delete → `EstaActivo = false` + `EliminadoEn = UtcNow` + `UpdateAsync` (NO hard delete)
+- GetAll → solo retorna `EstaActivo = true` (via `GetActivosAsync()`)
+- No se puede eliminar si tiene Personal asignado → `BusinessException`
+- Nombre único → `ConflictException` en Create/Update
+
 ### Usuarios — MediatR + CQRS, excepciones
 
 No usa `Result<T>`. Handlers lanzan → `ExceptionHandlingMiddleware` captura:
@@ -191,7 +198,7 @@ Auditoría publicada directamente en `AuthController` (no por pipeline).
 
 ### Reservas.Domain/Entities
 
-**Reserva** (PK: int ReservaId) — HuespedId (int), HabitacionId (int?), NumeroReserva, FechaCheckIn, FechaCheckOut, NumeroHuespedes, NumeroNinos, MontoTotal (decimal), MontoPagado (decimal), EstadoReservaId (int, FK), FechaCreacion, FechaActualizacion, CheckInRealizado (DateTime?), CheckOutRealizado (DateTime?), CreadoPor, Observaciones — Nav: EstadoReserva, ReservaHuespedes (1:M)
+**Reserva** (PK: int ReservaId) — HuespedId (int), HabitacionId (int?), NumeroReserva, FechaCheckIn, FechaCheckOut, NumeroHuespedes, NumeroNinos, MontoTotal (decimal), MontoPagado (decimal), EstadoReservaId (int, FK), FechaCreacion, FechaActualizacion, CheckInRealizado (DateTime?), CheckOutRealizado (DateTime?), CreadoPor, ModificadoPor, Observaciones — Nav: EstadoReserva, ReservaHuespedes (1:M)
 
 **Habitacion** (PK: int HabitacionId) — HotelId (int), NumeroHabitacion, TipoHabitacionId (int, FK), Piso (int), CapacidadMaxima (int), PrecioPorNoche (decimal), EstadoHabitacionId (int, FK), Descripcion, FechaCreacion, FechaActualizacion
 
@@ -226,8 +233,8 @@ Auditoría publicada directamente en `AuthController` (no por pipeline).
 | **CreateCerradurasInteligenteDto** | DispositivoId, HabitacionId, EstadoPuerta, UltimaApertura, ContadorAperturas, SoportaModoOffline, FechaActivacion, EstaActiva |
 | **UpdateCerradurasInteligenteDto** | CerraduraId + campos de Create |
 | **CredencialesAccesoDto** | CredencialId, HuespedId, PersonalId, ReservaId, CodigoPin, FechaActivacion, FechaExpiracion, EstaActiva, TipoCredencial, FechaCreacion, CreadoPor, NumeroUsos, UltimoUso |
-| **CreateCredencialesAccesoDto** | HuespedId, PersonalId, ReservaId, CodigoPin, HashPIN, FechaActivacion, FechaExpiracion, EstaActiva, TipoCredencial, CreadoPor, NumeroUsos |
-| **UpdateCredencialesAccesoDto** | CredencialId + campos de Create |
+| **CreateCredencialesAccesoDto** | HuespedId, PersonalId, ReservaId, CodigoPin, HashPIN, FechaActivacion, FechaExpiracion, EstaActiva, TipoCredencial, NumeroUsos |
+| **UpdateCredencialesAccesoDto** | CredencialId, HuespedId, PersonalId, ReservaId, CodigoPin, FechaActivacion, FechaExpiracion, EstaActiva, TipoCredencial, NumeroUsos |
 | **MantenimientoCerraduraDto** | MantenimientoId, DispositivoId, CerraduraId, TipoMantenimiento, FechaProgramada, FechaRealizada, PersonalId, Estado, Observaciones, CostoMantenimiento, TiempoEmpleadoMinutos, FechaCreacion |
 | **CreateMantenimientoCerraduraDto** | DispositivoId, CerraduraId, TipoMantenimiento, FechaProgramada, FechaRealizada, PersonalId, Estado, Observaciones, CostoMantenimiento, TiempoEmpleadoMinutos |
 | **UpdateMantenimientoCerraduraDto** | MantenimientoId + campos de Create |
@@ -528,7 +535,7 @@ await _repo.UpdateAsync(entidad, cancellationToken);
 - `CreateCerradurasInteligenteDto → CerradurasInteligente`: ignora `CerraduraId`, navigation props
 
 **Reservas:**
-- `CreateReservaCommand/UpdateReservaCommand → Reserva`: ignora `EstadoReserva`, `ReservaHuespedes`, timestamps
+- `CreateReservaCommand/UpdateReservaCommand → Reserva`: ignora `EstadoReserva`, `ReservaHuespedes`, timestamps, `CreadoPor`, `ModificadoPor`
 
 ---
 
@@ -672,6 +679,21 @@ Authenticate.API: auditoría manual en `AuthController` (no por pipeline).
 Email HTML de credenciales: diseño profesional, PIN monospace destacado, NumeroReserva, fechas CheckIn/CheckOut, advertencia no compartir.
 
 Servicios: `IEmailService` (Azure Communication Services), `IPushNotificationService` (ntfy.sh)
+
+---
+
+## Campos de auditoría automáticos (del JWT)
+
+| Tabla | Campo | Cuándo | Servicio |
+|---|---|---|---|
+| `CredencialesAcceso` | `CreadoPor` | Create | Dispositivos.API — `IHttpContextAccessor`, claim `"nameid" ?? ClaimTypes.NameIdentifier` |
+| `Reservas` | `CreadoPor` | Create | Reservas.API — ídem |
+| `Reservas` | `ModificadoPor` | Update | Reservas.API — ídem |
+| `PermisosPersonal` | `OtorgadoPor` | Create | Usuarios.API — ídem |
+
+- `FechaCreacion` → `DateTime.UtcNow` en todos los Create handlers (no viene del cliente, Ignored en mapping)
+- `FechaActualizacion` → `DateTime.UtcNow` en todos los Update handlers con ese campo
+- `DELETE /reservas/{id}` → **cancela** (EstadoReservaId = 4), no borra el registro
 
 ---
 

@@ -9,6 +9,8 @@ public class UnitOfWork : IUnitOfWork
     private IHuespedeRepository? _huespedeRepository;
     private IPersonalRepository? _personalRepository;
     private IPermisosPersonalRepository? _permisosPersonalRepository;
+    private IPuestoRepository? _puestoRepository;
+    private IDepartamentoRepository? _departamentoRepository;
 
     public UnitOfWork(BarceloIoTSystemContext context)
     {
@@ -39,6 +41,24 @@ public class UnitOfWork : IUnitOfWork
         {
             _permisosPersonalRepository ??= new PermisosPersonalRepository(_context);
             return _permisosPersonalRepository;
+        }
+    }
+
+    public IPuestoRepository Puestos
+    {
+        get
+        {
+            _puestoRepository ??= new PuestoRepository(_context);
+            return _puestoRepository;
+        }
+    }
+
+    public IDepartamentoRepository Departamentos
+    {
+        get
+        {
+            _departamentoRepository ??= new DepartamentoRepository(_context);
+            return _departamentoRepository;
         }
     }
 
