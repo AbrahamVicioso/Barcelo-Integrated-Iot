@@ -65,6 +65,7 @@ public class ReservasController : ControllerBase
         return result.IsSuccess ? Ok(result.Data) : BadRequest(result.ErrorMessage);
     }
 
+    [Authorize]
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateReservaCommand command)
     {
@@ -72,6 +73,7 @@ public class ReservasController : ControllerBase
         return result.IsSuccess ? CreatedAtAction(nameof(GetById), new { id = result.Data?.ReservaId }, result.Data) : BadRequest(result.ErrorMessage);
     }
 
+    [Authorize]
     [HttpPut("{id}")]
     public async Task<IActionResult> Update(int id, [FromBody] UpdateReservaCommand command)
     {

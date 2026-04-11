@@ -43,5 +43,7 @@ public partial class Reserva
 
     public string CreadoPor { get; set; }
 
+    public string ModificadoPor { get; set; }
+
     public string Observaciones { get; set; }
 }

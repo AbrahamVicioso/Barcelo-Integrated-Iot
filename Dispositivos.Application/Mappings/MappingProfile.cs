@@ -54,9 +54,14 @@ public class MappingProfile : Profile
             .ForMember(dest => dest.CredencialId, opt => opt.Ignore())
             .ForMember(dest => dest.FechaCreacion, opt => opt.Ignore())
             .ForMember(dest => dest.HashPin, opt => opt.Ignore())
+            .ForMember(dest => dest.CreadoPor, opt => opt.Ignore())
             .ForMember(dest => dest.UltimoUso, opt => opt.Ignore());
         
-        CreateMap<UpdateCredencialesAccesoDto, CredencialesAcceso>();
+        CreateMap<UpdateCredencialesAccesoDto, CredencialesAcceso>()
+            .ForMember(dest => dest.CreadoPor, opt => opt.Ignore())
+            .ForMember(dest => dest.FechaCreacion, opt => opt.Ignore())
+            .ForMember(dest => dest.HashPin, opt => opt.Ignore())
+            .ForMember(dest => dest.UltimoUso, opt => opt.Ignore());
 
         // MantenimientoCerradura mappings
         CreateMap<MantenimientoCerradura, MantenimientoCerraduraDto>();

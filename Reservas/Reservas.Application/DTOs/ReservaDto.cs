@@ -20,5 +20,6 @@ public class ReservaDto
     public DateTime? CheckInRealizado { get; set; }
     public DateTime? CheckOutRealizado { get; set; }
     public string? CreadoPor { get; set; }
+    public string? ModificadoPor { get; set; }
     public string? Observaciones { get; set; }
 }

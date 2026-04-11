@@ -11,6 +11,5 @@ public class CreateCredencialesAccesoDto
     public DateTime FechaExpiracion { get; set; }
     public bool EstaActiva { get; set; }
     public string TipoCredencial { get; set; } = string.Empty;
-    public string CreadoPor { get; set; } = string.Empty;
     public int NumeroUsos { get; set; }
 }

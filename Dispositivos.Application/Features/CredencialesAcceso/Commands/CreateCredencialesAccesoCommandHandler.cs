@@ -1,9 +1,11 @@
 using AutoMapper;
 using MediatR;
+using Microsoft.AspNetCore.Http;
 using Dispositivos.Application.Common;
 using Dispositivos.Application.DTOs;
 using Dispositivos.Application.Interfaces;
 using CredencialEntity = Dispositivos.Domain.Entities.CredencialesAcceso;
+using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -14,15 +16,18 @@ public class CreateCredencialesAccesoCommandHandler : IRequestHandler<CreateCred
     private readonly IMapper _mapper;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ICredencialesAccesoRepository _credencialRepository;
+    private readonly IHttpContextAccessor _httpContextAccessor;
 
     public CreateCredencialesAccesoCommandHandler(
-        IMapper mapper, 
+        IMapper mapper,
         IUnitOfWork unitOfWork,
-        ICredencialesAccesoRepository credencialRepository)
+        ICredencialesAccesoRepository credencialRepository,
+        IHttpContextAccessor httpContextAccessor)
     {
         _mapper = mapper;
         _unitOfWork = unitOfWork;
         _credencialRepository = credencialRepository;
+        _httpContextAccessor = httpContextAccessor;
     }
 
     private string GenerarHash(string texto)
@@ -42,8 +47,15 @@ public class CreateCredencialesAccesoCommandHandler : IRequestHandler<CreateCred
             if (request.Credencial.FechaActivacion < DateTime.UtcNow.Date)
                 return Result<int>.Failure("La fecha de activación no puede ser en el pasado.");
 
+            var user = _httpContextAccessor.HttpContext?.User;
+            var userId = user?.FindFirst("nameid")?.Value
+                      ?? user?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId))
+                return Result<int>.Failure("No se pudo identificar al usuario autenticado.");
+
             var credencial = _mapper.Map<CredencialEntity>(request.Credencial);
             credencial.FechaCreacion = DateTime.UtcNow;
+            credencial.CreadoPor = userId;
             credencial.HashPin = GenerarHash(credencial.CodigoPin);
 
             await _credencialRepository.AddAsync(credencial, cancellationToken);

@@ -1,4 +1,5 @@
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Dispositivos.Application.Common;
@@ -46,6 +47,7 @@ public class CredencialesAccesoController : ControllerBase
         return Ok(result.Data);
     }
 
+    [Authorize]
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateCredencialesAccesoDto credencialDto)
     {

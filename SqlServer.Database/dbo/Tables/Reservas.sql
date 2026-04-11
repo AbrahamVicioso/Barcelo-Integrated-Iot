@@ -16,6 +16,7 @@ CREATE TABLE [dbo].[Reservas]
     [CheckInRealizado]     DATETIME2(7)   NULL,
     [CheckOutRealizado]    DATETIME2(7)   NULL,
     [CreadoPor]            NVARCHAR(450)  NULL,
+    [ModificadoPor]        NVARCHAR(450)  NULL,
     [Observaciones]        NVARCHAR(1000) NULL,
 
     CONSTRAINT [PK_Reservas]               PRIMARY KEY CLUSTERED ([ReservaId] ASC),

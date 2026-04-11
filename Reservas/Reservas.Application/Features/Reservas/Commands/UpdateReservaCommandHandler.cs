@@ -1,9 +1,11 @@
 using AutoMapper;
 using MediatR;
+using Microsoft.AspNetCore.Http;
 using Reservas.Application.Common;
 using Reservas.Application.DTOs;
 using Reservas.Application.Interfaces;
 using Reservas.Domain.Entites;
+using System.Security.Claims;
 
 namespace Reservas.Application.Features.Reservas.Commands;
 
@@ -11,11 +13,13 @@ public class UpdateReservaCommandHandler : IRequestHandler<UpdateReservaCommand,
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
+    private readonly IHttpContextAccessor _httpContextAccessor;
 
-    public UpdateReservaCommandHandler(IUnitOfWork unitOfWork, IMapper mapper)
+    public UpdateReservaCommandHandler(IUnitOfWork unitOfWork, IMapper mapper, IHttpContextAccessor httpContextAccessor)
     {
         _unitOfWork = unitOfWork;
         _mapper = mapper;
+        _httpContextAccessor = httpContextAccessor;
     }
 
     public async Task<Result<ReservaDto>> Handle(UpdateReservaCommand request, CancellationToken cancellationToken)
@@ -54,8 +58,13 @@ public class UpdateReservaCommandHandler : IRequestHandler<UpdateReservaCommand,
                 }
             }
 
+            var user = _httpContextAccessor.HttpContext?.User;
+            var userId = user?.FindFirst("nameid")?.Value
+                      ?? user?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
             _mapper.Map(request, reserva);
             reserva.FechaActualizacion = DateTime.UtcNow;
+            reserva.ModificadoPor = userId;
 
             if (request.Huespedes != null)
             {

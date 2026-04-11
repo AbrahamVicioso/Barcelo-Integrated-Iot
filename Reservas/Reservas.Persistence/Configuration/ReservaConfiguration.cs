@@ -28,6 +28,7 @@ namespace Reservas.Persistence.Configuration
             builder.Property(e => e.HabitacionId).IsRequired(false);
 
             builder.Property(e => e.CreadoPor).HasMaxLength(450);
+            builder.Property(e => e.ModificadoPor).HasMaxLength(450);
             builder.Property(e => e.EstadoReservaId)
                 .HasDefaultValue(1);
             builder.HasOne(e => e.EstadoReserva)

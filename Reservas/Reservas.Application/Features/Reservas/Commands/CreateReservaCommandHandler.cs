@@ -1,5 +1,6 @@
 using AutoMapper;
 using MediatR;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Reservas.Application.Common;
 using Reservas.Application.DTOs;
@@ -7,6 +8,7 @@ using Reservas.Application.Interfaces;
 using Reservas.Domain.Entites;
 using static Reservas.Domain.Entites.EstadoReserva;
 using Notification.Domain.Events;
+using System.Security.Claims;
 
 namespace Reservas.Application.Features.Reservas.Commands;
 
@@ -17,25 +19,34 @@ public class CreateReservaCommandHandler : IRequestHandler<CreateReservaCommand,
     private readonly IHuespedRepository _huespedRepository;
     private readonly IReservaKafkaProducer _kafkaProducer;
     private readonly ILogger<CreateReservaCommandHandler> _logger;
+    private readonly IHttpContextAccessor _httpContextAccessor;
 
     public CreateReservaCommandHandler(
-        IUnitOfWork unitOfWork, 
-        IMapper mapper, 
+        IUnitOfWork unitOfWork,
+        IMapper mapper,
         IHuespedRepository huespedRepository,
         IReservaKafkaProducer kafkaProducer,
-        ILogger<CreateReservaCommandHandler> logger)
+        ILogger<CreateReservaCommandHandler> logger,
+        IHttpContextAccessor httpContextAccessor)
     {
         _unitOfWork = unitOfWork;
         _mapper = mapper;
         _huespedRepository = huespedRepository;
         _kafkaProducer = kafkaProducer;
         _logger = logger;
+        _httpContextAccessor = httpContextAccessor;
     }
 
     public async Task<Result<ReservaDto>> Handle(CreateReservaCommand request, CancellationToken cancellationToken)
     {
         try
         {
+            var user = _httpContextAccessor.HttpContext?.User;
+            var userId = user?.FindFirst("nameid")?.Value
+                      ?? user?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId))
+                return Result<ReservaDto>.Failure("No se pudo identificar al usuario autenticado.");
+
             if (request.FechaCheckOut <= request.FechaCheckIn)
                 return Result<ReservaDto>.Failure("La fecha de check-out debe ser posterior a la fecha de check-in.");
 
@@ -96,7 +107,7 @@ public class CreateReservaCommandHandler : IRequestHandler<CreateReservaCommand,
                 NumeroNinos = request.NumeroNinos,
                 MontoTotal = request.MontoTotal,
                 MontoPagado = request.MontoPagado,
-                CreadoPor = request.CreadoPor,
+                CreadoPor = userId,
                 Observaciones = request.Observaciones,
                 ReservaHuespedes = reservaHuespedes
             };

@@ -203,6 +203,10 @@ namespace Reservas.Persistence.Migrations
                         .HasMaxLength(450)
                         .HasColumnType("nvarchar(450)");
 
+                    b.Property<string>("ModificadoPor")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
                     b.Property<int>("EstadoReservaId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int")
