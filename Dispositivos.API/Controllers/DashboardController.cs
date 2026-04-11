@@ -4,7 +4,7 @@ using Dispositivos.Application.Features.Dashboard.Queries;
 
 namespace Dispositivos.API.Controllers;
 
-[Route("api/[controller]")]
+[Route("[controller]")]
 [ApiController]
 public class DashboardController : ControllerBase
 {

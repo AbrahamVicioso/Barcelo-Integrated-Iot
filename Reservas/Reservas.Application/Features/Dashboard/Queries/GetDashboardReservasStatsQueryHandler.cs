@@ -2,6 +2,7 @@ using MediatR;
 using Reservas.Application.Common;
 using Reservas.Application.DTOs;
 using Reservas.Application.Interfaces;
+using Reservas.Domain.Entites;
 
 namespace Reservas.Application.Features.Dashboard.Queries;
 
@@ -86,9 +87,7 @@ public class GetDashboardReservasStatsQueryHandler
 
         // Obtener IDs de habitaciones ocupadas (con reserva activa)
         var reservasActivas = reservas.Where(r =>
-            r.EstadoReserva?.Nombre?.ToLower() == "confirmada" ||
-            r.EstadoReserva?.Nombre?.ToLower() == "en curso" ||
-            r.EstadoReserva?.Nombre?.ToLower() == "activa").ToList();
+            r.EstadoReservaId != EstadoReserva.Cancelada).ToList();
 
         var habitacionesOcupadas = reservasActivas
             .Where(r => r.HabitacionId.HasValue)
@@ -97,14 +96,13 @@ public class GetDashboardReservasStatsQueryHandler
             .ToHashSet();
 
         var totalHabitaciones = habitacionesList.Count;
+        // IDs de EstadoHabitacion: 1=Disponible, 2=Ocupada, 3=Mantenimiento, 4=Fuera de Servicio, 5=Limpieza
         var disponibles = habitacionesList.Count(h =>
-            h.EstadoHabitacion?.Descripcion?.ToLower() == "disponible" &&
+            h.EstadoHabitacionId == 1 &&
             !habitacionesOcupadas.Contains(h.HabitacionId));
         var ocupadas = habitacionesList.Count(h => habitacionesOcupadas.Contains(h.HabitacionId));
-        var mantenimiento = habitacionesList.Count(h =>
-            h.EstadoHabitacion?.Descripcion?.ToLower() == "mantenimiento");
-        var limpieza = habitacionesList.Count(h =>
-            h.EstadoHabitacion?.Descripcion?.ToLower() == "limpieza");
+        var mantenimiento = habitacionesList.Count(h => h.EstadoHabitacionId == 3);
+        var limpieza = habitacionesList.Count(h => h.EstadoHabitacionId == 5);
 
         var ocupacionPorcentaje = totalHabitaciones > 0
             ? (decimal)ocupadas / totalHabitaciones * 100
@@ -164,24 +162,25 @@ public class GetDashboardReservasStatsQueryHandler
 
         var reservasList = reservas.ToList();
 
-        // Reservas activas: Confirmadas o En curso
+        // Reservas por estado: Pendiente=1, Activa=2, CheckOut=3, Cancelada=4
         var reservasConfirmadas = reservasList.Where(r =>
-            r.EstadoReserva?.Nombre?.ToLower() == "confirmada").ToList();
+            r.EstadoReservaId == EstadoReserva.Pendiente).ToList();
         var reservasEnCurso = reservasList.Where(r =>
-            r.EstadoReserva?.Nombre?.ToLower() == "en curso" ||
-            r.EstadoReserva?.Nombre?.ToLower() == "activa").ToList();
+            r.EstadoReservaId == EstadoReserva.Activa).ToList();
         var reservasActivas = reservasConfirmadas.Concat(reservasEnCurso).ToList();
 
-        // Check-ins de hoy
+        // Check-ins de hoy (excluye canceladas)
         var checkInsHoy = reservasList.Where(r =>
             r.FechaCheckIn.Date == hoy &&
-            r.CheckInRealizado == null).ToList();
+            r.CheckInRealizado == null &&
+            r.EstadoReservaId != EstadoReserva.Cancelada).ToList();
 
-        // Check-outs de hoy
+        // Check-outs de hoy (excluye canceladas)
         var checkOutsHoy = reservasList.Where(r =>
             r.FechaCheckOut.Date == hoy &&
             r.CheckInRealizado != null &&
-            r.CheckOutRealizado == null).ToList();
+            r.CheckOutRealizado == null &&
+            r.EstadoReservaId != EstadoReserva.Cancelada).ToList();
 
         // Calcular promedio de estancia
         var reservasCompletadas = reservasList

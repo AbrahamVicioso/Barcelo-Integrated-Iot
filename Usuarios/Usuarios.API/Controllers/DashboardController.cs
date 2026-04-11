@@ -6,7 +6,7 @@ using Usuarios.Application.UseCases.Dashboard.Queries.GetPersonalStats;
 namespace Usuarios.API.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("[controller]")]
 public class DashboardController : ControllerBase
 {
     private readonly IMediator _mediator;

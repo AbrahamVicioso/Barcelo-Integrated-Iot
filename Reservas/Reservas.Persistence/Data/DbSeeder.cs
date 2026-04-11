@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Reservas.Domain.Entites;
 using Reservas.Domain.Entities;
 using Reservas.Persistence.Data;
 
@@ -10,6 +11,7 @@ public static class DbSeeder
     {
         await SeedTiposHabitacionAsync(context);
         await SeedEstadosHabitacionAsync(context);
+        await SeedEstadosReservaAsync(context);
     }
 
     private static async Task SeedTiposHabitacionAsync(BarceloReservasContext context)
@@ -47,6 +49,23 @@ public static class DbSeeder
         };
 
         await context.EstadosHabitacion.AddRangeAsync(estados);
+        await context.SaveChangesAsync();
+    }
+
+    private static async Task SeedEstadosReservaAsync(BarceloReservasContext context)
+    {
+        if (await context.EstadosReserva.AnyAsync())
+            return;
+
+        var estados = new List<EstadoReserva>
+        {
+            new() { EstadoReservaId = EstadoReserva.Pendiente, Nombre = "Pendiente",  Descripcion = "Reserva registrada, pendiente de confirmación" },
+            new() { EstadoReservaId = EstadoReserva.Activa,    Nombre = "Activa",     Descripcion = "Huésped con check-in realizado" },
+            new() { EstadoReservaId = EstadoReserva.CheckOut,  Nombre = "CheckOut",   Descripcion = "Estancia finalizada" },
+            new() { EstadoReservaId = EstadoReserva.Cancelada, Nombre = "Cancelada",  Descripcion = "Reserva cancelada" },
+        };
+
+        await context.EstadosReserva.AddRangeAsync(estados);
         await context.SaveChangesAsync();
     }
 }

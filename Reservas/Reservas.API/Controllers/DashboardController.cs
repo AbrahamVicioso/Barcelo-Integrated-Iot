@@ -4,7 +4,7 @@ using Reservas.Application.Features.Dashboard.Queries;
 
 namespace Reservas.API.Controllers;
 
-[Route("api/[controller]")]
+[Route("[controller]")]
 [ApiController]
 public class DashboardController : ControllerBase
 {
