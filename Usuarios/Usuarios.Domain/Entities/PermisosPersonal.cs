@@ -13,7 +13,7 @@ public partial class PermisosPersonal
 
     public int? HabitacionId { get; set; }
 
-    public string TipoPermiso { get; set; }
+    public int? ActividadId { get; set; }
 
     public DateTime FechaOtorgamiento { get; set; }
 
@@ -28,4 +28,10 @@ public partial class PermisosPersonal
     public string Justificacion { get; set; }
 
     public virtual Personal Personal { get; set; }
+
+    public virtual HabitacionLookup Habitacion { get; set; }
+
+    public virtual ActividadLookup Actividad { get; set; }
+
+    public virtual UsuarioLookup OtorgadoPorNavigation { get; set; }
 }

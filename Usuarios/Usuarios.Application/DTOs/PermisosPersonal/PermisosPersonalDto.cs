@@ -5,11 +5,15 @@ public class PermisosPersonalDto
     public int PermisoId { get; set; }
     public int PersonalId { get; set; }
     public int? HabitacionId { get; set; }
-    public string TipoPermiso { get; set; } = string.Empty;
+    public int? ActividadId { get; set; }
     public DateTime FechaOtorgamiento { get; set; }
     public DateTime? FechaExpiracion { get; set; }
     public bool EsTemporal { get; set; }
     public string OtorgadoPor { get; set; } = string.Empty;
     public bool EstaActivo { get; set; }
     public string? Justificacion { get; set; }
+    public string? NombrePersonal { get; set; }
+    public string? NombreHabitacion { get; set; }
+    public string? NombreActividad { get; set; }
+    public string? OtorgadoPorNombre { get; set; }
 }

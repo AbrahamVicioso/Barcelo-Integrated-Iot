@@ -1,5 +1,7 @@
+using System.Security.Claims;
 using AutoMapper;
 using MediatR;
+using Microsoft.AspNetCore.Http;
 using Usuarios.Application.DTOs.PermisosPersonal;
 using Usuarios.Application.Exceptions;
 using Usuarios.Domain.Interfaces;
@@ -10,11 +12,13 @@ public class CreatePermisoCommandHandler : IRequestHandler<CreatePermisoCommand,
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
+    private readonly IHttpContextAccessor _httpContextAccessor;
 
-    public CreatePermisoCommandHandler(IUnitOfWork unitOfWork, IMapper mapper)
+    public CreatePermisoCommandHandler(IUnitOfWork unitOfWork, IMapper mapper, IHttpContextAccessor httpContextAccessor)
     {
         _unitOfWork = unitOfWork;
         _mapper = mapper;
+        _httpContextAccessor = httpContextAccessor;
     }
 
     public async Task<PermisosPersonalDto> Handle(CreatePermisoCommand request, CancellationToken cancellationToken)
@@ -35,14 +39,37 @@ public class CreatePermisoCommandHandler : IRequestHandler<CreatePermisoCommand,
             throw new BusinessException("Los permisos temporales deben tener fecha de expiración");
         }
 
+        var user = _httpContextAccessor.HttpContext?.User;
+        // Con MapInboundClaims=false el claim queda como "nameid" (nombre corto JWT),
+        // no como la URI larga de ClaimTypes.NameIdentifier
+        var userId = user?.FindFirst("nameid")?.Value
+                  ?? user?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userId))
+            throw new BusinessException("No se pudo identificar al usuario autenticado.");
+
         var permiso = _mapper.Map<Domain.Entities.PermisosPersonal>(request.Permiso);
         permiso.FechaOtorgamiento = DateTime.UtcNow;
         permiso.EstaActivo = true;
+        permiso.OtorgadoPor = userId;
 
-        var createdPermiso = await _unitOfWork.PermisosPersonal.AddAsync(permiso);
-        await _unitOfWork.SaveChangesAsync();
-
-        var permisoDto = _mapper.Map<PermisosPersonalDto>(createdPermiso);
-        return permisoDto;
+        try
+        {
+            var createdPermiso = await _unitOfWork.PermisosPersonal.AddAsync(permiso);
+            await _unitOfWork.SaveChangesAsync();
+            return _mapper.Map<PermisosPersonalDto>(createdPermiso);
+        }
+        catch (Exception ex) when (ex.GetType().Name == "DbUpdateException")
+        {
+            var inner = ex.InnerException?.Message ?? ex.Message;
+            if (inner.Contains("FK_PermisosPersonal_OtorgadoPor"))
+                throw new BusinessException("El usuario especificado en OtorgadoPor no existe.");
+            if (inner.Contains("FK_PermisosPersonal_Habitaciones"))
+                throw new BusinessException($"La habitación {request.Permiso.HabitacionId} no existe.");
+            if (inner.Contains("FK_PermisosPersonal_ActividadesRecreativas"))
+                throw new BusinessException($"La actividad recreativa {request.Permiso.ActividadId} no existe.");
+            if (inner.Contains("FK_PermisosPersonal_Personal"))
+                throw new NotFoundException("El personal especificado no existe.");
+            throw new BusinessException($"Error de base de datos: {inner}");
+        }
     }
 }

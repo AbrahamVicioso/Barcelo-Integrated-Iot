@@ -23,7 +23,17 @@ public class MappingProfile : Profile
         CreateMap<UpdatePersonalDto, Personal>();
 
         // PermisosPersonal Mappings
-        CreateMap<PermisosPersonal, PermisosPersonalDto>();
+        CreateMap<PermisosPersonal, PermisosPersonalDto>()
+            .ForMember(dest => dest.NombrePersonal,
+                opt => opt.MapFrom(src => src.Personal != null ? src.Personal.NombreCompleto : null))
+            .ForMember(dest => dest.NombreHabitacion,
+                opt => opt.MapFrom(src => src.Habitacion != null ? src.Habitacion.NumeroHabitacion : null))
+            .ForMember(dest => dest.NombreActividad,
+                opt => opt.MapFrom(src => src.Actividad != null ? src.Actividad.NombreActividad : null))
+            .ForMember(dest => dest.OtorgadoPorNombre,
+                opt => opt.MapFrom(src => src.OtorgadoPorNavigation != null
+                    ? (src.OtorgadoPorNavigation.UserName ?? src.OtorgadoPorNavigation.Email)
+                    : null));
         CreateMap<CreatePermisosPersonalDto, PermisosPersonal>();
         CreateMap<UpdatePermisosPersonalDto, PermisosPersonal>();
     }

@@ -14,13 +14,13 @@ public class CreatePermisosPersonalDtoValidator : AbstractValidator<CreatePermis
             .GreaterThan(0).WithMessage("El HabitacionId debe ser mayor a 0")
             .When(x => x.HabitacionId.HasValue);
 
-        RuleFor(x => x.TipoPermiso)
-            .NotEmpty().WithMessage("El tipo de permiso es requerido")
-            .MaximumLength(50).WithMessage("El tipo de permiso no puede exceder 50 caracteres");
+        RuleFor(x => x.ActividadId)
+            .GreaterThan(0).WithMessage("El ActividadId debe ser mayor a 0")
+            .When(x => x.ActividadId.HasValue);
 
-        RuleFor(x => x.OtorgadoPor)
-            .NotEmpty().WithMessage("El campo OtorgadoPor es requerido")
-            .MaximumLength(450).WithMessage("El campo OtorgadoPor no puede exceder 450 caracteres");
+        RuleFor(x => x)
+            .Must(x => x.HabitacionId.HasValue || x.ActividadId.HasValue)
+            .WithMessage("Debe especificar al menos una HabitacionId o ActividadId");
 
         RuleFor(x => x.FechaExpiracion)
             .GreaterThan(DateTime.UtcNow).WithMessage("La fecha de expiración debe ser futura")

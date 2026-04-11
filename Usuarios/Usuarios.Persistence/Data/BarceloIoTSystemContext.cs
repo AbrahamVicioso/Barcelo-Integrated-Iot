@@ -20,6 +20,12 @@ public partial class BarceloIoTSystemContext : DbContext
 
     public virtual DbSet<Personal> Personals { get; set; }
 
+    public virtual DbSet<HabitacionLookup> Habitaciones { get; set; }
+
+    public virtual DbSet<ActividadLookup> ActividadesRecreativas { get; set; }
+
+    public virtual DbSet<UsuarioLookup> Usuarios { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Huespede>(entity =>
@@ -64,14 +70,36 @@ public partial class BarceloIoTSystemContext : DbContext
             entity.Property(e => e.OtorgadoPor)
                 .IsRequired()
                 .HasMaxLength(450);
-            entity.Property(e => e.TipoPermiso)
-                .IsRequired()
-                .HasMaxLength(50);
 
             entity.HasOne(d => d.Personal).WithMany(p => p.PermisosPersonals)
                 .HasForeignKey(d => d.PersonalId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_PermisosPersonal_Personal");
+
+            // FK a Habitaciones (tabla de Reservas, misma DB)
+            entity.Property(e => e.HabitacionId).IsRequired(false);
+            entity.HasIndex(e => e.HabitacionId).HasDatabaseName("IX_PermisosPersonal_HabitacionId");
+            entity.HasOne(d => d.Habitacion)
+                .WithMany()
+                .HasForeignKey(d => d.HabitacionId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_PermisosPersonal_Habitaciones");
+
+            // FK a ActividadesRecreativas (tabla de Reservas, misma DB)
+            entity.Property(e => e.ActividadId).IsRequired(false);
+            entity.HasIndex(e => e.ActividadId).HasDatabaseName("IX_PermisosPersonal_ActividadId");
+            entity.HasOne(d => d.Actividad)
+                .WithMany()
+                .HasForeignKey(d => d.ActividadId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_PermisosPersonal_ActividadesRecreativas");
+
+            // FK a Users (tabla de Identity, misma DB)
+            entity.HasOne(d => d.OtorgadoPorNavigation)
+                .WithMany()
+                .HasForeignKey(d => d.OtorgadoPor)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_PermisosPersonal_OtorgadoPor");
         });
 
         modelBuilder.Entity<Personal>(entity =>
@@ -103,6 +131,28 @@ public partial class BarceloIoTSystemContext : DbContext
             entity.HasOne(d => d.SupervisorNavigation).WithMany(p => p.InverseSupervisorNavigation)
                 .HasForeignKey(d => d.Supervisor)
                 .HasConstraintName("FK_Personal_Supervisor");
+        });
+
+        modelBuilder.Entity<HabitacionLookup>(entity =>
+        {
+            entity.HasKey(e => e.HabitacionId);
+            entity.ToTable("Habitaciones");
+            entity.Property(e => e.NumeroHabitacion).IsRequired().HasMaxLength(20);
+        });
+
+        modelBuilder.Entity<ActividadLookup>(entity =>
+        {
+            entity.HasKey(e => e.ActividadId);
+            entity.ToTable("ActividadesRecreativas");
+            entity.Property(e => e.NombreActividad).IsRequired().HasMaxLength(200);
+        });
+
+        modelBuilder.Entity<UsuarioLookup>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.ToTable("Users");
+            entity.Property(e => e.UserName).HasMaxLength(256);
+            entity.Property(e => e.Email).HasMaxLength(256);
         });
 
         OnModelCreatingPartial(modelBuilder);

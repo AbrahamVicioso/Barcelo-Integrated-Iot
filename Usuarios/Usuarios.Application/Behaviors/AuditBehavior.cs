@@ -62,7 +62,9 @@ public class AuditBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TR
         {
             var (accion, tipoEntidad) = ParseCommandName(commandName);
             var ctx = _httpContextAccessor.HttpContext;
-            var userId = ctx?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            // Con MapInboundClaims=false el claim queda como "nameid" (nombre corto JWT)
+            var userId = ctx?.User?.FindFirst("nameid")?.Value
+                      ?? ctx?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
             var auditEvent = new AuditEvent
             {

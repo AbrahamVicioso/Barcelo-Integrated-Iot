@@ -1,4 +1,5 @@
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Usuarios.Application.DTOs.PermisosPersonal;
 using Usuarios.Application.UseCases.PermisosPersonal.Commands.CreatePermiso;
@@ -7,10 +8,13 @@ using Usuarios.Application.UseCases.PermisosPersonal.Commands.UpdatePermiso;
 using Usuarios.Application.UseCases.PermisosPersonal.Queries.GetAllPermisos;
 using Usuarios.Application.UseCases.PermisosPersonal.Queries.GetPermisoById;
 using Usuarios.Application.UseCases.PermisosPersonal.Queries.GetPermisosActivos;
+using Usuarios.Application.UseCases.PermisosPersonal.Queries.GetPermisosByActividad;
+using Usuarios.Application.UseCases.PermisosPersonal.Queries.GetPermisosByHabitacion;
 using Usuarios.Application.UseCases.PermisosPersonal.Queries.GetPermisosByPersonal;
 
 namespace Usuarios.API.Controllers;
 
+[Authorize]
 [ApiController]
 [Route("[controller]")]
 public class PermisoPersonalController : ControllerBase
@@ -46,7 +50,21 @@ public class PermisoPersonalController : ControllerBase
     [HttpGet("personal/{personalId}/activos")]
     public async Task<IActionResult> GetActivos(int personalId)
     {
-        var result = await _mediator.Send(new GetPermisosActivosQuery(personalId));;
+        var result = await _mediator.Send(new GetPermisosActivosQuery(personalId));
+        return Ok(result);
+    }
+
+    [HttpGet("habitacion/{habitacionId}")]
+    public async Task<IActionResult> GetByHabitacion(int habitacionId)
+    {
+        var result = await _mediator.Send(new GetPermisosByHabitacionQuery(habitacionId));
+        return Ok(result);
+    }
+
+    [HttpGet("actividad/{actividadId}")]
+    public async Task<IActionResult> GetByActividad(int actividadId)
+    {
+        var result = await _mediator.Send(new GetPermisosByActividadQuery(actividadId));
         return Ok(result);
     }
 
