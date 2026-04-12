@@ -21,9 +21,19 @@ public class ReservasController : ControllerBase
 
     [HttpGet]
     //[Authorize]
-    public async Task<IActionResult> GetAll()
+    public async Task<IActionResult> GetAll(
+        [FromQuery] int? estadoReservaId,
+        [FromQuery] DateTime? fechaInicio,
+        [FromQuery] DateTime? fechaFin,
+        [FromQuery] string? nombreHuesped)
     {
-        var result = await _mediator.Send(new GetAllReservasQuery());
+        var result = await _mediator.Send(new GetAllReservasQuery
+        {
+            EstadoReservaId = estadoReservaId,
+            FechaInicio = fechaInicio,
+            FechaFin = fechaFin,
+            NombreHuesped = nombreHuesped
+        });
         return result.IsSuccess ? Ok(result.Data) : BadRequest(result.ErrorMessage);
     }
 

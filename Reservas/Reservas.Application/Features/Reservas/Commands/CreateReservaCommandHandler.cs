@@ -56,7 +56,8 @@ public class CreateReservaCommandHandler : IRequestHandler<CreateReservaCommand,
             // Build guest list (always include the titular guest)
             var huespedes = request.Huespedes ?? [];
             var allHuespedIds = huespedes.Select(h => h.HuespedId).ToHashSet();
-            int totalHuespedes = allHuespedIds.Count;
+            // +1 por el huesped titular de la reserva
+            int totalHuespedes = allHuespedIds.Count + 1;
 
             string habitacionNumero = "Por asignar";
             string hotelNombre = "Hotel Barcelo";
@@ -70,7 +71,7 @@ public class CreateReservaCommandHandler : IRequestHandler<CreateReservaCommand,
                 if (habitacion.CapacidadMaxima < totalHuespedes)
                     return Result<ReservaDto>.Failure(
                         $"La habitación {habitacion.NumeroHabitacion} tiene capacidad máxima de {habitacion.CapacidadMaxima} persona(s), " +
-                        $"pero la reserva incluye {totalHuespedes} huésped(es).");
+                        $"pero la reserva incluye {totalHuespedes} huésped(es) (1 titular + {allHuespedIds.Count} adicional(es)).");
 
                 var ocupada = await _unitOfWork.Reservas.IsHabitacionOcupadaAsync(
                     request.HabitacionId.Value,

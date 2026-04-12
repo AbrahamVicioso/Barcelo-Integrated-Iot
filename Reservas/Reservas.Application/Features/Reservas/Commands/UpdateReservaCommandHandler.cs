@@ -72,7 +72,8 @@ public class UpdateReservaCommandHandler : IRequestHandler<UpdateReservaCommand,
             {
                 var huespedes = request.Huespedes;
                 var allHuespedIds = huespedes.Select(h => h.HuespedId).ToHashSet();
-                int totalHuespedes = allHuespedIds.Count;
+                // +1 por el huesped titular de la reserva
+                int totalHuespedes = allHuespedIds.Count + 1;
 
                 int habId = request.HabitacionId ?? reserva.HabitacionId ?? 0;
                 if (habId > 0)
@@ -81,7 +82,7 @@ public class UpdateReservaCommandHandler : IRequestHandler<UpdateReservaCommand,
                     if (habitacion != null && habitacion.CapacidadMaxima < totalHuespedes)
                         return Result<ReservaDto>.Failure(
                             $"La habitación {habitacion.NumeroHabitacion} tiene capacidad máxima de {habitacion.CapacidadMaxima} persona(s), " +
-                            $"pero la reserva incluye {totalHuespedes} huésped(es).");
+                            $"pero la reserva incluye {totalHuespedes} huésped(es) (1 titular + {allHuespedIds.Count} adicional(es)).");
                 }
 
                 reserva.ReservaHuespedes.Clear();
@@ -103,13 +104,15 @@ public class UpdateReservaCommandHandler : IRequestHandler<UpdateReservaCommand,
                 if (habId > 0)
                 {
                     var habitacion = await _unitOfWork.Habitaciones.GetById(habId);
-                    int totalHuespedes = reserva.ReservaHuespedes.Count > 0
+                    // +1 por el huesped titular de la reserva
+                    int huespedCount = reserva.ReservaHuespedes.Count > 0
                         ? reserva.ReservaHuespedes.Count
                         : request.NumeroHuespedes;
+                    int totalHuespedes = huespedCount + 1;
                     if (habitacion != null && habitacion.CapacidadMaxima < totalHuespedes)
                         return Result<ReservaDto>.Failure(
                             $"La habitación {habitacion.NumeroHabitacion} tiene capacidad máxima de {habitacion.CapacidadMaxima} persona(s), " +
-                            $"pero la reserva incluye {totalHuespedes} huésped(es).");
+                            $"pero la reserva incluye {totalHuespedes} huésped(es) (1 titular + {huespedCount} adicional(es)).");
                 }
             }
 
