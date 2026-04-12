@@ -49,9 +49,9 @@ public class CreateReservaCommandHandler : IRequestHandler<CreateReservaCommand,
 
             if (request.FechaCheckOut <= request.FechaCheckIn)
                 return Result<ReservaDto>.Failure("La fecha de check-out debe ser posterior a la fecha de check-in.");
-
-            // if (request.FechaCheckIn < DateTime.UtcNow.Date)
-            //     return Result<ReservaDto>.Failure("La fecha de check-in no puede ser en el pasado.");
+            
+            if (request.FechaCheckIn.ToLocalTime() < DateTime.Now)
+                return Result<ReservaDto>.Failure("La fecha de check-in no puede ser en el pasado.");
 
             // Build guest list (always include the titular guest)
             var huespedes = request.Huespedes ?? [];

@@ -34,6 +34,11 @@ RUN dotnet publish "Authentication.Api.csproj" -c Release -o /app/publish --no-r
 
 FROM base AS final
 WORKDIR /app
+
+RUN apt-get update && apt-get install -y tzdata
+    
+ENV TZ=America/Santo_Domingo
+
 COPY --from=publish /app/publish .
 
 # Configuración optimizada

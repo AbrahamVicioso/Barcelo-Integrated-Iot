@@ -27,6 +27,11 @@ RUN dotnet publish "Audit.Worker.csproj" -c Release -o /app/publish --no-restore
 
 FROM base AS final
 WORKDIR /app
+
+RUN apt-get update && apt-get install -y tzdata
+    
+ENV TZ=America/Santo_Domingo
+
 COPY --from=publish /app/publish .
 
 # Configuración optimizada
