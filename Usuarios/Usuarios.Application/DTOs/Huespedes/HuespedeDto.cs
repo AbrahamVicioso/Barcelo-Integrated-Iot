@@ -6,7 +6,8 @@ public class HuespedeDto
     public string UsuarioId { get; set; } = string.Empty;
     public string? CorreoElectronico { get; set; }
     public string NombreCompleto { get; set; } = string.Empty;
-    public string TipoDocumento { get; set; } = string.Empty;
+    public int TipoDocumentoId { get; set; }
+    public string NombreTipoDocumento { get; set; } = string.Empty;
     public string NumeroDocumento { get; set; } = string.Empty;
     public string Nacionalidad { get; set; } = string.Empty;
     public DateTime FechaNacimiento { get; set; }

@@ -7,5 +7,6 @@ public interface IUnitOfWork : IDisposable
     IPermisosPersonalRepository PermisosPersonal { get; }
     IPuestoRepository Puestos { get; }
     IDepartamentoRepository Departamentos { get; }
+    ITipoDocumentoRepository TiposDocumento { get; }
     Task<int> SaveChangesAsync();
 }

@@ -28,6 +28,10 @@ public class UpdateHuespedeCommandHandler : IRequestHandler<UpdateHuespedeComman
         if (huespede == null)
             throw new NotFoundException("Huésped no encontrado");
 
+        var tipoDocumento = await _unitOfWork.TiposDocumento.GetByIdAsync(request.Huespede.TipoDocumentoId);
+        if (tipoDocumento == null)
+            throw new NotFoundException($"Tipo de documento con ID {request.Huespede.TipoDocumentoId} no encontrado");
+
         var nuevoUsuarioId = await _authenticationApiClient.GetUserIdByEmailAsync(request.Huespede.CorreoElectronico);
         if (nuevoUsuarioId == null)
             throw new NotFoundException("No se encontró un usuario con ese correo electrónico");
@@ -44,13 +48,13 @@ public class UpdateHuespedeCommandHandler : IRequestHandler<UpdateHuespedeComman
         }
 
         var existenteDocumento = await _unitOfWork.Huespedes.GetByDocumentoAsync(
-            request.Huespede.TipoDocumento,
+            request.Huespede.TipoDocumentoId,
             request.Huespede.NumeroDocumento);
         if (existenteDocumento != null && existenteDocumento.HuespedId != request.Huespede.HuespedId)
             throw new ConflictException("Ya existe un huésped con ese número de documento");
 
         huespede.NombreCompleto = request.Huespede.NombreCompleto;
-        huespede.TipoDocumento = request.Huespede.TipoDocumento;
+        huespede.TipoDocumentoId = request.Huespede.TipoDocumentoId;
         huespede.NumeroDocumento = request.Huespede.NumeroDocumento;
         huespede.Nacionalidad = request.Huespede.Nacionalidad;
         huespede.FechaNacimiento = request.Huespede.FechaNacimiento;
@@ -64,6 +68,8 @@ public class UpdateHuespedeCommandHandler : IRequestHandler<UpdateHuespedeComman
         await _unitOfWork.SaveChangesAsync();
 
         var huespedeDto = _mapper.Map<HuespedeDto>(huespede);
+        huespedeDto.NombreTipoDocumento = tipoDocumento.Nombre;
+
         return huespedeDto;
     }
 }

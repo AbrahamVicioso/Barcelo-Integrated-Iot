@@ -15,9 +15,8 @@ public class CreateHuespedeDtoValidator : AbstractValidator<CreateHuespedeDto>
             .NotEmpty().WithMessage("El nombre completo es requerido")
             .MaximumLength(200).WithMessage("El nombre completo no puede exceder 200 caracteres");
 
-        RuleFor(x => x.TipoDocumento)
-            .NotEmpty().WithMessage("El tipo de documento es requerido")
-            .MaximumLength(50).WithMessage("El tipo de documento no puede exceder 50 caracteres");
+        RuleFor(x => x.TipoDocumentoId)
+            .GreaterThan(0).WithMessage("El tipo de documento es requerido");
 
         RuleFor(x => x.NumeroDocumento)
             .NotEmpty().WithMessage("El número de documento es requerido")

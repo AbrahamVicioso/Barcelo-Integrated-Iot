@@ -26,7 +26,7 @@ public class GetHuespedesStatsQueryHandler : IRequestHandler<GetHuespedesStatsQu
             Total = huespedesList.Count,
             Vip = huespedesList.Count(h => h.EsVip),
             PorTipoDocumento = huespedesList
-                .GroupBy(h => h.TipoDocumento ?? "Sin especificar")
+                .GroupBy(h => h.TipoDocumentoNavigation?.Nombre ?? "Sin especificar")
                 .Select(g => new HuespedesPorTipoDocumentoDto
                 {
                     Tipo = g.Key,

@@ -62,7 +62,9 @@ public class UpdateReservaCommandHandler : IRequestHandler<UpdateReservaCommand,
             var userId = user?.FindFirst("nameid")?.Value
                       ?? user?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
+            var estadoOriginal = reserva.EstadoReservaId;
             _mapper.Map(request, reserva);
+            reserva.EstadoReservaId = estadoOriginal;
             reserva.FechaActualizacion = DateTime.UtcNow;
             reserva.ModificadoPor = userId;
 

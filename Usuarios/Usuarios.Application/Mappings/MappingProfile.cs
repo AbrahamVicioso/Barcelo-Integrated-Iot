@@ -4,6 +4,7 @@ using Usuarios.Application.DTOs.Huespedes;
 using Usuarios.Application.DTOs.PermisosPersonal;
 using Usuarios.Application.DTOs.Personal;
 using Usuarios.Application.DTOs.Puesto;
+using Usuarios.Application.DTOs.TipoDocumento;
 using Usuarios.Domain.Entities;
 
 namespace Usuarios.Application.Mappings;
@@ -13,11 +14,15 @@ public class MappingProfile : Profile
     public MappingProfile()
     {
         // Huespede Mappings
-        CreateMap<Huespede, HuespedeDto>();
+        CreateMap<Huespede, HuespedeDto>()
+            .ForMember(dest => dest.NombreTipoDocumento,
+                opt => opt.MapFrom(src => src.TipoDocumentoNavigation != null ? src.TipoDocumentoNavigation.Nombre : string.Empty));
         CreateMap<CreateHuespedeDto, Huespede>()
-            .ForMember(dest => dest.UsuarioId, opt => opt.Ignore());
+            .ForMember(dest => dest.UsuarioId, opt => opt.Ignore())
+            .ForMember(dest => dest.TipoDocumentoNavigation, opt => opt.Ignore());
         CreateMap<UpdateHuespedeDto, Huespede>()
-            .ForMember(dest => dest.UsuarioId, opt => opt.Ignore());
+            .ForMember(dest => dest.UsuarioId, opt => opt.Ignore())
+            .ForMember(dest => dest.TipoDocumentoNavigation, opt => opt.Ignore());
 
         // Personal Mappings
         CreateMap<Personal, PersonalDto>()
@@ -57,6 +62,19 @@ public class MappingProfile : Profile
             .ForMember(dest => dest.FechaCreacion, opt => opt.Ignore())
             .ForMember(dest => dest.EliminadoEn, opt => opt.Ignore())
             .ForMember(dest => dest.Personals, opt => opt.Ignore());
+
+        // TipoDocumento Mappings
+        CreateMap<Domain.Entities.TipoDocumento, TipoDocumentoDto>();
+        CreateMap<CreateTipoDocumentoDto, Domain.Entities.TipoDocumento>()
+            .ForMember(dest => dest.TipoDocumentoId, opt => opt.Ignore())
+            .ForMember(dest => dest.EstaActivo, opt => opt.Ignore())
+            .ForMember(dest => dest.FechaCreacion, opt => opt.Ignore())
+            .ForMember(dest => dest.EliminadoEn, opt => opt.Ignore())
+            .ForMember(dest => dest.Huespedes, opt => opt.Ignore());
+        CreateMap<UpdateTipoDocumentoDto, Domain.Entities.TipoDocumento>()
+            .ForMember(dest => dest.FechaCreacion, opt => opt.Ignore())
+            .ForMember(dest => dest.EliminadoEn, opt => opt.Ignore())
+            .ForMember(dest => dest.Huespedes, opt => opt.Ignore());
 
         // PermisosPersonal Mappings
         CreateMap<PermisosPersonal, PermisosPersonalDto>()

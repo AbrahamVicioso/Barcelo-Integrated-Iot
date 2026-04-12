@@ -11,25 +11,37 @@ public class HuespedeRepository : GenericRepository<Huespede>, IHuespedeReposito
     {
     }
 
-    public async Task<Huespede?> GetByUsuarioIdAsync(string usuarioId)
+    public override async Task<IEnumerable<Huespede>> GetAllAsync()
     {
-        return await _dbSet.FirstOrDefaultAsync(h => h.UsuarioId == usuarioId);
+        return await _dbSet.Include(h => h.TipoDocumentoNavigation).ToListAsync();
     }
 
-    public async Task<Huespede?> GetByDocumentoAsync(string tipoDocumento, string numeroDocumento)
+    public override async Task<Huespede?> GetByIdAsync(int id)
+    {
+        return await _dbSet.Include(h => h.TipoDocumentoNavigation).FirstOrDefaultAsync(h => h.HuespedId == id);
+    }
+
+    public async Task<Huespede?> GetByUsuarioIdAsync(string usuarioId)
+    {
+        return await _dbSet.Include(h => h.TipoDocumentoNavigation)
+            .FirstOrDefaultAsync(h => h.UsuarioId == usuarioId);
+    }
+
+    public async Task<Huespede?> GetByDocumentoAsync(int tipoDocumentoId, string numeroDocumento)
     {
         return await _dbSet.FirstOrDefaultAsync(h =>
-            h.TipoDocumento == tipoDocumento &&
+            h.TipoDocumentoId == tipoDocumentoId &&
             h.NumeroDocumento == numeroDocumento);
     }
 
     public async Task<IEnumerable<Huespede>> GetHuespedesVipAsync()
     {
-        return await _dbSet.Where(h => h.EsVip).ToListAsync();
+        return await _dbSet.Include(h => h.TipoDocumentoNavigation).Where(h => h.EsVip).ToListAsync();
     }
 
     public async Task<IEnumerable<Huespede>> GetByNacionalidadAsync(string nacionalidad)
     {
-        return await _dbSet.Where(h => h.Nacionalidad == nacionalidad).ToListAsync();
+        return await _dbSet.Include(h => h.TipoDocumentoNavigation)
+            .Where(h => h.Nacionalidad == nacionalidad).ToListAsync();
     }
 }

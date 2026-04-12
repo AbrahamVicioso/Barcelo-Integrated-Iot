@@ -135,6 +135,9 @@
     <None Include="Scripts\Seed_Puestos.sql" />
     <None Include="Scripts\Seed_Departamentos.sql" />
     <None Include="Scripts\Migration_Personal_Puesto_Departamento_FK.sql" />
+    <Build Include="dbo\Tables\TiposDocumento.sql" />
+    <None Include="Scripts\Seed_TiposDocumento.sql" />
+    <None Include="Scripts\Migration_Huespedes_TipoDocumentoId.sql" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Condition="'$(NetCoreBuild)' == 'true'">

@@ -11,6 +11,7 @@ public class UnitOfWork : IUnitOfWork
     private IPermisosPersonalRepository? _permisosPersonalRepository;
     private IPuestoRepository? _puestoRepository;
     private IDepartamentoRepository? _departamentoRepository;
+    private ITipoDocumentoRepository? _tipoDocumentoRepository;
 
     public UnitOfWork(BarceloIoTSystemContext context)
     {
@@ -59,6 +60,15 @@ public class UnitOfWork : IUnitOfWork
         {
             _departamentoRepository ??= new DepartamentoRepository(_context);
             return _departamentoRepository;
+        }
+    }
+
+    public ITipoDocumentoRepository TiposDocumento
+    {
+        get
+        {
+            _tipoDocumentoRepository ??= new TipoDocumentoRepository(_context);
+            return _tipoDocumentoRepository;
         }
     }
 

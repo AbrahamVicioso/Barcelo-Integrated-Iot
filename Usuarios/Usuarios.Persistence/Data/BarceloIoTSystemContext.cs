@@ -16,6 +16,8 @@ public partial class BarceloIoTSystemContext : DbContext
 
     public virtual DbSet<Huespede> Huespedes { get; set; }
 
+    public virtual DbSet<TipoDocumento> TiposDocumento { get; set; }
+
     public virtual DbSet<PermisosPersonal> PermisosPersonals { get; set; }
 
     public virtual DbSet<Personal> Personals { get; set; }
@@ -32,11 +34,24 @@ public partial class BarceloIoTSystemContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.Entity<TipoDocumento>(entity =>
+        {
+            entity.HasKey(e => e.TipoDocumentoId);
+            entity.ToTable("TiposDocumento");
+
+            entity.HasIndex(e => e.Nombre, "UQ_TiposDocumento_Nombre").IsUnique();
+
+            entity.Property(e => e.Nombre).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.Descripcion).HasMaxLength(500);
+            entity.Property(e => e.EstaActivo).HasDefaultValue(true);
+            entity.Property(e => e.FechaCreacion).HasDefaultValueSql("(getutcdate())");
+        });
+
         modelBuilder.Entity<Huespede>(entity =>
         {
             entity.HasKey(e => e.HuespedId);
 
-            entity.HasIndex(e => new { e.TipoDocumento, e.NumeroDocumento }, "UQ_Huespedes_Documento").IsUnique();
+            entity.HasIndex(e => new { e.TipoDocumentoId, e.NumeroDocumento }, "UQ_Huespedes_Documento").IsUnique();
 
             entity.HasIndex(e => e.UsuarioId, "UQ_Huespedes_Usuario").IsUnique();
 
@@ -56,10 +71,13 @@ public partial class BarceloIoTSystemContext : DbContext
                 .HasMaxLength(100);
             entity.Property(e => e.PreferenciasAlimentarias).HasMaxLength(500);
             entity.Property(e => e.TelefonoEmergencia).HasMaxLength(50);
-            entity.Property(e => e.TipoDocumento)
-                .IsRequired()
-                .HasMaxLength(50);
             entity.Property(e => e.UsuarioId).IsRequired();
+
+            entity.HasOne(e => e.TipoDocumentoNavigation)
+                .WithMany(t => t.Huespedes)
+                .HasForeignKey(e => e.TipoDocumentoId)
+                .OnDelete(DeleteBehavior.Restrict)
+                .HasConstraintName("FK_Huespedes_TiposDocumento");
         });
 
         modelBuilder.Entity<PermisosPersonal>(entity =>

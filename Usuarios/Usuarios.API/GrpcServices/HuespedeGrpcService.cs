@@ -72,7 +72,7 @@ public class HuespedeGrpcService : Huesped.HuespedBase
         HuespedId = dto.HuespedId,
         UsuarioId = dto.UsuarioId ?? string.Empty,
         NombreCompleto = dto.NombreCompleto ?? string.Empty,
-        TipoDocumento = dto.TipoDocumento ?? string.Empty,
+        TipoDocumento = dto.NombreTipoDocumento ?? string.Empty,
         NumeroDocumento = dto.NumeroDocumento ?? string.Empty,
         Nacionalidad = dto.Nacionalidad ?? string.Empty,
         FechaNacimiento = dto.FechaNacimiento.ToString("O"),
