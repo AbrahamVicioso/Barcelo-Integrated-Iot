@@ -22,6 +22,8 @@ public class UpdateHuespedeCommandHandler : IRequestHandler<UpdateHuespedeComman
         _authenticationApiClient = authenticationApiClient;
     }
 
+    private const int TipoDocumentoCedula = 2;
+
     public async Task<HuespedeDto> Handle(UpdateHuespedeCommand request, CancellationToken cancellationToken)
     {
         var huespede = await _unitOfWork.Huespedes.GetByIdAsync(request.Huespede.HuespedId);
@@ -31,6 +33,15 @@ public class UpdateHuespedeCommandHandler : IRequestHandler<UpdateHuespedeComman
         var tipoDocumento = await _unitOfWork.TiposDocumento.GetByIdAsync(request.Huespede.TipoDocumentoId);
         if (tipoDocumento == null)
             throw new NotFoundException($"Tipo de documento con ID {request.Huespede.TipoDocumentoId} no encontrado");
+
+        if (request.Huespede.TipoDocumentoId == TipoDocumentoCedula)
+        {
+            var cedula = request.Huespede.NumeroDocumento?.Trim() ?? string.Empty;
+            if (cedula.Length != 11 || !cedula.All(char.IsDigit))
+                throw new BusinessException("La cédula dominicana debe tener exactamente 11 dígitos numéricos.");
+            if (!EsCedulaDominicanaValida(cedula))
+                throw new BusinessException("La cédula dominicana ingresada no es válida. El dígito verificador no coincide.");
+        }
 
         var nuevoUsuarioId = await _authenticationApiClient.GetUserIdByEmailAsync(request.Huespede.CorreoElectronico);
         if (nuevoUsuarioId == null)
@@ -71,5 +82,22 @@ public class UpdateHuespedeCommandHandler : IRequestHandler<UpdateHuespedeComman
         huespedeDto.NombreTipoDocumento = tipoDocumento.Nombre;
 
         return huespedeDto;
+    }
+
+    private static bool EsCedulaDominicanaValida(string cedula)
+    {
+        int[] pesos = [1, 2, 1, 2, 1, 2, 1, 2, 1, 2];
+        int suma = 0;
+
+        for (int i = 0; i < 10; i++)
+        {
+            int producto = (cedula[i] - '0') * pesos[i];
+            suma += producto >= 10
+                ? (producto / 10) + (producto % 10)
+                : producto;
+        }
+
+        int digitoVerificador = (10 - (suma % 10)) % 10;
+        return (cedula[10] - '0') == digitoVerificador;
     }
 }
