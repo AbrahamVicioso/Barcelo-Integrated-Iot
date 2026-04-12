@@ -27,6 +27,9 @@ public static class DependencyInjection
         services.Configure<ThingsboardOptions>(
             configuration.GetSection("Thingsboard"));
 
+        // Singleton token cache shared across all TbDeviceService instances
+        services.AddSingleton<TbTokenCache>();
+
         // Register HttpClient for Thingsboard using factory pattern
         services.AddHttpClient<ITbDeviceService, TbDeviceService>((serviceProvider, client) =>
         {
@@ -46,6 +49,12 @@ public static class DependencyInjection
         configuration.GetSection("KafkaConsumer:CheckInRealizado").Bind(checkInConfig);
         services.AddSingleton(checkInConfig);
         services.AddHostedService<CheckInRealizadoKafkaConsumer>();
+
+        // Register Kafka consumer for personal unlock-door events
+        var personalUnlockConfig = new PersonalUnlockDoorKafkaConsumerConfig();
+        configuration.GetSection("KafkaConsumer:PersonalUnlockDoor").Bind(personalUnlockConfig);
+        services.AddSingleton(personalUnlockConfig);
+        services.AddHostedService<PersonalUnlockDoorKafkaConsumer>();
 
         // Register Audit Kafka Producer
         var auditConfig = new AuditKafkaProducerConfig();

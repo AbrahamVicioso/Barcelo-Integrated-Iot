@@ -62,6 +62,7 @@ public class CreateDispositivoCommandHandler : IRequestHandler<CreateDispositivo
             }
 
             var dispositivo = _mapper.Map<Dispositivo>(request.Dispositivo);
+            dispositivo.DispositivoId = Guid.NewGuid();
             dispositivo.FechaCreacion = DateTime.UtcNow;
 
             // Crear en ThingsBoard antes de guardar en DB para evitar inconsistencias

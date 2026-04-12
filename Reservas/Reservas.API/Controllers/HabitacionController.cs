@@ -1,4 +1,5 @@
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Reservas.Application.DTOs;
@@ -66,6 +67,20 @@ namespace Reservas.API.Controllers
         {
             var result = await _mediator.Send(new DeleteHabitacionCommand { HabitacionId = id });
             return result.IsSuccess ? Ok(result.Data) : NotFound(result.ErrorMessage);
+        }
+
+        [Authorize]
+        [HttpPost("{habitacionId}/unlock")]
+        public async Task<IActionResult> UnlockDoorPersonal(int habitacionId)
+        {
+            var result = await _mediator.Send(new UnlockDoorPersonalCommand { HabitacionId = habitacionId });
+
+            if (!result.IsSuccess)
+                return result.IsNotFound
+                    ? NotFound(new { error = result.ErrorMessage })
+                    : BadRequest(new { error = result.ErrorMessage });
+
+            return Ok(new { message = result.Data });
         }
     }
 }

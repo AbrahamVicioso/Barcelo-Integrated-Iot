@@ -12,6 +12,7 @@ namespace Reservas.Infrastructure.Kafka
         private readonly string _topic;
         private readonly string _unlockDoorTopic;
         private readonly string _checkInRealizadoTopic;
+        private readonly string _personalUnlockDoorTopic;
         private readonly ILogger<ReservaKafkaProducer> _logger;
         private bool _disposed;
 
@@ -20,6 +21,7 @@ namespace Reservas.Infrastructure.Kafka
             _topic = config.Topic;
             _unlockDoorTopic = config.UnlockDoorTopic;
             _checkInRealizadoTopic = config.CheckInRealizadoTopic;
+            _personalUnlockDoorTopic = config.PersonalUnlockDoorTopic;
             _logger = logger;
 
             var producerConfig = new ProducerConfig
@@ -111,6 +113,33 @@ namespace Reservas.Infrastructure.Kafka
             }
         }
 
+        public async Task PublishPersonalUnlockDoorAsync(PersonalUnlockDoorEvent personalUnlockEvent, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var message = new Message<string, string>
+                {
+                    Key = personalUnlockEvent.HabitacionId.ToString(),
+                    Value = JsonSerializer.Serialize(personalUnlockEvent, new JsonSerializerOptions
+                    {
+                        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                    })
+                };
+
+                var result = await _producer.ProduceAsync(_personalUnlockDoorTopic, message, cancellationToken);
+
+                _logger.LogInformation(
+                    "Published PersonalUnlockDoorEvent for personal {PersonalId}, habitacion {HabitacionId} to partition {Partition} at offset {Offset}",
+                    personalUnlockEvent.PersonalId, personalUnlockEvent.HabitacionId, result.Partition.Value, result.Offset.Value);
+            }
+            catch (ProduceException<string, string> ex)
+            {
+                _logger.LogError(ex, "Failed to publish PersonalUnlockDoorEvent for personal {PersonalId}, habitacion {HabitacionId}",
+                    personalUnlockEvent.PersonalId, personalUnlockEvent.HabitacionId);
+                throw;
+            }
+        }
+
         public void Dispose()
         {
             if (_disposed)
@@ -130,6 +159,7 @@ namespace Reservas.Infrastructure.Kafka
         public string Topic { get; set; } = "reservas";
         public string UnlockDoorTopic { get; set; } = "dispositivos.unlock-door";
         public string CheckInRealizadoTopic { get; set; } = "reservas.checkin-realizado";
+        public string PersonalUnlockDoorTopic { get; set; } = "habitacion.personal-unlock";
         public string? ClientId { get; set; }
     }
 }

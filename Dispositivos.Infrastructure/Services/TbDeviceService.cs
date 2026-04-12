@@ -9,21 +9,69 @@ using Newtonsoft.Json;
 namespace Dispositivos.Infrastructure.Services;
 
 /// <summary>
+/// Singleton token cache shared across all TbDeviceService instances
+/// </summary>
+public class TbTokenCache
+{
+    private string? _token;
+    private DateTime _expiration = DateTime.MinValue;
+    private readonly SemaphoreSlim _lock = new(1, 1);
+
+    public bool TryGet(out string? token)
+    {
+        token = _token;
+        return !string.IsNullOrEmpty(_token) && DateTime.UtcNow < _expiration;
+    }
+
+    public async Task<string> GetOrRefreshAsync(
+        Func<CancellationToken, Task<(string token, int expirationMinutes)>> factory,
+        CancellationToken cancellationToken)
+    {
+        if (!string.IsNullOrEmpty(_token) && DateTime.UtcNow < _expiration)
+            return _token!;
+
+        await _lock.WaitAsync(cancellationToken);
+        try
+        {
+            // Double-check after acquiring lock
+            if (!string.IsNullOrEmpty(_token) && DateTime.UtcNow < _expiration)
+                return _token!;
+
+            var (newToken, minutes) = await factory(cancellationToken);
+            _token = newToken;
+            _expiration = DateTime.UtcNow.AddMinutes(minutes);
+            return _token;
+        }
+        finally
+        {
+            _lock.Release();
+        }
+    }
+
+    public void Invalidate()
+    {
+        _token = null;
+        _expiration = DateTime.MinValue;
+    }
+}
+
+/// <summary>
 /// Implementation of Thingsboard device management service using HTTP API
 /// </summary>
 public class TbDeviceService : ITbDeviceService
 {
     private readonly HttpClient _httpClient;
     private readonly ThingsboardOptions _options;
-    private string? _cachedToken;
-    private DateTime _tokenExpiration = DateTime.MinValue;
+    private readonly TbTokenCache _tokenCache;
 
     public TbDeviceService(
         HttpClient httpClient,
-        IOptions<ThingsboardOptions> options)
+        IOptions<ThingsboardOptions> options,
+        TbTokenCache tokenCache)
     {
         _httpClient = httpClient;
         _options = options.Value;
+        _tokenCache = tokenCache;
     }
 
     /// <inheritdoc />
@@ -40,9 +88,10 @@ public class TbDeviceService : ITbDeviceService
         var queryParams = new List<string>();
 
         if (!string.IsNullOrEmpty(accessToken))
-        {
-            queryParams.Add($"accessToken={accessToken}");
-        }
+            queryParams.Add($"accessToken={Uri.EscapeDataString(accessToken)}");
+
+        if (!string.IsNullOrEmpty(_options.NameConflictPolicy))
+            queryParams.Add($"nameConflictPolicy={Uri.EscapeDataString(_options.NameConflictPolicy)}");
 
         var queryString = queryParams.Any() ? "?" + string.Join("&", queryParams) : "";
         var url = $"/api/device{queryString}";
@@ -384,17 +433,12 @@ public class TbDeviceService : ITbDeviceService
         }
     }
 
-    private async Task<string> GetValidTokenAsync(CancellationToken cancellationToken)
+    private Task<string> GetValidTokenAsync(CancellationToken cancellationToken)
     {
-        if (!string.IsNullOrEmpty(_cachedToken) && DateTime.UtcNow < _tokenExpiration)
-        {
-            return _cachedToken;
-        }
-
-        return await AuthenticateAsync(cancellationToken);
+        return _tokenCache.GetOrRefreshAsync(AuthenticateAsync, cancellationToken);
     }
 
-    private async Task<string> AuthenticateAsync(CancellationToken cancellationToken)
+    private async Task<(string token, int expirationMinutes)> AuthenticateAsync(CancellationToken cancellationToken)
     {
         var authPayload = new
         {
@@ -420,10 +464,7 @@ public class TbDeviceService : ITbDeviceService
         var authResponse = JsonConvert.DeserializeObject<ThingsboardAuthResponse>(responseContent)
                           ?? throw new InvalidOperationException("Failed to deserialize Thingsboard auth response");
 
-        _cachedToken = authResponse.Token;
-        _tokenExpiration = DateTime.UtcNow.AddMinutes(_options.TokenExpirationMinutes);
-
-        return _cachedToken;
+        return (authResponse.Token, _options.TokenExpirationMinutes);
     }
 }
 

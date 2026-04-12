@@ -3,6 +3,7 @@ namespace Reservas.Application.Common;
 public class Result<T>
 {
     public bool IsSuccess { get; set; }
+    public bool IsNotFound { get; set; }
     public T? Data { get; set; }
     public string? ErrorMessage { get; set; }
     public List<string>? Errors { get; set; }
@@ -31,6 +32,16 @@ public class Result<T>
         {
             IsSuccess = false,
             Errors = errors
+        };
+    }
+
+    public static Result<T> NotFound(string errorMessage)
+    {
+        return new Result<T>
+        {
+            IsSuccess = false,
+            IsNotFound = true,
+            ErrorMessage = errorMessage
         };
     }
 }

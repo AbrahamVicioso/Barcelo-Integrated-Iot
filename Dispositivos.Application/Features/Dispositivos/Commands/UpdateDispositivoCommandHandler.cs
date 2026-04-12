@@ -1,6 +1,6 @@
-using System.Net;
 using AutoMapper;
 using MediatR;
+using Microsoft.Extensions.Logging;
 using Dispositivos.Application.Common;
 using Dispositivos.Application.DTOs;
 using Dispositivos.Application.Interfaces;
@@ -13,15 +13,18 @@ public class UpdateDispositivoCommandHandler : IRequestHandler<UpdateDispositivo
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
     private readonly ITbDeviceService _tbDeviceService;
+    private readonly ILogger<UpdateDispositivoCommandHandler> _logger;
 
     public UpdateDispositivoCommandHandler(
-        IUnitOfWork unitOfWork, 
+        IUnitOfWork unitOfWork,
         IMapper mapper,
-        ITbDeviceService tbDeviceService)
+        ITbDeviceService tbDeviceService,
+        ILogger<UpdateDispositivoCommandHandler> logger)
     {
         _unitOfWork = unitOfWork;
         _mapper = mapper;
         _tbDeviceService = tbDeviceService;
+        _logger = logger;
     }
 
     public async Task<Result<DispositivoDto>> Handle(UpdateDispositivoCommand request, CancellationToken cancellationToken)
@@ -105,8 +108,10 @@ public class UpdateDispositivoCommandHandler : IRequestHandler<UpdateDispositivo
             }
             catch (HttpRequestException ex)
             {
-                return Result<DispositivoDto>.Failure(
-                    $"Dispositivo actualizado localmente pero falló la sincronización con ThingsBoard: {ex.Message}");
+                // DB update already succeeded — log warning but don't fail the request
+                _logger.LogWarning(ex,
+                    "Dispositivo {DispositivoId} actualizado en DB pero falló sincronización con ThingsBoard",
+                    dispositivo.DispositivoId);
             }
 
             var dispositivoDto = _mapper.Map<DispositivoDto>(dispositivo);

@@ -6,6 +6,7 @@ using Notification.Email;
 using Notification.Kafka.Configuration;
 using Notification.Kafka.Services;
 using Notification.Push;
+using Microsoft.Extensions.Logging;
 
 namespace Notification.Worker
 {
@@ -63,17 +64,24 @@ namespace Notification.Worker
                 context.Configuration.GetSection("KafkaConsumer:CredencialesCheckIn").Bind(credencialesCheckInConsumerConfig);
                 services.AddSingleton(credencialesCheckInConsumerConfig);
 
+                // Configure PersonalAccesoHabitacionConsumerConfig
+                var personalAccesoConsumerConfig = new PersonalAccesoHabitacionConsumerConfig();
+                context.Configuration.GetSection("KafkaConsumer:PersonalAccesoHabitacion").Bind(personalAccesoConsumerConfig);
+                services.AddSingleton(personalAccesoConsumerConfig);
+
                 // Add Kafka Consumers as separate instances
                 services.AddSingleton<UserCreatedEventConsumer>();
                 services.AddSingleton<ReservaCreadaEventConsumer>();
                 services.AddSingleton<EmailConfirmationEventConsumer>();
                 services.AddSingleton<CredencialesCheckInEventConsumer>();
+                services.AddSingleton<PersonalAccesoHabitacionEventConsumer>();
 
                 // Add Background Services for Kafka Consumers
                 services.AddHostedService<UserCreatedNotificationWorker>();
                 services.AddHostedService<ReservaCreadaNotificationWorker>();
                 services.AddHostedService<EmailConfirmationNotificationWorker>();
                 services.AddHostedService<CredencialesCheckInNotificationWorker>();
+                services.AddHostedService<PersonalAccesoHabitacionNotificationWorker>();
             });
 
             IHost host = builder.Build();
@@ -207,6 +215,35 @@ namespace Notification.Worker
         public override async Task StopAsync(CancellationToken cancellationToken)
         {
             _logger.LogInformation("Stopping Credenciales CheckIn Notification Worker...");
+            await _kafkaConsumer.StopAsync(cancellationToken);
+            await base.StopAsync(cancellationToken);
+        }
+    }
+
+    public class PersonalAccesoHabitacionNotificationWorker : BackgroundService
+    {
+        private readonly PersonalAccesoHabitacionEventConsumer _kafkaConsumer;
+        private readonly ILogger<PersonalAccesoHabitacionNotificationWorker> _logger;
+
+        public PersonalAccesoHabitacionNotificationWorker(
+            PersonalAccesoHabitacionEventConsumer kafkaConsumer,
+            ILogger<PersonalAccesoHabitacionNotificationWorker> logger)
+        {
+            _kafkaConsumer = kafkaConsumer;
+            _logger = logger;
+        }
+
+        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+        {
+            _logger.LogInformation("Starting Personal Acceso Habitacion Notification Worker...");
+            await _kafkaConsumer.StartAsync(stoppingToken);
+            while (!stoppingToken.IsCancellationRequested)
+                await Task.Delay(Timeout.Infinite, stoppingToken);
+        }
+
+        public override async Task StopAsync(CancellationToken cancellationToken)
+        {
+            _logger.LogInformation("Stopping Personal Acceso Habitacion Notification Worker...");
             await _kafkaConsumer.StopAsync(cancellationToken);
             await base.StopAsync(cancellationToken);
         }

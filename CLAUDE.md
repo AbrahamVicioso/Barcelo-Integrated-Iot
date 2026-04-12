@@ -363,6 +363,7 @@ SetSharedAttributesAsync(string deviceId, Dictionary<string, object> attrs, Canc
 | POST | /reservas/checkin | → PerformCheckInCommand |
 | CRUD | /reservas | Reservas |
 | CRUD | /habitacion | Habitaciones |
+| POST | /habitacion/{habitacionId}/unlock | [Authorize] → UnlockDoorPersonalCommand (personal JWT) |
 | CRUD | /hotel | Hoteles |
 
 ---
@@ -549,13 +550,32 @@ await _repo.UpdateAsync(entidad, cancellationToken);
 | `dispositivos.unlock-door` | Reservas.API | Dispositivos.Infrastructure (`UnlockDoorKafkaConsumer`) | `UnlockDoorEvent` |
 | `reservas.checkin-realizado` | Reservas.API | Dispositivos.Infrastructure (`CheckInRealizadoKafkaConsumer`) | `CheckInRealizadoEvent` |
 | `checkin.credenciales` | Dispositivos.Infrastructure | Notification.Worker (`CredencialesCheckInEventConsumer`) | `CredencialesCheckInEvent` |
+| `habitacion.personal-unlock` | Reservas.API | Dispositivos.Infrastructure (`PersonalUnlockDoorKafkaConsumer`) | `PersonalUnlockDoorEvent` |
+| `habitacion.personal-acceso` | Dispositivos.Infrastructure | Notification.Worker (`PersonalAccesoHabitacionEventConsumer`) | `PersonalAccesoHabitacionEvent` |
 | `audit.events` | Todos los APIs | Audit.Worker | `AuditEvent` |
 
-### Flujo unlock-door
+### Flujo unlock-door (huésped con PIN)
 
 1. `POST /reservas/{id}/unlock-door?pin=` → `UnlockDoorCommand`
 2. Handler: valida reserva activa + habitación + PIN → `RegistrarUsoAsync(credencialId)` → publica `UnlockDoorEvent`
 3. `UnlockDoorKafkaConsumer`: busca cerradura activa por HabitacionId → ThingsBoard `lockState = "unlocked"` → crea `RegistrosAcceso`
+
+### Flujo unlock-door personal (`POST /habitacion/{habitacionId}/unlock`)
+
+1. `[Authorize]` — obtiene `UsuarioId` del JWT (`ClaimTypes.NameIdentifier` o `"nameid"`)
+2. `UnlockDoorPersonalCommandHandler`:
+   - Busca `Personal` por `UsuarioId` → `ICredencialesAccesoService.GetPersonalByUsuarioIdAsync` (raw SQL `Personal WHERE UsuarioId=... AND EstaActivo=1`)
+   - Valida permiso activo → `PersonalTienePermisoAsync` (raw SQL `PermisosPersonal WHERE PersonalId AND HabitacionId AND EstaActivo AND FechaExpiracion`)
+   - Valida cerradura activa → `HabitacionTieneCerraduraActivaAsync`
+   - Busca reserva activa → `GetReservaActivaByHabitacionIdAsync` (`Reservas WHERE HabitacionId AND EstadoReservaId=2`)
+   - Si hay reserva: obtiene emails de todos los huéspedes vía `IUsuariosApiService` (principal + `ReservaHuespedes`)
+   - Publica `PersonalUnlockDoorEvent { HabitacionId, NumeroHabitacion, PersonalId, NombrePersonal, UsuarioId, DireccionIp, InfoDispositivo, Huespedes }` → topic `habitacion.personal-unlock`
+3. `PersonalUnlockDoorKafkaConsumer` (Dispositivos.Infrastructure, BackgroundService):
+   - Busca cerradura activa por HabitacionId
+   - **ThingsBoard es no-bloqueante**: intenta `lockState = "unlocked"`, si falla solo loguea error y continúa
+   - Crea `RegistrosAcceso` (TipoAcceso = "Personal")
+   - Publica `PersonalAccesoHabitacionEvent` a `habitacion.personal-acceso` (si `Huespedes.Count > 0`)
+4. `PersonalAccesoHabitacionEventConsumer` (Notification.Worker): por huésped con email → email HTML + push notification (alerta de acceso del personal)
 
 ### Flujo check-in + credenciales + email
 
@@ -675,6 +695,7 @@ Authenticate.API: auditoría manual en `AuthController` (no por pipeline).
 | `ReservaCreadaEventConsumer` | `reservas` | Email confirmación reserva |
 | `EmailConfirmationEventConsumer` | `email-confirmation` | Email con link de confirmación |
 | `CredencialesCheckInEventConsumer` | `checkin.credenciales` | Email HTML con PIN + push notification |
+| `PersonalAccesoHabitacionEventConsumer` | `habitacion.personal-acceso` | Email HTML + push de alerta de acceso del personal a todos los huéspedes |
 
 Email HTML de credenciales: diseño profesional, PIN monospace destacado, NumeroReserva, fechas CheckIn/CheckOut, advertencia no compartir.
 
@@ -699,7 +720,22 @@ Servicios: `IEmailService` (Azure Communication Services), `IPushNotificationSer
 
 ## Pendientes conocidos
 
-- **`Reservas.Application/Common/Result.cs`**: agregar `IsNotFound` + `Result<T>.NotFound()` (igual que Dispositivos)
 - **Controllers de Reservas**: migrar de `BadRequest(result.ErrorMessage)` → `BadRequest(new { error = result.ErrorMessage })` + usar 404 cuando corresponda
 - **`UpdateReservaCommandHandler`**: agregar `catch (Exception ex) when (ex.GetType().Name == "DbUpdateException")`
 - **Otros handlers de Reservas**: verificar que capturen DbUpdateException antes de Exception genérico
+
+## Implementado — Personal unlock door
+
+- `Reservas.Application/Common/Result.cs`: ya tiene `IsNotFound` + `Result<T>.NotFound()` ✓
+- `ICredencialesAccesoService` (interfaz + implementación): métodos `PersonalTienePermisoAsync`, `GetReservaActivaByHabitacionIdAsync`, `GetPersonalNombreAsync`, `GetPersonalByUsuarioIdAsync` ✓
+- `UnlockDoorPersonalCommand` + `UnlockDoorPersonalCommandHandler` (Reservas.Application) ✓
+- `PersonalUnlockDoorEvent` + `PersonalAccesoHabitacionEvent` (Notification.Domain/Events) ✓
+- `PersonalUnlockDoorKafkaConsumer` (Dispositivos.Infrastructure, BackgroundService) ✓
+- `PersonalAccesoHabitacionEventConsumer` + `PersonalAccesoHabitacionConsumerConfig` (Notification.Kafka) ✓
+- `POST /habitacion/{habitacionId}/unlock` en `HabitacionController` `[Authorize]` ✓
+
+### Regla: ThingsBoard es no-bloqueante en PersonalUnlockDoorKafkaConsumer
+El consumer siempre ejecuta `RegistrarAccesoAsync` y `PublicarPersonalAccesoEventAsync` independientemente de si ThingsBoard está disponible. El intento de desbloqueo ThingsBoard va en try/catch que solo loguea. Esto garantiza que el registro y la notificación a huéspedes siempre ocurran.
+
+### Regla: PersonalId viene del JWT, nunca de query param
+`UnlockDoorPersonalCommandHandler` extrae `UsuarioId` del JWT → busca en `Personal` tabla via `GetPersonalByUsuarioIdAsync` → obtiene `(PersonalId, NombreCompleto)`.

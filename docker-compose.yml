@@ -232,6 +232,7 @@ services:
       KafkaProducer__Topic: reservas
       KafkaProducer__UnlockDoorTopic: dispositivos.unlock-door
       KafkaProducer__CheckInRealizadoTopic: reservas.checkin-realizado
+      KafkaProducer__PersonalUnlockDoorTopic: habitacion.personal-unlock
       KafkaProducer__ClientId: reservas-api
       AuditProducer__BootstrapServers: kafka:29092
       AuditProducer__Topic: audit.events
@@ -270,6 +271,10 @@ services:
       KafkaConsumer__CheckInRealizado__GroupId: dispositivos-checkin-group
       KafkaConsumer__CheckInRealizado__Topic: reservas.checkin-realizado
       KafkaConsumer__CheckInRealizado__CredencialesProducerTopic: checkin.credenciales
+      KafkaConsumer__PersonalUnlockDoor__BootstrapServers: kafka:29092
+      KafkaConsumer__PersonalUnlockDoor__GroupId: dispositivos-personal-unlock-group
+      KafkaConsumer__PersonalUnlockDoor__Topic: habitacion.personal-unlock
+      KafkaConsumer__PersonalUnlockDoor__PersonalAccesoProducerTopic: habitacion.personal-acceso
     networks:
       - barcelo-net
     depends_on:
@@ -327,6 +332,9 @@ services:
       KafkaConsumer__CredencialesCheckIn__BootstrapServers: kafka:29092
       KafkaConsumer__CredencialesCheckIn__GroupId: notification-credenciales-checkin-group
       KafkaConsumer__CredencialesCheckIn__Topic: checkin.credenciales
+      KafkaConsumer__PersonalAccesoHabitacion__BootstrapServers: kafka:29092
+      KafkaConsumer__PersonalAccesoHabitacion__GroupId: notification-personal-acceso-group
+      KafkaConsumer__PersonalAccesoHabitacion__Topic: habitacion.personal-acceso
       EmailSettings__ConnectionString: ${AZURE_COMMUNICATION_CONNECTION_STRING:?EmailSettings__ConnectionString is required. Set AZURE_COMMUNICATION_CONNECTION_STRING in your .env file}
       EmailSettings__Username: ${AZURE_COMMUNICATION_SENDER_ADDRESS:?EmailSettings__Username is required. Set AZURE_COMMUNICATION_SENDER_ADDRESS in your .env file}
       Ntfy__BaseUrl: https://ntfy:443
