@@ -68,6 +68,10 @@ public class UpdateDispositivoCommandHandler : IRequestHandler<UpdateDispositivo
             }
 
             _mapper.Map(dto, dispositivo);
+            dispositivo.EstadoDispositivo = null;
+            dispositivo.TipoDispositivo = null;
+            dispositivo.CerradurasInteligentes = [];
+            dispositivo.MantenimientoCerraduras = [];
             dispositivo.FechaActualizacion = DateTime.UtcNow;
 
             await _unitOfWork.Dispositivos.UpdateAsync(dispositivo, cancellationToken);
