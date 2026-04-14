@@ -133,14 +133,15 @@ public class UpdateReservaCommandHandler : IRequestHandler<UpdateReservaCommand,
             await _unitOfWork.Reservas.UpdateAsync(reserva, cancellationToken);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-            // Si la reserva ya tenía check-in y la habitación cambió (incluyendo quitarla),
+            // Si la reserva ya tenía check-in y la habitación cambió (incluyendo asignar, cambiar o quitar),
             // recalcular ThingsBoard: la antigua pierde las credenciales, la nueva las gana.
-            if (hadCheckIn && oldHabitacionId.HasValue && request.HabitacionId != oldHabitacionId)
+            if (hadCheckIn && request.HabitacionId != oldHabitacionId)
             {
-                // Siempre limpiar la habitación antigua
-                await _kafkaProducer.PublishHabitacionSyncAsync(oldHabitacionId.Value, cancellationToken);
+                // Limpiar la habitación antigua si existía
+                if (oldHabitacionId.HasValue)
+                    await _kafkaProducer.PublishHabitacionSyncAsync(oldHabitacionId.Value, cancellationToken);
 
-                // Solo sincronizar la nueva si existe
+                // Sincronizar la nueva si existe
                 if (request.HabitacionId.HasValue)
                     await _kafkaProducer.PublishHabitacionSyncAsync(request.HabitacionId.Value, cancellationToken);
             }
