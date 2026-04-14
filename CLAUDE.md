@@ -847,11 +847,18 @@ Cada vez que se crea una credencial o permiso para una habitación con cerradura
 | `POST /permisopersonal` | `CreatePermisoCommandHandler` publica `PermisoPersonalCreadoEvent` si `HabitacionId != null` |
 | `PUT /reservas/{id}` (cambio de habitación con check-in activo) | `UpdateReservaCommandHandler` publica `PublishHabitacionSyncAsync` para la **habitación antigua** y la **nueva** si `CheckInRealizado != null && HabitacionId cambió` |
 
-### Regla: sync de cambio de habitación
-Si la reserva cambia de habitación (`request.HabitacionId != reserva.HabitacionId`) y ya tiene check-in activo (`reserva.CheckInRealizado.HasValue`):
-- Se sincroniza la habitación **antigua** → las credenciales del guest ya no aparecen (la reserva apunta a la nueva habitación)
-- Se sincroniza la habitación **nueva** → las credenciales del guest aparecen en la nueva cerradura
-- El recálculo es automático porque `TbCredencialesSyncService` hace el JOIN `CredencialesAcceso → Reservas` al momento de la llamada
+### Regla: sync de cambio de habitación (incluyendo eliminación)
+Condición: `hadCheckIn && oldHabitacionId.HasValue && request.HabitacionId != oldHabitacionId`
+
+| Caso | Qué se sincroniza |
+|---|---|
+| Habitación A → Habitación B | Antigua (A) + Nueva (B) |
+| Habitación A → null (se quita) | Solo la antigua (A) se limpia |
+| Sin cambio | Nada |
+
+- La habitación **antigua** siempre se sincroniza → sus credenciales quedan vacías porque la reserva ya no apunta a ella
+- La habitación **nueva** solo se sincroniza si `request.HabitacionId.HasValue`
+- El recálculo es automático: `TbCredencialesSyncService` hace `CredencialesAcceso INNER JOIN Reservas WHERE HabitacionId = X` en el momento de la llamada, por lo que refleja el estado actual de la DB
 
 ### Config appsettings
 - Dispositivos: `KafkaConsumer:PermisoPersonal` (GroupId: `dispositivos-permiso-personal-group`, Topic: `habitacion.permiso-personal`)
