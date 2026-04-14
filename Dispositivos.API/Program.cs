@@ -1,8 +1,10 @@
+using Dispositivos.API.GrpcServices;
 using Dispositivos.Application;
 using Dispositivos.Infrastructure;
 using Dispositivos.Persistence;
 using Dispositivos.Persistence.Data;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
 using System.Security.Claims;
@@ -16,8 +18,21 @@ namespace Dispositivos.API
         {
             var builder = WebApplication.CreateBuilder(args);
 
+            // Enable HTTP/2 cleartext (h2c) for gRPC on the same port as REST
+            if (!builder.Configuration.GetSection("Kestrel:Endpoints").Exists())
+            {
+                builder.WebHost.ConfigureKestrel(options =>
+                {
+                    options.ConfigureEndpointDefaults(listenOptions =>
+                    {
+                        listenOptions.Protocols = HttpProtocols.Http1AndHttp2;
+                    });
+                });
+            }
+
             // Add services to the container.
             builder.Services.AddControllers();
+            builder.Services.AddGrpc();
             builder.Services.AddOpenApi();
             builder.Services.AddHttpContextAccessor();
 
@@ -82,6 +97,7 @@ namespace Dispositivos.API
             app.UseAuthentication();
             app.UseAuthorization();
             app.MapControllers();
+            app.MapGrpcService<PersonalEstadoGrpcService>();
             app.Run();
 
            

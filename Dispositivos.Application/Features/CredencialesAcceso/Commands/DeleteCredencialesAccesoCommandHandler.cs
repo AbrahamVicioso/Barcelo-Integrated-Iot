@@ -8,13 +8,16 @@ public class DeleteCredencialesAccesoCommandHandler : IRequestHandler<DeleteCred
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly ICredencialesAccesoRepository _credencialRepository;
+    private readonly ITbCredencialesSyncService _syncService;
 
     public DeleteCredencialesAccesoCommandHandler(
         IUnitOfWork unitOfWork,
-        ICredencialesAccesoRepository credencialRepository)
+        ICredencialesAccesoRepository credencialRepository,
+        ITbCredencialesSyncService syncService)
     {
         _unitOfWork = unitOfWork;
         _credencialRepository = credencialRepository;
+        _syncService = syncService;
     }
 
     public async Task<Result<bool>> Handle(DeleteCredencialesAccesoCommand request, CancellationToken cancellationToken)
@@ -28,8 +31,13 @@ public class DeleteCredencialesAccesoCommandHandler : IRequestHandler<DeleteCred
                 return Result<bool>.Failure($"Credencial con ID {request.CredencialId} no encontrada.");
             }
 
+            var reservaId = credencial.ReservaId;
+
             await _credencialRepository.DeleteAsync(credencial, cancellationToken);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+            if (reservaId.HasValue)
+                await _syncService.SyncByReservaIdAsync(reservaId.Value, cancellationToken);
 
             return Result<bool>.Success(true);
         }

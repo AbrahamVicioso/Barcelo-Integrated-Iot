@@ -205,6 +205,7 @@ services:
       KafkaProducer__PermisoHabitacion__Topic: habitacion.permiso-personal
       ExternalServices__Authentication__GrpcUrl: "https://auth-api:5118"
       ExternalServices__Authentication__SkipCertValidation: "true"
+      ExternalServices__Dispositivos__GrpcUrl: "http://dispositivos-api:5185"
     networks:
       - barcelo-net
     depends_on:
@@ -213,6 +214,8 @@ services:
       kafka:
         condition: service_started
       auth-api:
+        condition: service_started
+      dispositivos-api:
         condition: service_started
 
   reservas-api:

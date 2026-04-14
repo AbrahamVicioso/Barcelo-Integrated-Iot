@@ -2,6 +2,7 @@ using AutoMapper;
 using MediatR;
 using Usuarios.Application.DTOs.Personal;
 using Usuarios.Application.Exceptions;
+using Usuarios.Application.Interfaces;
 using Usuarios.Domain.Interfaces;
 
 namespace Usuarios.Application.UseCases.Personal.Commands.UpdatePersonal;
@@ -10,11 +11,16 @@ public class UpdatePersonalCommandHandler : IRequestHandler<UpdatePersonalComman
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
+    private readonly IDispositivosApiService _dispositivosApi;
 
-    public UpdatePersonalCommandHandler(IUnitOfWork unitOfWork, IMapper mapper)
+    public UpdatePersonalCommandHandler(
+        IUnitOfWork unitOfWork,
+        IMapper mapper,
+        IDispositivosApiService dispositivosApi)
     {
         _unitOfWork = unitOfWork;
         _mapper = mapper;
+        _dispositivosApi = dispositivosApi;
     }
 
     public async Task<PersonalDto> Handle(UpdatePersonalCommand request, CancellationToken cancellationToken)
@@ -47,6 +53,8 @@ public class UpdatePersonalCommandHandler : IRequestHandler<UpdatePersonalComman
             }
         }
 
+        var estabaActivo = personal.EstaActivo;
+
         personal.NombreCompleto = request.Personal.NombreCompleto;
         personal.PuestoId = request.Personal.PuestoId;
         personal.DepartamentoId = request.Personal.DepartamentoId;
@@ -56,6 +64,9 @@ public class UpdatePersonalCommandHandler : IRequestHandler<UpdatePersonalComman
 
         await _unitOfWork.Personal.UpdateAsync(personal);
         await _unitOfWork.SaveChangesAsync();
+
+        if (estabaActivo != request.Personal.EstaActivo)
+            await _dispositivosApi.SincronizarEstadoPersonalAsync(request.Personal.PersonalId, request.Personal.EstaActivo, cancellationToken);
 
         var personalDto = _mapper.Map<PersonalDto>(personal);
         return personalDto;

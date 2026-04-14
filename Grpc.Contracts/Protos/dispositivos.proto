@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+option csharp_namespace = "Grpc.Contracts.Dispositivos";
+
+package dispositivos;
+
+service PersonalEstado {
+  rpc SincronizarEstadoPersonal (SincronizarEstadoPersonalRequest) returns (SincronizarEstadoPersonalResponse);
+}
+
+message SincronizarEstadoPersonalRequest {
+  int32 personal_id = 1;
+  bool esta_activo = 2;
+}
+
+message SincronizarEstadoPersonalResponse {
+  bool success = 1;
+  int32 credenciales_afectadas = 2;
+}

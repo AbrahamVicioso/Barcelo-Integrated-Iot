@@ -67,6 +67,7 @@ namespace Usuarios.API
             builder.Services.AddSingleton(permisoProducerConfig);
             builder.Services.AddSingleton<Usuarios.Application.Interfaces.IPermisoHabitacionSyncProducer, PermisoHabitacionKafkaProducer>();
 
+
             // Required for AuditBehavior
             builder.Services.AddHttpContextAccessor();
 

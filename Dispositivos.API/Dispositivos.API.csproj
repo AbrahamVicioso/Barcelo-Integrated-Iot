@@ -14,6 +14,7 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.3" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.3" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.4" />
+    <PackageReference Include="Grpc.AspNetCore" Version="2.66.0" />
     <PackageReference Include="Scalar.AspNetCore" Version="2.12.27" />
   </ItemGroup>
 
@@ -21,6 +22,7 @@
     <ProjectReference Include="..\Dispositivos.Application\Dispositivos.Application.csproj" />
     <ProjectReference Include="..\Dispositivos.Infrastructure\Dispositivos.Infrastructure.csproj" />
     <ProjectReference Include="..\Dispositivos.Persistence\Dispositivos.Persistence.csproj" />
+    <ProjectReference Include="..\Grpc.Contracts\Grpc.Contracts.csproj" />
   </ItemGroup>
 
 </Project>

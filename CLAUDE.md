@@ -490,6 +490,19 @@ Todos los repositorios usan `.AsNoTracking()`. Al update con FK + nav prop carga
 
 `CredencialesCheckInEventConsumer`: email HTML con PIN + push notification.
 
+### Flujo personal desactivado/activado → credenciales + ThingsBoard sync (gRPC)
+`PUT /personal/{id}` cambia `EstaActivo` → `UpdatePersonalCommandHandler` detecta `estabaActivo != EstaActivo` → llama `IDispositivosApiService.SincronizarEstadoPersonalAsync(personalId, estaActivo)` (no bloquea si falla).
+
+`IDispositivosApiService` implementado por `DispositivosGrpcClient` (en `Usuarios.ExternalService`) → llama `PersonalEstado.SincronizarEstadoPersonal` en `Dispositivos.API` vía gRPC (h2c, puerto 5185).
+
+`PersonalEstadoGrpcService` (Dispositivos.API):
+- **Desactivación** (`EstaActivo=false`): filtra `EstaActiva=true` → `EstaActiva=false` → save
+- **Reactivación** (`EstaActivo=true`): filtra `!EstaActiva && FechaExpiracion >= NOW` → `EstaActiva=true` → save
+- Raw SQL: `CredencialesAcceso JOIN Reservas` + `PermisosPersonal` → HabitacionIds afectadas → `SyncAsync` por cada una
+
+Proto: `Grpc.Contracts/Protos/dispositivos.proto` · namespace `Grpc.Contracts.Dispositivos`
+Config Usuarios: `ExternalServices:Dispositivos:GrpcUrl` (local: `http://localhost:5185`, Docker: `http://dispositivos-api:5185`)
+
 ### Flujo permiso personal → ThingsBoard sync
 `POST /permisopersonal` → `CreatePermisoCommandHandler`: si `HabitacionId != null` publica `PermisoPersonalCreadoEvent` → `PermisoPersonalCreadoKafkaConsumer`: `SyncAsync(habitacionId)`.
 
@@ -555,8 +568,12 @@ Flujos que disparan sync:
 | Trigger | Llamada |
 |---|---|
 | Check-in (`CheckInRealizadoKafkaConsumer`) | `SyncByReservaIdAsync(reservaId)` |
-| `POST /credencialesacceso` manual | `SyncByReservaIdAsync` si `ReservaId != null` |
+| `POST /credencialesacceso` | `SyncByReservaIdAsync` si `ReservaId != null` |
+| `PUT /credencialesacceso/{id}` | `SyncByReservaIdAsync` por ReservaId anterior + nueva si cambió (ambas si distintas) |
+| `DELETE /credencialesacceso/{id}` | `SyncByReservaIdAsync` si tenía `ReservaId` |
 | `POST /permisopersonal` | `PermisoPersonalCreadoEvent` → `SyncAsync(habitacionId)` |
+| `PUT /permisopersonal/{id}` | `_syncProducer.PublishAsync(habitacionId)` si `HabitacionId != null` |
+| `DELETE /permisopersonal/{id}` | `_syncProducer.PublishAsync(habitacionId)` si `HabitacionId != null` |
 | `PUT /reservas/{id}` cambio habitación con CheckIn activo | `PublishHabitacionSyncAsync` habitación antigua + nueva (si aplica) |
 
 Regla cambio habitación: condición `hadCheckIn && oldHabitacionId.HasValue && request.HabitacionId != oldHabitacionId` → siempre sync antigua; sync nueva solo si `request.HabitacionId.HasValue`.

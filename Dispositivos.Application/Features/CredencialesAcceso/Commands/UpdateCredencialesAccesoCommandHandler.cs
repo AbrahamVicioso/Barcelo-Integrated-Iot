@@ -12,15 +12,18 @@ public class UpdateCredencialesAccesoCommandHandler : IRequestHandler<UpdateCred
     private readonly IMapper _mapper;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ICredencialesAccesoRepository _credencialRepository;
+    private readonly ITbCredencialesSyncService _syncService;
 
     public UpdateCredencialesAccesoCommandHandler(
-        IMapper mapper, 
+        IMapper mapper,
         IUnitOfWork unitOfWork,
-        ICredencialesAccesoRepository credencialRepository)
+        ICredencialesAccesoRepository credencialRepository,
+        ITbCredencialesSyncService syncService)
     {
         _mapper = mapper;
         _unitOfWork = unitOfWork;
         _credencialRepository = credencialRepository;
+        _syncService = syncService;
     }
 
     public async Task<Result<CredencialesAccesoDto>> Handle(UpdateCredencialesAccesoCommand request, CancellationToken cancellationToken)
@@ -35,10 +38,16 @@ public class UpdateCredencialesAccesoCommandHandler : IRequestHandler<UpdateCred
             if (request.Credencial.FechaExpiracion <= request.Credencial.FechaActivacion)
                 return Result<CredencialesAccesoDto>.Failure("La fecha de expiración debe ser posterior a la fecha de activación.");
 
+            var oldReservaId = credencial.ReservaId;
             _mapper.Map(request.Credencial, credencial);
 
             await _credencialRepository.UpdateAsync(credencial, cancellationToken);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+            if (oldReservaId.HasValue)
+                await _syncService.SyncByReservaIdAsync(oldReservaId.Value, cancellationToken);
+            if (request.Credencial.ReservaId.HasValue && request.Credencial.ReservaId != oldReservaId)
+                await _syncService.SyncByReservaIdAsync(request.Credencial.ReservaId.Value, cancellationToken);
 
             var credencialDto = _mapper.Map<CredencialesAccesoDto>(credencial);
             return Result<CredencialesAccesoDto>.Success(credencialDto);
