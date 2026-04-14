@@ -31,13 +31,11 @@ public class PerformCheckInCommandHandler : IRequestHandler<PerformCheckInComman
     {
         try
         {
-            // RF-003: Validar numero de reserva
-            var reserva = await _unitOfWork.Reservas.GetByNumeroReservaAsync(request.NumeroReserva, cancellationToken);
+            var reserva = await _unitOfWork.Reservas.GetByIdAsync(request.ReservaId, cancellationToken);
 
             if (reserva == null)
-                return Result<CheckInDto>.Failure("No se encontró ninguna reserva con el número proporcionado.");
+                return Result<CheckInDto>.Failure($"No se encontró la reserva con ID {request.ReservaId}.");
 
-            // Verificar que la reserva esté en estado válido para check-in
             if (reserva.EstadoReservaId == EstadoReserva.Activa)
                 return Result<CheckInDto>.Failure("Esta reserva ya tiene un check-in registrado.");
 
@@ -47,26 +45,14 @@ public class PerformCheckInCommandHandler : IRequestHandler<PerformCheckInComman
             if (reserva.EstadoReservaId == EstadoReserva.Cancelada)
                 return Result<CheckInDto>.Failure("No se puede realizar check-in para una reserva cancelada.");
 
-            // Verificar que no exista ya un check-in para esta reserva
             if (reserva.CheckInRealizado.HasValue)
                 return Result<CheckInDto>.Failure("Ya existe un check-in registrado para esta reserva.");
 
-            // Verificar que la fecha actual esté dentro del rango de la reserva
             var hoy = DateTime.UtcNow.Date;
             if (hoy < reserva.FechaCheckIn.Date)
                 return Result<CheckInDto>.Failure($"El check-in no puede realizarse antes de la fecha de entrada: {reserva.FechaCheckIn:dd/MM/yyyy}.");
             if (hoy > reserva.FechaCheckOut.Date)
                 return Result<CheckInDto>.Failure($"La reserva venció el {reserva.FechaCheckOut:dd/MM/yyyy}. No es posible realizar el check-in.");
-
-            // RF-003: Validar identidad del huesped via email
-            var huesped = await _usuariosApiService.GetHuespedByIdAsync(reserva.HuespedId, cancellationToken);
-
-            if (huesped == null)
-                return Result<CheckInDto>.Failure("No se encontró el huésped asociado a esta reserva.");
-
-            if (string.IsNullOrEmpty(huesped.CorreoElectronico) ||
-                !huesped.CorreoElectronico.Equals(request.Email, StringComparison.OrdinalIgnoreCase))
-                return Result<CheckInDto>.Failure("El email proporcionado no coincide con el registrado para esta reserva.");
 
             var fechaCheckIn = DateTime.UtcNow;
 
@@ -131,7 +117,7 @@ public class PerformCheckInCommandHandler : IRequestHandler<PerformCheckInComman
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error al realizar check-in para reserva {NumeroReserva}", request.NumeroReserva);
+            _logger.LogError(ex, "Error al realizar check-in para reserva {ReservaId}", request.ReservaId);
             return Result<CheckInDto>.Failure($"Error al realizar el check-in: {ex.Message}");
         }
     }

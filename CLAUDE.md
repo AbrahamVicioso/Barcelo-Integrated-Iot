@@ -316,6 +316,16 @@ SetSharedAttributesAsync(string deviceId, Dictionary<string, object> attrs, Canc
 
 ---
 
+## Handlers/Queries existentes — Usuarios
+
+| Entidad | Queries | Commands |
+|---|---|---|
+| Huespedes | GetAll, GetById, GetByUserId, GetVip | Create, Update, Delete |
+| Personal | GetAll, GetById, GetByUserId, GetActivo, GetByDepartamento | Create, Update, Delete |
+| PermisosPersonal | GetAll, GetById, GetActivos, GetByPersonal, GetByHabitacion, GetByActividad | Create, Update, Delete |
+
+---
+
 ## Handlers/Queries existentes — Dispositivos
 
 | Entidad | Queries | Commands |
@@ -360,11 +370,33 @@ SetSharedAttributesAsync(string deviceId, Dictionary<string, object> attrs, Canc
 | Verbo | Ruta | Descripción |
 |---|---|---|
 | POST | /reservas/{id}/unlock-door?pin= | → UnlockDoorCommand |
-| POST | /reservas/checkin | → PerformCheckInCommand |
+| POST | /reservas/{id}/checkin | → PerformCheckInCommand (solo ReservaId de ruta, sin body) |
+| POST | /reservas/{id}/checkout | → PerformCheckOutCommand |
 | CRUD | /reservas | Reservas |
 | CRUD | /habitacion | Habitaciones |
 | POST | /habitacion/{habitacionId}/unlock | [Authorize] → UnlockDoorPersonalCommand (personal JWT) |
 | CRUD | /hotel | Hoteles |
+
+## Endpoints — Usuarios.API (principales)
+
+| Verbo | Ruta | Descripción |
+|---|---|---|
+| CRUD | /huesped | Huéspedes |
+| GET | /huesped/{id} | Por HuespedId |
+| GET | /huesped/user/{usuarioId} | Por UsuarioId (Identity) |
+| GET | /huesped/vip | Solo VIPs |
+| CRUD | /personal | Personal |
+| GET | /personal/{id} | Por PersonalId |
+| GET | /personal/user/{usuarioId} | Por UsuarioId (Identity) |
+| GET | /personal/activo | Solo activos |
+| GET | /personal/departamento/{departamentoId} | Por departamento |
+| CRUD | /permisopersonal | Permisos de personal |
+
+---
+
+## Reglas de negocio — Reservas
+
+- **Reserva cancelada** (`EstadoReservaId = 4`): no se puede editar. `UpdateReservaCommandHandler` valida esto antes de procesar.
 
 ---
 
@@ -579,8 +611,8 @@ await _repo.UpdateAsync(entidad, cancellationToken);
 
 ### Flujo check-in + credenciales + email
 
-1. `POST /reservas/checkin` → `PerformCheckInCommand`
-2. Handler: valida reserva → obtiene email+nombre de **todos** huéspedes vía `IUsuariosApiService` → publica `CheckInRealizadoEvent { Huespedes: [{HuespedId, Email, NombreCompleto}] }`
+1. `POST /reservas/{id}/checkin` → `PerformCheckInCommand { ReservaId }` (sin body, ReservaId de la ruta)
+2. Handler: busca reserva por `ReservaId`, valida estado y fechas → obtiene email+nombre de **todos** huéspedes vía `IUsuariosApiService` → publica `CheckInRealizadoEvent { Huespedes: [{HuespedId, Email, NombreCompleto}] }`
 3. `CheckInRealizadoKafkaConsumer`: por huésped genera PIN (`RandomNumberGenerator.GetInt32(100000, 1000000)`) → crea `CredencialesAcceso` → publica `CredencialesCheckInEvent { Credenciales: [{Email, NombreCompleto, CodigoPin}] }`
 4. `CredencialesCheckInEventConsumer`: por huésped con email → envía email HTML con PIN + push notification
 

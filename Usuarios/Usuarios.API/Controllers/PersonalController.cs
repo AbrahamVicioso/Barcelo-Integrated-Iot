@@ -8,6 +8,7 @@ using Usuarios.Application.UseCases.Personal.Queries.GetAllPersonal;
 using Usuarios.Application.UseCases.Personal.Queries.GetPersonalActivo;
 using Usuarios.Application.UseCases.Personal.Queries.GetPersonalByDepartamento;
 using Usuarios.Application.UseCases.Personal.Queries.GetPersonalById;
+using Usuarios.Application.UseCases.Personal.Queries.GetPersonalByUserId;
 
 namespace Usuarios.API.Controllers;
 
@@ -40,6 +41,13 @@ public class PersonalController : ControllerBase
     public async Task<IActionResult> GetActivo()
     {
         var result = await _mediator.Send(new GetPersonalActivoQuery());
+        return Ok(result);
+    }
+
+    [HttpGet("user/{usuarioId}")]
+    public async Task<IActionResult> GetByUserId(string usuarioId)
+    {
+        var result = await _mediator.Send(new GetPersonalByUserIdQuery(usuarioId));
         return Ok(result);
     }
 

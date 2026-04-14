@@ -31,6 +31,9 @@ public class UpdateReservaCommandHandler : IRequestHandler<UpdateReservaCommand,
             if (reserva == null)
                 return Result<ReservaDto>.Failure($"Reserva con ID {request.ReservaId} no encontrada.");
 
+            if (reserva.EstadoReservaId == EstadoReserva.Cancelada)
+                return Result<ReservaDto>.Failure("No se puede editar una reserva cancelada.");
+
             var habitacionId = request.HabitacionId ?? reserva.HabitacionId;
             var fechaCheckIn = request.FechaCheckIn != default ? request.FechaCheckIn : reserva.FechaCheckIn;
             var fechaCheckOut = request.FechaCheckOut != default ? request.FechaCheckOut : reserva.FechaCheckOut;

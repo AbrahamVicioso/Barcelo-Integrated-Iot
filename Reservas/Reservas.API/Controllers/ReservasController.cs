@@ -108,10 +108,10 @@ public class ReservasController : ControllerBase
         return result.IsSuccess ? Ok(result.Data) : BadRequest(result.ErrorMessage);
     }
 
-    [HttpPost("checkin")]
-    public async Task<IActionResult> PerformCheckIn([FromBody] PerformCheckInCommand command)
+    [HttpPost("{id}/checkin")]
+    public async Task<IActionResult> PerformCheckIn(int id)
     {
-        var result = await _mediator.Send(command);
+        var result = await _mediator.Send(new PerformCheckInCommand { ReservaId = id });
         return result.IsSuccess ? Ok(result.Data) : BadRequest(result.ErrorMessage);
     }
 
