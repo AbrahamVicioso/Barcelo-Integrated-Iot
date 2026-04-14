@@ -241,9 +241,26 @@ public class CheckInRealizadoKafkaConsumer : BackgroundService
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
+        // Sincronizar credenciales a ThingsBoard para la cerradura de esta habitacion
+        await SyncThingsBoardAsync(checkInEvent.ReservaId, cancellationToken);
+
         // Publicar evento para que Notification.Worker envíe el PIN por email a cada huésped
         if (credencialesGeneradas.Count > 0)
             await PublicarCredencialesEventAsync(checkInEvent, credencialesGeneradas, cancellationToken);
+    }
+
+    private async Task SyncThingsBoardAsync(int reservaId, CancellationToken cancellationToken)
+    {
+        try
+        {
+            using var scope = _scopeFactory.CreateScope();
+            var syncService = scope.ServiceProvider.GetRequiredService<ITbCredencialesSyncService>();
+            await syncService.SyncByReservaIdAsync(reservaId, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error sincronizando ThingsBoard tras check-in para Reserva {ReservaId}.", reservaId);
+        }
     }
 
     private async Task PublicarCredencialesEventAsync(

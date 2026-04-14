@@ -201,6 +201,8 @@ services:
       AuditProducer__BootstrapServers: kafka:29092
       AuditProducer__Topic: audit.events
       AuditProducer__ClientId: usuarios-audit
+      KafkaProducer__PermisoHabitacion__BootstrapServers: kafka:29092
+      KafkaProducer__PermisoHabitacion__Topic: habitacion.permiso-personal
       ExternalServices__Authentication__GrpcUrl: "https://auth-api:5118"
       ExternalServices__Authentication__SkipCertValidation: "true"
     networks:
@@ -233,6 +235,7 @@ services:
       KafkaProducer__UnlockDoorTopic: dispositivos.unlock-door
       KafkaProducer__CheckInRealizadoTopic: reservas.checkin-realizado
       KafkaProducer__PersonalUnlockDoorTopic: habitacion.personal-unlock
+      KafkaProducer__HabitacionSyncTopic: habitacion.permiso-personal
       KafkaProducer__ClientId: reservas-api
       AuditProducer__BootstrapServers: kafka:29092
       AuditProducer__Topic: audit.events
@@ -275,6 +278,9 @@ services:
       KafkaConsumer__PersonalUnlockDoor__GroupId: dispositivos-personal-unlock-group
       KafkaConsumer__PersonalUnlockDoor__Topic: habitacion.personal-unlock
       KafkaConsumer__PersonalUnlockDoor__PersonalAccesoProducerTopic: habitacion.personal-acceso
+      KafkaConsumer__PermisoPersonal__BootstrapServers: kafka:29092
+      KafkaConsumer__PermisoPersonal__GroupId: dispositivos-permiso-personal-group
+      KafkaConsumer__PermisoPersonal__Topic: habitacion.permiso-personal
     networks:
       - barcelo-net
     depends_on:

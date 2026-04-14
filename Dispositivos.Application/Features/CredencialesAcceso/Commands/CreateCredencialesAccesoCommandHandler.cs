@@ -17,17 +17,20 @@ public class CreateCredencialesAccesoCommandHandler : IRequestHandler<CreateCred
     private readonly IUnitOfWork _unitOfWork;
     private readonly ICredencialesAccesoRepository _credencialRepository;
     private readonly IHttpContextAccessor _httpContextAccessor;
+    private readonly ITbCredencialesSyncService _syncService;
 
     public CreateCredencialesAccesoCommandHandler(
         IMapper mapper,
         IUnitOfWork unitOfWork,
         ICredencialesAccesoRepository credencialRepository,
-        IHttpContextAccessor httpContextAccessor)
+        IHttpContextAccessor httpContextAccessor,
+        ITbCredencialesSyncService syncService)
     {
         _mapper = mapper;
         _unitOfWork = unitOfWork;
         _credencialRepository = credencialRepository;
         _httpContextAccessor = httpContextAccessor;
+        _syncService = syncService;
     }
 
     private string GenerarHash(string texto)
@@ -60,6 +63,10 @@ public class CreateCredencialesAccesoCommandHandler : IRequestHandler<CreateCred
 
             await _credencialRepository.AddAsync(credencial, cancellationToken);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+            // Sync ThingsBoard credentials for this habitacion if linked to a reserva
+            if (request.Credencial.ReservaId.HasValue)
+                await _syncService.SyncByReservaIdAsync(request.Credencial.ReservaId.Value, cancellationToken);
 
             return Result<int>.Success(credencial.CredencialId);
         }

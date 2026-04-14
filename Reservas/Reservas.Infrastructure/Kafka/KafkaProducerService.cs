@@ -13,6 +13,7 @@ namespace Reservas.Infrastructure.Kafka
         private readonly string _unlockDoorTopic;
         private readonly string _checkInRealizadoTopic;
         private readonly string _personalUnlockDoorTopic;
+        private readonly string _habitacionSyncTopic;
         private readonly ILogger<ReservaKafkaProducer> _logger;
         private bool _disposed;
 
@@ -22,6 +23,7 @@ namespace Reservas.Infrastructure.Kafka
             _unlockDoorTopic = config.UnlockDoorTopic;
             _checkInRealizadoTopic = config.CheckInRealizadoTopic;
             _personalUnlockDoorTopic = config.PersonalUnlockDoorTopic;
+            _habitacionSyncTopic = config.HabitacionSyncTopic;
             _logger = logger;
 
             var producerConfig = new ProducerConfig
@@ -140,6 +142,32 @@ namespace Reservas.Infrastructure.Kafka
             }
         }
 
+        public async Task PublishHabitacionSyncAsync(int habitacionId, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var evt = new PermisoPersonalCreadoEvent { HabitacionId = habitacionId };
+                var message = new Message<string, string>
+                {
+                    Key = habitacionId.ToString(),
+                    Value = JsonSerializer.Serialize(evt, new JsonSerializerOptions
+                    {
+                        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                    })
+                };
+
+                var result = await _producer.ProduceAsync(_habitacionSyncTopic, message, cancellationToken);
+
+                _logger.LogInformation(
+                    "Published HabitacionSync for habitacion {HabitacionId} to partition {Partition} at offset {Offset}",
+                    habitacionId, result.Partition.Value, result.Offset.Value);
+            }
+            catch (ProduceException<string, string> ex)
+            {
+                _logger.LogError(ex, "Failed to publish HabitacionSync for habitacion {HabitacionId}", habitacionId);
+            }
+        }
+
         public void Dispose()
         {
             if (_disposed)
@@ -160,6 +188,7 @@ namespace Reservas.Infrastructure.Kafka
         public string UnlockDoorTopic { get; set; } = "dispositivos.unlock-door";
         public string CheckInRealizadoTopic { get; set; } = "reservas.checkin-realizado";
         public string PersonalUnlockDoorTopic { get; set; } = "habitacion.personal-unlock";
+        public string HabitacionSyncTopic { get; set; } = "habitacion.permiso-personal";
         public string? ClientId { get; set; }
     }
 }

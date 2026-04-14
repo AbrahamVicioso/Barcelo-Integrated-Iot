@@ -52,15 +52,15 @@ Barcelo-Integrated-Iot/
 ├── Reservas/
 │   ├── Reservas.API/Controllers/
 │   ├── Reservas.Application/
-│   │   ├── Common/Result.cs          ← versión antigua, sin NotFound (pendiente)
+│   │   ├── Common/Result.cs          ← versión actualizada, tiene IsNotFound + NotFound()
 │   │   ├── DTOs/
 │   │   ├── Features/{Entidad}/Commands|Queries/
-│   │   ├── Interfaces/
+│   │   ├── Interfaces/               ← ICredencialesAccesoService, IUsuariosApiService
 │   │   └── Mappings/MappingProfile.cs
 │   ├── Reservas.Domain/Entities/
 │   └── Reservas.Persistence/
 │       ├── Repositories/
-│       └── Services/                 ← CredencialesAccesoService (SQL raw)
+│       └── Services/                 ← CredencialesAccesoService (SQL raw, queries cross-table)
 │
 ├── Dispositivos.API/Controllers/
 ├── Dispositivos.Application/
@@ -70,19 +70,26 @@ Barcelo-Integrated-Iot/
 │   ├── Behaviors/AuditBehavior.cs
 │   ├── DTOs/
 │   ├── Features/{Entidad}/Commands|Queries/
-│   ├── Interfaces/
+│   ├── Interfaces/                   ← repos + ITbDeviceService + ITbCredencialesSyncService
 │   └── Mappings/MappingProfile.cs
 ├── Dispositivos.Domain/Entities/
 ├── Dispositivos.Infrastructure/
-│   └── Kafka/Consumers/              ← BackgroundServices
+│   ├── Services/                     ← TbDeviceService, TbCredencialesSyncService
+│   │                                    BackgroundServices (Kafka consumers)
+│   ├── Configuration/                ← ThingsboardOptions
+│   └── DependencyInjection.cs        ← AddThingsboardInfrastructure()
 └── Dispositivos.Persistence/
     ├── Data/Configurations/           ← EF Core configs + constraints
     └── Repositories/
 │
 ├── Usuarios/
-│   ├── Usuarios.API/                 ← ExceptionHandlingMiddleware
+│   ├── Usuarios.API/
+│   │   ├── Controllers/
+│   │   ├── Services/                 ← AuditKafkaProducer, PermisoHabitacionKafkaProducer
+│   │   └── Middleware/ExceptionHandlingMiddleware
 │   ├── Usuarios.Application/
 │   │   ├── Features/{Entidad}/Commands|Queries/
+│   │   ├── Interfaces/               ← IPermisoHabitacionSyncProducer
 │   │   └── Exceptions/               ← NotFoundException, ConflictException, BusinessException
 │   └── Usuarios.Persistence/
 │
@@ -121,14 +128,12 @@ Barcelo-Integrated-Iot/
 
 Handlers devuelven `Result<T>`. **Nunca lanzan excepciones al controller.**
 
-**Dispositivos** (`Dispositivos.Application/Common/Result.cs`) — versión actualizada:
+**Dispositivos y Reservas** (`*/Common/Result.cs`) — ambos tienen la versión actualizada:
 ```csharp
 Result<T>.Success(data)        // → 200/201
 Result<T>.NotFound("msg")      // → 404 (IsNotFound = true)
 Result<T>.Failure("msg")       // → 400
 ```
-
-**Reservas** (`Reservas.Application/Common/Result.cs`) — versión antigua: sin `IsNotFound`/`NotFound()` ← pendiente migrar
 
 ### Entidades de catálogo con soft delete (Puesto, Departamento)
 
@@ -308,10 +313,38 @@ GetReservasByHuespedIdAsync · GetByNumeroReservaAsync · GetReservasByEstadoAsy
 GetReservasByFechaRangoAsync · IsHabitacionOcupadaAsync(habitacionId, checkIn, checkOut, excludeReservaId?)
 ```
 
+### `IReservaKafkaProducer` (Reservas)
+```
+PublishReservaCreadaAsync(ReservaCreadaEvent)
+PublishUnlockDoorAsync(UnlockDoorEvent)
+PublishCheckInRealizadoAsync(CheckInRealizadoEvent)
+PublishPersonalUnlockDoorAsync(PersonalUnlockDoorEvent)
+PublishHabitacionSyncAsync(int habitacionId)   ← dispara sync ThingsBoard en Dispositivos
+```
+Impl: `Reservas.Infrastructure/Kafka/KafkaProducerService.cs` · Config: `KafkaProducerConfig` (appsettings `KafkaProducer:`)
+
 ### `ITbDeviceService` (ThingsBoard)
 ```
-GetDeviceByNameAsync(string name) → DeviceDto
+GetDeviceByNameAsync(string name) → TbDeviceResponse?
 SetSharedAttributesAsync(string deviceId, Dictionary<string, object> attrs, CancellationToken)
+CreateOrUpdateDeviceAsync · GetDeviceByIdAsync · DeleteDeviceAsync · GetDeviceCredentialsAsync · UpdateDeviceAsync
+```
+
+### `ITbCredencialesSyncService` (ThingsBoard sync)
+```
+SyncAsync(int habitacionId, CancellationToken)          ← usa HabitacionId directamente
+SyncByReservaIdAsync(int reservaId, CancellationToken)  ← resuelve HabitacionId desde ReservaId
+```
+
+### `ICredencialesAccesoService` (Reservas — SQL raw, cross-table)
+```
+GetCredencialIdAsync(reservaId, pin) → int?
+RegistrarUsoAsync(credencialId)
+HabitacionTieneCerraduraActivaAsync(habitacionId) → bool
+PersonalTienePermisoAsync(personalId, habitacionId) → bool
+GetReservaActivaByHabitacionIdAsync(habitacionId) → int?
+GetPersonalNombreAsync(personalId) → string?
+GetPersonalByUsuarioIdAsync(usuarioId) → (PersonalId, NombreCompleto)?
 ```
 
 ---
@@ -584,6 +617,7 @@ await _repo.UpdateAsync(entidad, cancellationToken);
 | `checkin.credenciales` | Dispositivos.Infrastructure | Notification.Worker (`CredencialesCheckInEventConsumer`) | `CredencialesCheckInEvent` |
 | `habitacion.personal-unlock` | Reservas.API | Dispositivos.Infrastructure (`PersonalUnlockDoorKafkaConsumer`) | `PersonalUnlockDoorEvent` |
 | `habitacion.personal-acceso` | Dispositivos.Infrastructure | Notification.Worker (`PersonalAccesoHabitacionEventConsumer`) | `PersonalAccesoHabitacionEvent` |
+| `habitacion.permiso-personal` | Usuarios.API | Dispositivos.Infrastructure (`PermisoPersonalCreadoKafkaConsumer`) | `PermisoPersonalCreadoEvent` |
 | `audit.events` | Todos los APIs | Audit.Worker | `AuditEvent` |
 
 ### Flujo unlock-door (huésped con PIN)
@@ -609,12 +643,21 @@ await _repo.UpdateAsync(entidad, cancellationToken);
    - Publica `PersonalAccesoHabitacionEvent` a `habitacion.personal-acceso` (si `Huespedes.Count > 0`)
 4. `PersonalAccesoHabitacionEventConsumer` (Notification.Worker): por huésped con email → email HTML + push notification (alerta de acceso del personal)
 
-### Flujo check-in + credenciales + email
+### Flujo check-in + credenciales + email + ThingsBoard
 
 1. `POST /reservas/{id}/checkin` → `PerformCheckInCommand { ReservaId }` (sin body, ReservaId de la ruta)
-2. Handler: busca reserva por `ReservaId`, valida estado y fechas → obtiene email+nombre de **todos** huéspedes vía `IUsuariosApiService` → publica `CheckInRealizadoEvent { Huespedes: [{HuespedId, Email, NombreCompleto}] }`
-3. `CheckInRealizadoKafkaConsumer`: por huésped genera PIN (`RandomNumberGenerator.GetInt32(100000, 1000000)`) → crea `CredencialesAcceso` → publica `CredencialesCheckInEvent { Credenciales: [{Email, NombreCompleto, CodigoPin}] }`
+2. Handler: busca reserva por `ReservaId`, valida estado y fechas → obtiene email+nombre de **todos** huéspedes vía `IUsuariosApiService` → publica `CheckInRealizadoEvent { ReservaId, NumeroReserva, FechaCheckIn, FechaCheckOut, Huespedes }`
+3. `CheckInRealizadoKafkaConsumer`:
+   - Por huésped genera PIN (`RandomNumberGenerator.GetInt32(100000, 1000000)`) → crea `CredencialesAcceso`
+   - Llama `ITbCredencialesSyncService.SyncByReservaIdAsync(reservaId)` → sincroniza ThingsBoard
+   - Publica `CredencialesCheckInEvent { Credenciales: [{Email, NombreCompleto, CodigoPin}] }`
 4. `CredencialesCheckInEventConsumer`: por huésped con email → envía email HTML con PIN + push notification
+
+### Flujo permiso personal → ThingsBoard sync
+
+1. `POST /permisopersonal` → `CreatePermisoCommand`
+2. `CreatePermisoCommandHandler`: valida personal activo, crea permiso → si `HabitacionId != null` publica `PermisoPersonalCreadoEvent { HabitacionId }` a `habitacion.permiso-personal`
+3. `PermisoPersonalCreadoKafkaConsumer` (Dispositivos.Infrastructure): llama `ITbCredencialesSyncService.SyncAsync(habitacionId)`
 
 ### Flujo registro de usuario
 
@@ -699,9 +742,10 @@ POST /api/plugins/telemetry/DEVICE/{deviceId}/SHARED_SCOPE → setear atributos 
 ```
 
 - Nombre del device = `CerradurasInteligente.DispositivoId.ToString()`
-- Auth: JWT de tenant cacheado 60 min
+- Auth: JWT de tenant cacheado 60 min (`TbTokenCache` singleton, doble-check locking)
 - `POST /api/device` sin ID crea device; si ya existe → 400 "already exists" → usar `GetDeviceByNameAsync` (idempotente)
 - **No usar** `/api/device?name=...` (incorrecto)
+- `TbDeviceResponse.Id` puede ser null si el device no existe — siempre verificar antes de llamar `SetSharedAttributesAsync`
 
 ---
 
@@ -750,24 +794,76 @@ Servicios: `IEmailService` (Azure Communication Services), `IPushNotificationSer
 
 ---
 
+## Implementado — Personal unlock door ✓
+
+- `Reservas.Application/Common/Result.cs`: ya tiene `IsNotFound` + `Result<T>.NotFound()` ✓
+- `ICredencialesAccesoService` (interfaz + implementación en Reservas.Persistence/Services/): queries raw SQL cross-table ✓
+- `UnlockDoorPersonalCommand` + `UnlockDoorPersonalCommandHandler` (Reservas.Application) ✓
+- `PersonalUnlockDoorEvent` + `PersonalAccesoHabitacionEvent` (Notification.Domain/Events) ✓
+- `PersonalUnlockDoorKafkaConsumer` (Dispositivos.Infrastructure/Services/, BackgroundService) ✓
+- `PersonalAccesoHabitacionEventConsumer` + `PersonalAccesoHabitacionConsumerConfig` (Notification.Kafka) ✓
+- `POST /habitacion/{habitacionId}/unlock` en `HabitacionController` `[Authorize]` ✓
+
+### Regla: ThingsBoard es no-bloqueante en PersonalUnlockDoorKafkaConsumer
+El consumer siempre ejecuta `RegistrarAccesoAsync` y `PublicarPersonalAccesoEventAsync` independientemente de si ThingsBoard está disponible. El intento de desbloqueo ThingsBoard va en try/catch que solo loguea.
+
+### Regla: PersonalId viene del JWT, nunca de query param
+`UnlockDoorPersonalCommandHandler` extrae `UsuarioId` del JWT → busca en `Personal` tabla via `GetPersonalByUsuarioIdAsync` → obtiene `(PersonalId, NombreCompleto)`.
+
+---
+
+## Implementado — ThingsBoard sync de credenciales por habitación ✓
+
+Cada vez que se crea una credencial o permiso para una habitación con cerradura activa, se pushean a ThingsBoard todas las credenciales válidas en los próximos 7 días como atributo compartido `credenciales` del device.
+
+### Componentes
+
+- `ITbCredencialesSyncService` (`Dispositivos.Application/Interfaces/`) — `SyncAsync(habitacionId)` y `SyncByReservaIdAsync(reservaId)`
+- `TbCredencialesSyncService` (`Dispositivos.Infrastructure/Services/`) — implementación:
+  - Scoped — recibe `BarceloIoTDatabaseContext` + `ITbDeviceService` por DI
+  - Raw SQL cross-table: `CerradurasInteligentes`, `CredencialesAcceso INNER JOIN Reservas`, `PermisosPersonal INNER JOIN Personal`
+  - Horizonte credenciales: `FechaActivacion <= NOW+7d AND FechaExpiracion >= NOW`
+  - Horizonte permisos: `FechaExpiracion IS NULL OR FechaExpiracion >= NOW`
+  - Pushea `credenciales` (JSON array) + `ultimaSincronizacionCredenciales` (ISO 8601) al device
+  - **Nunca lanza excepciones** — falla silenciosamente con log de error
+- `PermisoPersonalCreadoKafkaConsumer` (`Dispositivos.Infrastructure/Services/`) — topic `habitacion.permiso-personal`, llama `SyncAsync`
+- `IPermisoHabitacionSyncProducer` (`Usuarios.Application/Interfaces/`) — interfaz de producer
+- `PermisoHabitacionKafkaProducer` (`Usuarios.API/Services/`) — implementación producer
+
+### Formato del atributo ThingsBoard `credenciales`
+```json
+[
+  {"tipo":"huesped","pin":"123456","huespedId":1,"reservaId":10,"activacion":"2026-04-13T...","expiracion":"2026-04-20T..."},
+  {"tipo":"personal","personalId":3,"nombre":"Juan Perez","expiracion":null}
+]
+```
+
+### Flujos que disparan la sync
+
+| Trigger | Cómo |
+|---|---|
+| Check-in (`CheckInRealizadoKafkaConsumer`) | Llama `SyncByReservaIdAsync(reservaId)` después de crear credenciales |
+| `POST /credencialesacceso` (manual) | `CreateCredencialesAccesoCommandHandler` llama `SyncByReservaIdAsync` si `ReservaId != null` |
+| `POST /permisopersonal` | `CreatePermisoCommandHandler` publica `PermisoPersonalCreadoEvent` si `HabitacionId != null` |
+| `PUT /reservas/{id}` (cambio de habitación con check-in activo) | `UpdateReservaCommandHandler` publica `PublishHabitacionSyncAsync` para la **habitación antigua** y la **nueva** si `CheckInRealizado != null && HabitacionId cambió` |
+
+### Regla: sync de cambio de habitación
+Si la reserva cambia de habitación (`request.HabitacionId != reserva.HabitacionId`) y ya tiene check-in activo (`reserva.CheckInRealizado.HasValue`):
+- Se sincroniza la habitación **antigua** → las credenciales del guest ya no aparecen (la reserva apunta a la nueva habitación)
+- Se sincroniza la habitación **nueva** → las credenciales del guest aparecen en la nueva cerradura
+- El recálculo es automático porque `TbCredencialesSyncService` hace el JOIN `CredencialesAcceso → Reservas` al momento de la llamada
+
+### Config appsettings
+- Dispositivos: `KafkaConsumer:PermisoPersonal` (GroupId: `dispositivos-permiso-personal-group`, Topic: `habitacion.permiso-personal`)
+- Usuarios: `KafkaProducer:PermisoHabitacion` (Topic: `habitacion.permiso-personal`)
+
+### Dependencia añadida
+`Dispositivos.Infrastructure.csproj` referencia `Dispositivos.Persistence` (para `BarceloIoTDatabaseContext` en `TbCredencialesSyncService`).
+
+---
+
 ## Pendientes conocidos
 
 - **Controllers de Reservas**: migrar de `BadRequest(result.ErrorMessage)` → `BadRequest(new { error = result.ErrorMessage })` + usar 404 cuando corresponda
 - **`UpdateReservaCommandHandler`**: agregar `catch (Exception ex) when (ex.GetType().Name == "DbUpdateException")`
 - **Otros handlers de Reservas**: verificar que capturen DbUpdateException antes de Exception genérico
-
-## Implementado — Personal unlock door
-
-- `Reservas.Application/Common/Result.cs`: ya tiene `IsNotFound` + `Result<T>.NotFound()` ✓
-- `ICredencialesAccesoService` (interfaz + implementación): métodos `PersonalTienePermisoAsync`, `GetReservaActivaByHabitacionIdAsync`, `GetPersonalNombreAsync`, `GetPersonalByUsuarioIdAsync` ✓
-- `UnlockDoorPersonalCommand` + `UnlockDoorPersonalCommandHandler` (Reservas.Application) ✓
-- `PersonalUnlockDoorEvent` + `PersonalAccesoHabitacionEvent` (Notification.Domain/Events) ✓
-- `PersonalUnlockDoorKafkaConsumer` (Dispositivos.Infrastructure, BackgroundService) ✓
-- `PersonalAccesoHabitacionEventConsumer` + `PersonalAccesoHabitacionConsumerConfig` (Notification.Kafka) ✓
-- `POST /habitacion/{habitacionId}/unlock` en `HabitacionController` `[Authorize]` ✓
-
-### Regla: ThingsBoard es no-bloqueante en PersonalUnlockDoorKafkaConsumer
-El consumer siempre ejecuta `RegistrarAccesoAsync` y `PublicarPersonalAccesoEventAsync` independientemente de si ThingsBoard está disponible. El intento de desbloqueo ThingsBoard va en try/catch que solo loguea. Esto garantiza que el registro y la notificación a huéspedes siempre ocurran.
-
-### Regla: PersonalId viene del JWT, nunca de query param
-`UnlockDoorPersonalCommandHandler` extrae `UsuarioId` del JWT → busca en `Personal` tabla via `GetPersonalByUsuarioIdAsync` → obtiene `(PersonalId, NombreCompleto)`.

@@ -14,12 +14,18 @@ public class UpdateReservaCommandHandler : IRequestHandler<UpdateReservaCommand,
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
     private readonly IHttpContextAccessor _httpContextAccessor;
+    private readonly IReservaKafkaProducer _kafkaProducer;
 
-    public UpdateReservaCommandHandler(IUnitOfWork unitOfWork, IMapper mapper, IHttpContextAccessor httpContextAccessor)
+    public UpdateReservaCommandHandler(
+        IUnitOfWork unitOfWork,
+        IMapper mapper,
+        IHttpContextAccessor httpContextAccessor,
+        IReservaKafkaProducer kafkaProducer)
     {
         _unitOfWork = unitOfWork;
         _mapper = mapper;
         _httpContextAccessor = httpContextAccessor;
+        _kafkaProducer = kafkaProducer;
     }
 
     public async Task<Result<ReservaDto>> Handle(UpdateReservaCommand request, CancellationToken cancellationToken)
@@ -65,6 +71,10 @@ public class UpdateReservaCommandHandler : IRequestHandler<UpdateReservaCommand,
             var user = _httpContextAccessor.HttpContext?.User;
             var userId = user?.FindFirst("nameid")?.Value
                       ?? user?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            // Capturar estado previo para detectar cambio de habitación con check-in activo
+            var oldHabitacionId = reserva.HabitacionId;
+            var hadCheckIn = reserva.CheckInRealizado.HasValue;
 
             var estadoOriginal = reserva.EstadoReservaId;
             _mapper.Map(request, reserva);
@@ -122,6 +132,15 @@ public class UpdateReservaCommandHandler : IRequestHandler<UpdateReservaCommand,
 
             await _unitOfWork.Reservas.UpdateAsync(reserva, cancellationToken);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+            // Si la reserva ya tenía check-in y cambió de habitación, recalcular ThingsBoard en ambas
+            if (hadCheckIn && request.HabitacionId.HasValue && request.HabitacionId != oldHabitacionId)
+            {
+                if (oldHabitacionId.HasValue)
+                    await _kafkaProducer.PublishHabitacionSyncAsync(oldHabitacionId.Value, cancellationToken);
+
+                await _kafkaProducer.PublishHabitacionSyncAsync(request.HabitacionId.Value, cancellationToken);
+            }
 
             var reservaDto = _mapper.Map<ReservaDto>(reserva);
             return Result<ReservaDto>.Success(reservaDto);

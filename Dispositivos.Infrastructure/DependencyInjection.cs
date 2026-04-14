@@ -56,6 +56,15 @@ public static class DependencyInjection
         services.AddSingleton(personalUnlockConfig);
         services.AddHostedService<PersonalUnlockDoorKafkaConsumer>();
 
+        // Register ThingsBoard credentials sync service (scoped — uses DbContext)
+        services.AddScoped<ITbCredencialesSyncService, TbCredencialesSyncService>();
+
+        // Register Kafka consumer for permiso personal creado events (triggers ThingsBoard sync)
+        var permisoPersonalConfig = new PermisoPersonalCreadoKafkaConsumerConfig();
+        configuration.GetSection("KafkaConsumer:PermisoPersonal").Bind(permisoPersonalConfig);
+        services.AddSingleton(permisoPersonalConfig);
+        services.AddHostedService<PermisoPersonalCreadoKafkaConsumer>();
+
         // Register Audit Kafka Producer
         var auditConfig = new AuditKafkaProducerConfig();
         configuration.GetSection("AuditProducer").Bind(auditConfig);

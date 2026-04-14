@@ -4,6 +4,7 @@ using MediatR;
 using Microsoft.AspNetCore.Http;
 using Usuarios.Application.DTOs.PermisosPersonal;
 using Usuarios.Application.Exceptions;
+using Usuarios.Application.Interfaces;
 using Usuarios.Domain.Interfaces;
 
 namespace Usuarios.Application.UseCases.PermisosPersonal.Commands.CreatePermiso;
@@ -13,12 +14,18 @@ public class CreatePermisoCommandHandler : IRequestHandler<CreatePermisoCommand,
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
     private readonly IHttpContextAccessor _httpContextAccessor;
+    private readonly IPermisoHabitacionSyncProducer _syncProducer;
 
-    public CreatePermisoCommandHandler(IUnitOfWork unitOfWork, IMapper mapper, IHttpContextAccessor httpContextAccessor)
+    public CreatePermisoCommandHandler(
+        IUnitOfWork unitOfWork,
+        IMapper mapper,
+        IHttpContextAccessor httpContextAccessor,
+        IPermisoHabitacionSyncProducer syncProducer)
     {
         _unitOfWork = unitOfWork;
         _mapper = mapper;
         _httpContextAccessor = httpContextAccessor;
+        _syncProducer = syncProducer;
     }
 
     public async Task<PermisosPersonalDto> Handle(CreatePermisoCommand request, CancellationToken cancellationToken)
@@ -56,6 +63,11 @@ public class CreatePermisoCommandHandler : IRequestHandler<CreatePermisoCommand,
         {
             var createdPermiso = await _unitOfWork.PermisosPersonal.AddAsync(permiso);
             await _unitOfWork.SaveChangesAsync();
+
+            // Notify Dispositivos to sync ThingsBoard credentials for this habitacion
+            if (request.Permiso.HabitacionId.HasValue)
+                await _syncProducer.PublishAsync(request.Permiso.HabitacionId.Value, cancellationToken);
+
             return _mapper.Map<PermisosPersonalDto>(createdPermiso);
         }
         catch (Exception ex) when (ex.GetType().Name == "DbUpdateException")

@@ -61,6 +61,12 @@ namespace Usuarios.API
             builder.Services.AddSingleton(auditConfig);
             builder.Services.AddSingleton<IAuditProducer, AuditKafkaProducer>();
 
+            // Register Permiso Habitacion Kafka Producer (notifies Dispositivos to sync ThingsBoard)
+            var permisoProducerConfig = new PermisoHabitacionKafkaProducerConfig();
+            builder.Configuration.GetSection("KafkaProducer:PermisoHabitacion").Bind(permisoProducerConfig);
+            builder.Services.AddSingleton(permisoProducerConfig);
+            builder.Services.AddSingleton<Usuarios.Application.Interfaces.IPermisoHabitacionSyncProducer, PermisoHabitacionKafkaProducer>();
+
             // Required for AuditBehavior
             builder.Services.AddHttpContextAccessor();
 
