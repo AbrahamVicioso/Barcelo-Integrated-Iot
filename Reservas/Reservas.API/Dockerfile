@@ -15,9 +15,13 @@
     COPY ["Reservas.Email/Reservas.Email.csproj", "Reservas.Email/"]
     COPY ["Grpc.Contracts/Grpc.Contracts.csproj", "Grpc.Contracts/"]
     COPY ["Notification.Domain/Notification.Domain.csproj", "Notification.Domain/"]
+    COPY NuGet.config .
 
-    # Restaurar dependencias
-    RUN dotnet restore "Reservas/Reservas.API/Reservas.API.csproj"
+    # Restaurar dependencias (retry por conexión inestable)
+    RUN for i in 1 2 3 4 5; do \
+          dotnet restore "Reservas/Reservas.API/Reservas.API.csproj" --disable-parallel && break; \
+          echo "Retry $i/5..."; sleep 15; \
+        done
 
     # Copiar código fuente
     COPY Reservas/ Reservas/

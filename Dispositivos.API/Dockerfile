@@ -13,9 +13,14 @@ COPY ["Dispositivos.Domain/Dispositivos.Domain.csproj", "Dispositivos.Domain/"]
 COPY ["Dispositivos.Infrastructure/Dispositivos.Infrastructure.csproj", "Dispositivos.Infrastructure/"]
 COPY ["Dispositivos.Persistence/Dispositivos.Persistence.csproj", "Dispositivos.Persistence/"]
 COPY ["Notification.Domain/Notification.Domain.csproj", "Notification.Domain/"]
+COPY ["Grpc.Contracts/Grpc.Contracts.csproj", "Grpc.Contracts/"]
+COPY NuGet.config .
 
-# Restaurar dependencias
-RUN dotnet restore "Dispositivos.API/Dispositivos.API.csproj"
+# Restaurar dependencias (retry por conexión inestable)
+RUN for i in 1 2 3 4 5; do \
+      dotnet restore "Dispositivos.API/Dispositivos.API.csproj" --disable-parallel && break; \
+      echo "Retry $i/5..."; sleep 15; \
+    done
 
 # Copiar código fuente
 COPY Dispositivos.API/ Dispositivos.API/
@@ -24,6 +29,7 @@ COPY Dispositivos.Domain/ Dispositivos.Domain/
 COPY Dispositivos.Infrastructure/ Dispositivos.Infrastructure/
 COPY Dispositivos.Persistence/ Dispositivos.Persistence/
 COPY Notification.Domain/ Notification.Domain/
+COPY Grpc.Contracts/ Grpc.Contracts/
 
 # Build
 WORKDIR "/src/Dispositivos.API"

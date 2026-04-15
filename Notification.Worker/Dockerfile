@@ -11,9 +11,13 @@ COPY ["EmailService.Infrastructure/Notification.Email.csproj", "EmailService.Inf
 COPY ["Notification.Kafka/Notification.Kafka.csproj", "Notification.Kafka/"]
 COPY ["Notification.Push/Notification.Push.csproj", "Notification.Push/"]
 COPY ["Notification.Domain/Notification.Domain.csproj", "Notification.Domain/"]
+COPY NuGet.config .
 
-# Restaurar dependencias
-RUN dotnet restore "Notification.Worker/Notification.Worker.csproj"
+# Restaurar dependencias (retry por conexión inestable)
+RUN for i in 1 2 3 4 5; do \
+      dotnet restore "Notification.Worker/Notification.Worker.csproj" --disable-parallel && break; \
+      echo "Retry $i/5..."; sleep 15; \
+    done
 
 # Copiar código fuente
 COPY Notification.Worker/ Notification.Worker/

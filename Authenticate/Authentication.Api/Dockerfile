@@ -15,9 +15,13 @@ COPY ["Authenticate/Authentication.Persistence/Authentication.Persistence.csproj
 COPY ["Grpc.Contracts/Grpc.Contracts.csproj", "Grpc.Contracts/"]
 COPY ["Notification.Domain/Notification.Domain.csproj", "Notification.Domain/"]
 COPY ["Notification.Push/Notification.Push.csproj", "Notification.Push/"]
+COPY NuGet.config .
 
-# Restaurar dependencias
-RUN dotnet restore "Authenticate/Authentication.Api/Authentication.Api.csproj"
+# Restaurar dependencias (retry por conexión inestable)
+RUN for i in 1 2 3 4 5; do \
+      dotnet restore "Authenticate/Authentication.Api/Authentication.Api.csproj" --disable-parallel && break; \
+      echo "Retry $i/5..."; sleep 15; \
+    done
 
 # Copiar el resto del código fuente
 COPY Authenticate/ Authenticate/

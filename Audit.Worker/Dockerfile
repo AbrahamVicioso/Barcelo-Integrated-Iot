@@ -10,9 +10,13 @@ WORKDIR /src
 # Copiar archivos de proyecto
 COPY ["Audit.Worker/Audit.Worker.csproj", "Audit.Worker/"]
 COPY ["Notification.Domain/Notification.Domain.csproj", "Notification.Domain/"]
+COPY NuGet.config .
 
-# Restaurar dependencias
-RUN dotnet restore "Audit.Worker/Audit.Worker.csproj"
+# Restaurar dependencias (retry por conexión inestable)
+RUN for i in 1 2 3 4 5; do \
+      dotnet restore "Audit.Worker/Audit.Worker.csproj" --disable-parallel && break; \
+      echo "Retry $i/5..."; sleep 15; \
+    done
 
 # Copiar código fuente
 COPY Audit.Worker/ Audit.Worker/
