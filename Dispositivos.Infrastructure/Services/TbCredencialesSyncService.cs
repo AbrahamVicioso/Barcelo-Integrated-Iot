@@ -199,6 +199,7 @@ public class TbCredencialesSyncService : ITbCredencialesSyncService
             INNER JOIN Personal p ON pp.PersonalId = p.PersonalId
             WHERE pp.HabitacionId = @habitacionId
               AND pp.EstaActivo = 1
+              AND p.EstaActivo = 1
               AND (pp.FechaExpiracion IS NULL OR pp.FechaExpiracion >= @ahora)";
 
         AddParam(cmd, "@habitacionId", habitacionId);

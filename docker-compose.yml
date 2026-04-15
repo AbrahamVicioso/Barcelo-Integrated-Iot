@@ -205,7 +205,8 @@ services:
       KafkaProducer__PermisoHabitacion__Topic: habitacion.permiso-personal
       ExternalServices__Authentication__GrpcUrl: "https://auth-api:5118"
       ExternalServices__Authentication__SkipCertValidation: "true"
-      ExternalServices__Dispositivos__GrpcUrl: "http://dispositivos-api:5185"
+      ExternalServices__Dispositivos__GrpcUrl: "https://dispositivos-api:7288"
+      ExternalServices__Dispositivos__SkipCertValidation: "true"
     networks:
       - barcelo-net
     depends_on:
@@ -263,9 +264,9 @@ services:
       - ./docker/certs:/https:ro
     ports:
       - "5185:5185"
+      - "7288:7288"
     environment:
       <<: [*dotnet-env, *db-conn, *jwt]
-      ASPNETCORE_URLS: "http://+:5185"
       Thingsboard__BaseUrl: "http://thingsboard-ce:8080"
       AuditProducer__BootstrapServers: kafka:29092
       AuditProducer__Topic: audit.events
