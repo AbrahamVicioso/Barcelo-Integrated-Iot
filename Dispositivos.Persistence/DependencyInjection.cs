@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Dispositivos.Application.Interfaces;
 using Dispositivos.Persistence.Data;
 using Dispositivos.Persistence.Repositories;
+using Dispositivos.Persistence.Services;
 
 namespace Dispositivos.Persistence;
 
@@ -26,6 +27,9 @@ public static class DependencyInjection
         services.AddScoped<IRegistrosAuditoriumRepository, RegistrosAuditoriumRepository>();
         services.AddScoped<IEstadoDispositivoRepository, EstadoDispositivoRepository>();
         services.AddScoped<ITipoDispositivoRepository, TipoDispositivoRepository>();
+
+        // Register Analytics Services
+        services.AddScoped<IDispositivosAnalyticsService, DispositivosAnalyticsService>();
 
         return services;
     }

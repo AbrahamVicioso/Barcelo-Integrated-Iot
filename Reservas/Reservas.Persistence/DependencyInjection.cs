@@ -5,6 +5,7 @@ using Reservas.Persistence.Data;
 using Reservas.Persistence.Repositories;
 using Reservas.Persistence.Services;
 
+
 namespace Reservas.Persistence
 {
     public static class DependencyInjection
@@ -28,6 +29,9 @@ namespace Reservas.Persistence
 
             // Services
             services.AddScoped<ICredencialesAccesoService, CredencialesAccesoService>();
+
+            // Analytics Services
+            services.AddScoped<IReservasAnalyticsService, ReservasAnalyticsService>();
 
             return services;
         }
