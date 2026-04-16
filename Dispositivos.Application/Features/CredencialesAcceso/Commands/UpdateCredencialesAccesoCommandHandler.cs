@@ -1,9 +1,12 @@
 using AutoMapper;
 using MediatR;
+using Microsoft.Extensions.DependencyInjection;
 using Dispositivos.Application.Common;
 using Dispositivos.Application.DTOs;
 using Dispositivos.Application.Interfaces;
 using CredencialEntity = Dispositivos.Domain.Entities.CredencialesAcceso;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace Dispositivos.Application.Features.CredencialesAcceso.Commands;
 
@@ -12,18 +15,25 @@ public class UpdateCredencialesAccesoCommandHandler : IRequestHandler<UpdateCred
     private readonly IMapper _mapper;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ICredencialesAccesoRepository _credencialRepository;
-    private readonly ITbCredencialesSyncService _syncService;
+    private readonly IServiceScopeFactory _scopeFactory;
 
     public UpdateCredencialesAccesoCommandHandler(
         IMapper mapper,
         IUnitOfWork unitOfWork,
         ICredencialesAccesoRepository credencialRepository,
-        ITbCredencialesSyncService syncService)
+        IServiceScopeFactory scopeFactory)
     {
         _mapper = mapper;
         _unitOfWork = unitOfWork;
         _credencialRepository = credencialRepository;
-        _syncService = syncService;
+        _scopeFactory = scopeFactory;
+    }
+
+    private static string GenerarHash(string texto)
+    {
+        using var sha256 = SHA256.Create();
+        var bytes = Encoding.UTF8.GetBytes(texto);
+        return Convert.ToBase64String(sha256.ComputeHash(bytes));
     }
 
     public async Task<Result<CredencialesAccesoDto>> Handle(UpdateCredencialesAccesoCommand request, CancellationToken cancellationToken)
@@ -39,15 +49,22 @@ public class UpdateCredencialesAccesoCommandHandler : IRequestHandler<UpdateCred
                 return Result<CredencialesAccesoDto>.Failure("La fecha de expiración debe ser posterior a la fecha de activación.");
 
             var oldReservaId = credencial.ReservaId;
+            var oldPin = credencial.CodigoPin;
+
             _mapper.Map(request.Credencial, credencial);
+
+            // Regenerar hash si el PIN cambió
+            if (credencial.CodigoPin != oldPin)
+                credencial.HashPin = GenerarHash(credencial.CodigoPin);
 
             await _credencialRepository.UpdateAsync(credencial, cancellationToken);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
+            // Sync en scope fresco para evitar interferencias del DbContext actual
             if (oldReservaId.HasValue)
-                await _syncService.SyncByReservaIdAsync(oldReservaId.Value, cancellationToken);
+                await SyncAsync(oldReservaId.Value, cancellationToken);
             if (request.Credencial.ReservaId.HasValue && request.Credencial.ReservaId != oldReservaId)
-                await _syncService.SyncByReservaIdAsync(request.Credencial.ReservaId.Value, cancellationToken);
+                await SyncAsync(request.Credencial.ReservaId.Value, cancellationToken);
 
             var credencialDto = _mapper.Map<CredencialesAccesoDto>(credencial);
             return Result<CredencialesAccesoDto>.Success(credencialDto);
@@ -63,5 +80,12 @@ public class UpdateCredencialesAccesoCommandHandler : IRequestHandler<UpdateCred
         {
             return Result<CredencialesAccesoDto>.Failure($"Error al actualizar la credencial de acceso: {ex.Message}");
         }
+    }
+
+    private async Task SyncAsync(int reservaId, CancellationToken cancellationToken)
+    {
+        using var scope = _scopeFactory.CreateScope();
+        var syncService = scope.ServiceProvider.GetRequiredService<ITbCredencialesSyncService>();
+        await syncService.SyncByReservaIdAsync(reservaId, cancellationToken);
     }
 }

@@ -166,6 +166,7 @@ public class TbCredencialesSyncService : ITbCredencialesSyncService
             INNER JOIN Reservas r ON ca.ReservaId = r.ReservaId
             WHERE r.HabitacionId = @habitacionId
               AND ca.EstaActiva = 1
+              AND r.EstadoReservaId != 4
               AND ca.FechaActivacion <= @horizonte
               AND ca.FechaExpiracion >= @ahora";
 

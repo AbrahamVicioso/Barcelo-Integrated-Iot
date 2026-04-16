@@ -1,6 +1,7 @@
 using AutoMapper;
 using MediatR;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.DependencyInjection;
 using Dispositivos.Application.Common;
 using Dispositivos.Application.DTOs;
 using Dispositivos.Application.Interfaces;
@@ -17,20 +18,20 @@ public class CreateCredencialesAccesoCommandHandler : IRequestHandler<CreateCred
     private readonly IUnitOfWork _unitOfWork;
     private readonly ICredencialesAccesoRepository _credencialRepository;
     private readonly IHttpContextAccessor _httpContextAccessor;
-    private readonly ITbCredencialesSyncService _syncService;
+    private readonly IServiceScopeFactory _scopeFactory;
 
     public CreateCredencialesAccesoCommandHandler(
         IMapper mapper,
         IUnitOfWork unitOfWork,
         ICredencialesAccesoRepository credencialRepository,
         IHttpContextAccessor httpContextAccessor,
-        ITbCredencialesSyncService syncService)
+        IServiceScopeFactory scopeFactory)
     {
         _mapper = mapper;
         _unitOfWork = unitOfWork;
         _credencialRepository = credencialRepository;
         _httpContextAccessor = httpContextAccessor;
-        _syncService = syncService;
+        _scopeFactory = scopeFactory;
     }
 
     private string GenerarHash(string texto)
@@ -64,9 +65,13 @@ public class CreateCredencialesAccesoCommandHandler : IRequestHandler<CreateCred
             await _credencialRepository.AddAsync(credencial, cancellationToken);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-            // Sync ThingsBoard credentials for this habitacion if linked to a reserva
+            // Sync ThingsBoard credentials en scope fresco para evitar interferencias del DbContext actual
             if (request.Credencial.ReservaId.HasValue)
-                await _syncService.SyncByReservaIdAsync(request.Credencial.ReservaId.Value, cancellationToken);
+            {
+                using var scope = _scopeFactory.CreateScope();
+                var syncService = scope.ServiceProvider.GetRequiredService<ITbCredencialesSyncService>();
+                await syncService.SyncByReservaIdAsync(request.Credencial.ReservaId.Value, cancellationToken);
+            }
 
             return Result<int>.Success(credencial.CredencialId);
         }
