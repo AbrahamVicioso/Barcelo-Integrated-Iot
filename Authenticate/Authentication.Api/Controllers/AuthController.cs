@@ -148,7 +148,7 @@ namespace Authentication.Api.Controllers
         }
 
         [HttpPost]
-        public async Task<Results<Ok<string>, ValidationProblem, BadRequest<string>>> ResetPassword([FromBody] ResetPasswordRequest request)
+        public async Task<Results<Ok<string>, ValidationProblem, BadRequest<string>>> ResetPassword([FromBody] ResetPasswordDto request)
         {
             if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.Token) || string.IsNullOrWhiteSpace(request.NewPassword))
                 return TypedResults.BadRequest("Email, token y nueva contraseña son requeridos.");

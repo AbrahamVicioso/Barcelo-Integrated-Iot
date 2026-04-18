@@ -1,6 +1,6 @@
 namespace Authentication.Api.DTOs
 {
-    public class ResetPasswordRequest
+    public class ResetPasswordDto
     {
         public string Email { get; set; } = string.Empty;
         public string Token { get; set; } = string.Empty;

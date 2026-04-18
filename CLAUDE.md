@@ -96,8 +96,12 @@ Respuesta: `{ "status": 404, "error": "Not Found", "message": "..." }`
 
 ### Authenticate — Sin MediatR
 
-Métodos estáticos: `LoginUserHandler`, `RegisterUserHandler`, `CreateUserWithRandomPasswordHandler`.
+Métodos estáticos: `LoginUserHandler`, `RegisterUserHandler`, `CreateUserWithRandomPasswordHandler`, `ForgotPasswordHandler`.
 Auditoría publicada directamente en `AuthController` (no por pipeline).
+
+**Login:** usa `FindByEmailAsync` + `CheckPasswordSignInAsync` — siempre por email, nunca por username.
+**Password reset:** token generado con `GeneratePasswordResetTokenAsync`, codificado en Base64Url. Link enviado por email (Kafka → `PasswordResetEventConsumer`). Reset con `ResetPasswordAsync`.
+**Token de reset:** nunca se devuelve en la respuesta HTTP — solo llega por email.
 
 ---
 
@@ -280,7 +284,7 @@ GetPersonalByUsuarioIdAsync(usuarioId) → (PersonalId, NombreCompleto)?
 
 | Entidad | Queries | Commands |
 |---|---|---|
-| Huespedes | GetAll, GetById, GetByUserId, GetVip | Create, Update, Delete |
+| Huespedes | GetAll, GetById, GetByUserId, GetVip | Create, Update, Delete, **CreateMe** |
 | Personal | GetAll, GetById, GetByUserId, GetActivo, GetByDepartamento | Create, Update, Delete |
 | PermisosPersonal | GetAll, GetById, GetActivos, GetByPersonal, GetByHabitacion, GetByActividad | Create, Update, Delete |
 
@@ -316,12 +320,14 @@ GetPersonalByUsuarioIdAsync(usuarioId) → (PersonalId, NombreCompleto)?
 
 | Verbo | Ruta | Descripción |
 |---|---|---|
-| POST | /login | LoginRequest → AccessTokenResponse + JWT |
-| POST | /register | RegisterRequest → crea usuario + publica `UserCreatedEvent` a Kafka |
+| POST | /login | `{ Email, Password }` → AccessTokenResponse + JWT (solo por email) |
+| POST | /register | RegisterRequest → crea usuario + publica `EmailConfirmationEvent` a Kafka |
 | POST | /create | EmailRequest → crea usuario con contraseña aleatoria |
 | GET | /info | [Authorize] → InfoResponse |
 | GET | /getuserbyemail?email= | → UserInfoResponse |
-| GET | /confirmemail?userId=&token= | confirma email |
+| GET | /confirmemail?userId=&token= | confirma email (token Base64Url) |
+| POST | /forgotpassword | `{ Email }` → genera token + envía email con link · siempre 200 |
+| POST | /resetpassword | `{ Email, Token, NewPassword }` → resetea contraseña (token Base64Url del email) |
 
 ## Endpoints — Reservas.API
 
@@ -342,6 +348,8 @@ GetPersonalByUsuarioIdAsync(usuarioId) → (PersonalId, NombreCompleto)?
 | CRUD | /huesped | Huéspedes |
 | GET | /huesped/user/{usuarioId} | Por UsuarioId (Identity) |
 | GET | /huesped/vip | Solo VIPs |
+| GET | /huesped/me | [Authorize] Perfil del huésped autenticado (UsuarioId del JWT) |
+| POST | /huesped/me | [Authorize] Crea perfil propio — sin `CorreoElectronico` en body, `EsVip=false` siempre |
 | CRUD | /personal | Personal |
 | GET | /personal/user/{usuarioId} | Por UsuarioId (Identity) |
 | GET | /personal/activo | Solo activos |
@@ -349,6 +357,12 @@ GetPersonalByUsuarioIdAsync(usuarioId) → (PersonalId, NombreCompleto)?
 | CRUD | /permisopersonal | Permisos de personal |
 
 ---
+
+## Reglas de negocio — Usuarios
+
+- **PermisosPersonal**: un personal no puede tener dos permisos para la misma habitación → `CreatePermisoCommandHandler` llama `GetByPersonalAndHabitacionAsync(personalId, habitacionId)` antes de insertar → `ConflictException` si ya existe.
+- **`IPermisosPersonalRepository`** incluye: `GetByPersonalAndHabitacionAsync(int personalId, int habitacionId) → PermisosPersonal?`
+- **Huesped/me**: `POST /huesped/me` usa `CreateHuespedeMeCommand(UsuarioId, SelfCreateHuespedeDto)` — `UsuarioId` viene del JWT, `EsVip=false` siempre. DTO: `SelfCreateHuespedeDto` (sin `CorreoElectronico` ni `EsVip`).
 
 ## Reglas de negocio — Reservas
 
@@ -458,6 +472,7 @@ Todos los repositorios usan `.AsNoTracking()`. Al update con FK + nav prop carga
 |---|---|---|---|
 | `users` | Authenticate.API | Notification.Worker (`UserCreatedEventConsumer`) | `UserCreatedEvent` |
 | `email-confirmation` | Authenticate.API | Notification.Worker (`EmailConfirmationEventConsumer`) | `EmailConfirmationEvent` |
+| `password-reset` | Authenticate.API | Notification.Worker (`PasswordResetEventConsumer`) | `PasswordResetEvent` |
 | `reservas` | Reservas.API | Notification.Worker (`ReservaCreadaEventConsumer`) | `ReservaCreadaEvent` |
 | `dispositivos.unlock-door` | Reservas.API | Dispositivos.Infrastructure (`UnlockDoorKafkaConsumer`) | `UnlockDoorEvent` |
 | `reservas.checkin-realizado` | Reservas.API | Dispositivos.Infrastructure (`CheckInRealizadoKafkaConsumer`) | `CheckInRealizadoEvent` |
@@ -507,7 +522,12 @@ Config Usuarios: `ExternalServices:Dispositivos:GrpcUrl` (local: `http://localho
 `POST /permisopersonal` → `CreatePermisoCommandHandler`: si `HabitacionId != null` publica `PermisoPersonalCreadoEvent` → `PermisoPersonalCreadoKafkaConsumer`: `SyncAsync(habitacionId)`.
 
 ### Flujo registro de usuario
-`POST /register` → crea usuario Identity → publica `UserCreatedEvent` → `UserCreatedEventConsumer`: email bienvenida + push.
+`POST /register` → crea usuario Identity → publica `EmailConfirmationEvent` → `EmailConfirmationEventConsumer`: email con link de confirmación.
+
+### Flujo password reset
+`POST /forgotpassword` `{ Email }` → `ForgotPasswordHandler` → `GeneratePasswordResetTokenAsync` → token Base64Url → link `{baseUrl}/ResetPassword?email=...&token=...` → publica `PasswordResetEvent` → `PasswordResetEventConsumer`: email HTML con botón de reset.
+`POST /resetpassword` `{ Email, Token, NewPassword }` → `FindByEmailAsync` → `Base64UrlDecode(token)` → `ResetPasswordAsync` → 200 / ValidationProblem.
+**Siempre 200 en `/forgotpassword`** aunque el email no exista (anti-enumeración).
 
 ---
 
@@ -602,6 +622,7 @@ Authenticate.API: auditoría manual en `AuthController` (Login/Register). `AddHt
 | `EmailConfirmationEventConsumer` | `email-confirmation` | Email con link de confirmación |
 | `CredencialesCheckInEventConsumer` | `checkin.credenciales` | Email HTML con PIN + push notification |
 | `PersonalAccesoHabitacionEventConsumer` | `habitacion.personal-acceso` | Email HTML + push alerta acceso personal a todos los huéspedes |
+| `PasswordResetEventConsumer` | `password-reset` | Email HTML con botón de restablecimiento de contraseña |
 
 Email HTML credenciales: PIN monospace destacado, NumeroReserva, fechas CheckIn/CheckOut, advertencia no compartir.
 Servicios: `IEmailService` (Azure Communication Services), `IPushNotificationService` (ntfy.sh)
