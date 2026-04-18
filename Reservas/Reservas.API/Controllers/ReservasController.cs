@@ -53,6 +53,31 @@ public class ReservasController : ControllerBase
         return result.IsSuccess ? Ok(result.Data) : BadRequest(result.ErrorMessage);
     }
 
+    [HttpGet("me/reserva/{reservaId}/credenciales")]
+    [Authorize]
+    public async Task<IActionResult> GetMyCredenciales(int reservaId)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if (string.IsNullOrEmpty(userId))
+        {
+            return Unauthorized("No se pudo identificar al usuario");
+        }
+
+        var result = await _mediator.Send(new GetReservaCredencialesQuery 
+        { 
+            ReservaId = reservaId, 
+            UserId = userId 
+        });
+
+        if (!result.IsSuccess)
+            return result.IsNotFound
+                ? NotFound(new { error = result.ErrorMessage })
+                : BadRequest(new { error = result.ErrorMessage });
+
+        return Ok(result.Data);
+    }
+
     [HttpGet("{id}")]
     public async Task<IActionResult> GetById(int id)
     {

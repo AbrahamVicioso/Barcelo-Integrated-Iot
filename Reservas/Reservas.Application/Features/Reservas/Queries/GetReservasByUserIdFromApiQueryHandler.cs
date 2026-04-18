@@ -3,6 +3,8 @@ using MediatR;
 using Reservas.Application.Common;
 using Reservas.Application.DTOs;
 using Reservas.Application.Interfaces;
+using Reservas.Domain.Entites;
+using System.Linq;
 
 namespace Reservas.Application.Features.Reservas.Queries;
 
@@ -36,7 +38,13 @@ public class GetReservasByUserIdFromApiQueryHandler : IRequestHandler<GetReserva
 
             // Get all reservations for this huesped using the HuespedId from the API
             var reservas = await _reservaRepository.GetReservasByHuespedIdAsync(huesped.HuespedId, cancellationToken);
-            var reservasDto = _mapper.Map<IEnumerable<ReservaDto>>(reservas);
+            
+            // Filter out CheckOut and Cancelada reservations
+            var filteredReservas = reservas.Where(r => 
+                r.EstadoReservaId != EstadoReserva.CheckOut && 
+                r.EstadoReservaId != EstadoReserva.Cancelada);
+                
+            var reservasDto = _mapper.Map<IEnumerable<ReservaDto>>(filteredReservas);
 
             return Result<IEnumerable<ReservaDto>>.Success(reservasDto);
         }

@@ -184,6 +184,17 @@ Auditoría publicada directamente en `AuthController` (no por pipeline).
 | **EstadoDispositivoDto** | EstadoDispositivoId, Descripcion · **CreateEstadoDispositivoDto** | Descripcion |
 | **TipoDispositivoDto** | TipoDispositivoId, Nombre · **CreateTipoDispositivoDto** | Nombre |
 
+| **CredencialHuespedDto** | CredencialId, CodigoPIN, FechaActivacion, FechaExpiracion, TipoCredencial, EstaActiva |
+
+---
+
+## DTOs — Reservas
+
+| DTO | Campos clave |
+|---|---|
+| **ReservaDto** | ReservaId, HuespedId, NumeroReserva, FechaCheckIn, FechaCheckOut, EstadoReservaId, CheckInRealizado, CheckOutRealizado |
+| **CredencialHuespedDto** | CredencialId, CodigoPIN, FechaActivacion, FechaExpiracion, TipoCredencial, EstaActiva |
+
 ---
 
 ## Repositorios — métodos completos
@@ -276,6 +287,7 @@ PersonalTienePermisoAsync(personalId, habitacionId) → bool
 GetReservaActivaByHabitacionIdAsync(habitacionId) → int?
 GetPersonalNombreAsync(personalId) → string?
 GetPersonalByUsuarioIdAsync(usuarioId) → (PersonalId, NombreCompleto)?
+GetCredencialesForHuespedAsync(reservaId, huespedId) → IEnumerable<CredencialHuespedDto>
 ```
 
 ---
@@ -334,6 +346,7 @@ GetPersonalByUsuarioIdAsync(usuarioId) → (PersonalId, NombreCompleto)?
 | Verbo | Ruta | Descripción |
 |---|---|---|
 | POST | /reservas/{id}/unlock-door?pin= | → UnlockDoorCommand |
+| GET | /reservas/me/reserva/{reservaId}/credenciales | [Authorize] → Credenciales del huésped para una reserva |
 | POST | /reservas/{id}/checkin | → PerformCheckInCommand (ReservaId de ruta, sin body) |
 | POST | /reservas/{id}/checkout | → PerformCheckOutCommand |
 | CRUD | /reservas | Reservas |
@@ -367,6 +380,7 @@ GetPersonalByUsuarioIdAsync(usuarioId) → (PersonalId, NombreCompleto)?
 ## Reglas de negocio — Reservas
 
 - **Reserva cancelada** (`EstadoReservaId = 4`): no se puede editar. `UpdateReservaCommandHandler` valida esto antes de procesar.
+- **Filtrado de Reservas**: `GetReservasByUserIdFromApiQuery` filtra automáticamente las reservas en estado **CheckOut (5)** o **Cancelada (4)**.
 - `DELETE /reservas/{id}` → **cancela** (EstadoReservaId = 4), no borra el registro.
 
 ---

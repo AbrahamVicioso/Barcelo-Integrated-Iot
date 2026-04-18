@@ -1,4 +1,7 @@
+using Reservas.Application.DTOs;
+
 namespace Reservas.Application.Interfaces;
+
 
 public interface ICredencialesAccesoService
 {
@@ -15,4 +18,7 @@ public interface ICredencialesAccesoService
     Task<string?> GetPersonalNombreAsync(int personalId, CancellationToken cancellationToken = default);
     /// <summary>Returns (PersonalId, NombreCompleto) for the given UsuarioId, or null if no personal record exists.</summary>
     Task<(int PersonalId, string NombreCompleto)?> GetPersonalByUsuarioIdAsync(string usuarioId, CancellationToken cancellationToken = default);
+
+    /// <summary>Returns active credentials for a specific guest and reservation.</summary>
+    Task<IEnumerable<CredencialHuespedDto>> GetCredencialesForHuespedAsync(int reservaId, int huespedId, CancellationToken cancellationToken = default);
 }

@@ -1,5 +1,6 @@
 using System.Data;
 using Microsoft.EntityFrameworkCore;
+using Reservas.Application.DTOs;
 using Reservas.Application.Interfaces;
 using Reservas.Persistence.Data;
 
@@ -191,5 +192,53 @@ public class CredencialesAccesoService : ICredencialesAccesoService
             return null;
 
         return (reader.GetInt32(0), reader.GetString(1));
+    }
+
+    public async Task<IEnumerable<CredencialHuespedDto>> GetCredencialesForHuespedAsync(int reservaId, int huespedId, CancellationToken cancellationToken = default)
+    {
+        var connection = _context.Database.GetDbConnection();
+        if (connection.State != ConnectionState.Open)
+            await connection.OpenAsync(cancellationToken);
+
+        using var command = connection.CreateCommand();
+        command.CommandText = @"
+            SELECT CredencialId, CodigoPIN, FechaActivacion, FechaExpiracion, TipoCredencial, EstaActiva 
+            FROM CredencialesAcceso
+            WHERE ReservaId = @reservaId
+              AND HuespedId = @huespedId
+              AND EstaActiva = 1
+              AND FechaActivacion <= @now
+              AND FechaExpiracion >= @now";
+
+        var pReservaId = command.CreateParameter();
+        pReservaId.ParameterName = "@reservaId";
+        pReservaId.Value = reservaId;
+        command.Parameters.Add(pReservaId);
+
+        var pHuespedId = command.CreateParameter();
+        pHuespedId.ParameterName = "@huespedId";
+        pHuespedId.Value = huespedId;
+        command.Parameters.Add(pHuespedId);
+
+        var pNow = command.CreateParameter();
+        pNow.ParameterName = "@now";
+        pNow.Value = DateTime.UtcNow;
+        command.Parameters.Add(pNow);
+
+        var results = new List<CredencialHuespedDto>();
+        using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            results.Add(new CredencialHuespedDto
+            {
+                CredencialId = reader.GetInt32(0),
+                CodigoPIN = reader.GetString(1),
+                FechaActivacion = reader.GetDateTime(2),
+                FechaExpiracion = reader.GetDateTime(3),
+                TipoCredencial = reader.GetString(4),
+                EstaActiva = reader.GetBoolean(5)
+            });
+        }
+        return results;
     }
 }
