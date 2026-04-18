@@ -1,7 +1,10 @@
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 using Usuarios.Application.DTOs.Huespedes;
 using Usuarios.Application.UseCases.Huespedes.Commands.CreateHuespede;
+using Usuarios.Application.UseCases.Huespedes.Commands.CreateHuespedeMe;
 using Usuarios.Application.UseCases.Huespedes.Commands.DeleteHuespede;
 using Usuarios.Application.UseCases.Huespedes.Commands.UpdateHuespede;
 using Usuarios.Application.UseCases.Huespedes.Queries.GetAllHuespedes;
@@ -48,6 +51,30 @@ public class HuespedController : ControllerBase
     {
         var result = await _mediator.Send(new GetHuespedeByUserIdQuery(usuarioId));
         return Ok(result);
+    }
+
+    [Authorize]
+    [HttpGet("me")]
+    public async Task<IActionResult> GetMe()
+    {
+        var usuarioId = User.FindFirstValue("nameid") ?? User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (usuarioId == null)
+            return Unauthorized();
+
+        var result = await _mediator.Send(new GetHuespedeByUserIdQuery(usuarioId));
+        return Ok(result);
+    }
+
+    [Authorize]
+    [HttpPost("me")]
+    public async Task<IActionResult> CreateMe([FromBody] SelfCreateHuespedeDto dto)
+    {
+        var usuarioId = User.FindFirstValue("nameid") ?? User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (usuarioId == null)
+            return Unauthorized();
+
+        var result = await _mediator.Send(new CreateHuespedeMeCommand(usuarioId, dto));
+        return CreatedAtAction(nameof(GetById), new { id = result.HuespedId }, result);
     }
 
     [HttpPost]

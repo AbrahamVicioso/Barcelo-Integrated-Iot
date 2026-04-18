@@ -70,4 +70,10 @@ public class PermisosPersonalRepository : GenericRepository<PermisosPersonal>, I
             .Where(p => p.FechaExpiracion.HasValue && p.FechaExpiracion.Value < now)
             .ToListAsync();
     }
+
+    public async Task<PermisosPersonal?> GetByPersonalAndHabitacionAsync(int personalId, int habitacionId)
+    {
+        return await _dbSet
+            .FirstOrDefaultAsync(p => p.PersonalId == personalId && p.HabitacionId == habitacionId);
+    }
 }

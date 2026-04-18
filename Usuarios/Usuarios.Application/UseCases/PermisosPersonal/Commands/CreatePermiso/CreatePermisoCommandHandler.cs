@@ -46,6 +46,14 @@ public class CreatePermisoCommandHandler : IRequestHandler<CreatePermisoCommand,
             throw new BusinessException("Los permisos temporales deben tener fecha de expiración");
         }
 
+        if (request.Permiso.HabitacionId.HasValue)
+        {
+            var permisoExistente = await _unitOfWork.PermisosPersonal
+                .GetByPersonalAndHabitacionAsync(request.Permiso.PersonalId, request.Permiso.HabitacionId.Value);
+            if (permisoExistente != null)
+                throw new ConflictException("El personal ya tiene un permiso asignado para esa habitación");
+        }
+
         var user = _httpContextAccessor.HttpContext?.User;
         // Con MapInboundClaims=false el claim queda como "nameid" (nombre corto JWT),
         // no como la URI larga de ClaimTypes.NameIdentifier

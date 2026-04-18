@@ -10,4 +10,5 @@ public interface IPermisosPersonalRepository : IGenericRepository<PermisosPerson
     Task<IEnumerable<PermisosPersonal>> GetPermisosByActividadAsync(int actividadId);
     Task<IEnumerable<PermisosPersonal>> GetPermisosTemporalesAsync();
     Task<IEnumerable<PermisosPersonal>> GetPermisosExpiradosAsync();
+    Task<PermisosPersonal?> GetByPersonalAndHabitacionAsync(int personalId, int habitacionId);
 }
