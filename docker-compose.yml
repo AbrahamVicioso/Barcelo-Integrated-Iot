@@ -178,6 +178,7 @@ services:
       Ntfy__BaseUrl: https://ntfy:443
       Ntfy__PublicBaseUrl: http://localhost:5019/ntfy
       Ntfy__IgnoreCertificateErrors: "true"
+      Ntfy__AccessToken: ${NTFY_SERVER_TOKEN:-}
     networks:
       - barcelo-net
     depends_on:
