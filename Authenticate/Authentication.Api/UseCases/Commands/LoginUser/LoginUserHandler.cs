@@ -12,23 +12,21 @@ namespace Authentication.Api.UseCases.Commands.LoginUser
     {
         public static async Task<Results<Ok<AccessTokenResponse>, EmptyHttpResult, ProblemHttpResult>> Handle(LoginRequest login, SignInManager<User> _signInManager, UserManager<User> _userManager, IJwtGenerator jwtGenerator)
         {
-            var result = await _signInManager.PasswordSignInAsync(
-                login.Email, 
-                login.Password, 
-                isPersistent: false, 
+            var user = await _userManager.FindByEmailAsync(login.Email);
+            if (user == null)
+            {
+                return TypedResults.Problem("Credenciales inválidas.", statusCode: StatusCodes.Status401Unauthorized);
+            }
+
+            var result = await _signInManager.CheckPasswordSignInAsync(
+                user,
+                login.Password,
                 lockoutOnFailure: true
             );
 
             if (!result.Succeeded)
             {
-                return TypedResults.Problem(result.ToString(), statusCode: StatusCodes.Status401Unauthorized);
-            }
-
-            var user = await _userManager.FindByEmailAsync(login.Email);
-
-            if (user == null) 
-            {
-                return TypedResults.Problem(result.ToString(), statusCode: StatusCodes.Status401Unauthorized);
+                return TypedResults.Problem("Credenciales inválidas.", statusCode: StatusCodes.Status401Unauthorized);
             }
 
             var roles = await _userManager.GetRolesAsync(user);

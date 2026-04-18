@@ -69,12 +69,18 @@ namespace Notification.Worker
                 context.Configuration.GetSection("KafkaConsumer:PersonalAccesoHabitacion").Bind(personalAccesoConsumerConfig);
                 services.AddSingleton(personalAccesoConsumerConfig);
 
+                // Configure PasswordResetConsumerConfig
+                var passwordResetConsumerConfig = new PasswordResetConsumerConfig();
+                context.Configuration.GetSection("KafkaConsumer:PasswordReset").Bind(passwordResetConsumerConfig);
+                services.AddSingleton(passwordResetConsumerConfig);
+
                 // Add Kafka Consumers as separate instances
                 services.AddSingleton<UserCreatedEventConsumer>();
                 services.AddSingleton<ReservaCreadaEventConsumer>();
                 services.AddSingleton<EmailConfirmationEventConsumer>();
                 services.AddSingleton<CredencialesCheckInEventConsumer>();
                 services.AddSingleton<PersonalAccesoHabitacionEventConsumer>();
+                services.AddSingleton<PasswordResetEventConsumer>();
 
                 // Add Background Services for Kafka Consumers
                 services.AddHostedService<UserCreatedNotificationWorker>();
@@ -82,6 +88,7 @@ namespace Notification.Worker
                 services.AddHostedService<EmailConfirmationNotificationWorker>();
                 services.AddHostedService<CredencialesCheckInNotificationWorker>();
                 services.AddHostedService<PersonalAccesoHabitacionNotificationWorker>();
+                services.AddHostedService<PasswordResetNotificationWorker>();
             });
 
             IHost host = builder.Build();
@@ -244,6 +251,35 @@ namespace Notification.Worker
         public override async Task StopAsync(CancellationToken cancellationToken)
         {
             _logger.LogInformation("Stopping Personal Acceso Habitacion Notification Worker...");
+            await _kafkaConsumer.StopAsync(cancellationToken);
+            await base.StopAsync(cancellationToken);
+        }
+    }
+
+    public class PasswordResetNotificationWorker : BackgroundService
+    {
+        private readonly PasswordResetEventConsumer _kafkaConsumer;
+        private readonly ILogger<PasswordResetNotificationWorker> _logger;
+
+        public PasswordResetNotificationWorker(
+            PasswordResetEventConsumer kafkaConsumer,
+            ILogger<PasswordResetNotificationWorker> logger)
+        {
+            _kafkaConsumer = kafkaConsumer;
+            _logger = logger;
+        }
+
+        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+        {
+            _logger.LogInformation("Starting Password Reset Notification Worker...");
+            await _kafkaConsumer.StartAsync(stoppingToken);
+            while (!stoppingToken.IsCancellationRequested)
+                await Task.Delay(Timeout.Infinite, stoppingToken);
+        }
+
+        public override async Task StopAsync(CancellationToken cancellationToken)
+        {
+            _logger.LogInformation("Stopping Password Reset Notification Worker...");
             await _kafkaConsumer.StopAsync(cancellationToken);
             await base.StopAsync(cancellationToken);
         }

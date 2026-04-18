@@ -2,6 +2,7 @@
 using Authentication.Api.DTOs;
 using Authentication.Api.Services;
 using Authentication.Api.UseCases.Commands.CreateUserWithRandomPassword;
+using Authentication.Api.UseCases.Commands.ForgotPassword;
 using Authentication.Api.UseCases.Commands.LoginUser;
 using Authentication.Api.UseCases.Commands.RegisterUser;
 using Authentication.Domain.Entities;
@@ -137,6 +138,37 @@ namespace Authentication.Api.Controllers
             };
 
             return TypedResults.Ok(response);
+        }
+
+        [HttpPost]
+        public async Task<Ok> ForgotPassword([FromBody] EmailRequest request)
+        {
+            var baseUrl = BuildConfirmEmailBaseUrl();
+            return await ForgotPasswordHandler.Handle(request.Email, userManager, kafkaProducerService, baseUrl);
+        }
+
+        [HttpPost]
+        public async Task<Results<Ok<string>, ValidationProblem, BadRequest<string>>> ResetPassword([FromBody] ResetPasswordRequest request)
+        {
+            if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.Token) || string.IsNullOrWhiteSpace(request.NewPassword))
+                return TypedResults.BadRequest("Email, token y nueva contraseña son requeridos.");
+
+            var user = await userManager.FindByEmailAsync(request.Email);
+            if (user is null)
+                return TypedResults.BadRequest("Datos inválidos.");
+
+            var decodedToken = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(request.Token));
+            var result = await userManager.ResetPasswordAsync(user, decodedToken, request.NewPassword);
+
+            if (!result.Succeeded)
+            {
+                var errors = result.Errors
+                    .GroupBy(e => e.Code)
+                    .ToDictionary(g => g.Key, g => g.Select(e => e.Description).ToArray());
+                return TypedResults.ValidationProblem(errors);
+            }
+
+            return TypedResults.Ok("Contraseña restablecida exitosamente.");
         }
 
         [HttpGet]

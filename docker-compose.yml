@@ -168,6 +168,7 @@ services:
       KafkaProducer__BootstrapServers: kafka:29092
       KafkaProducer__Topic: users
       KafkaProducer__EmailConfirmationTopic: email-confirmation
+      KafkaProducer__PasswordResetTopic: password-reset
       KafkaProducer__ClientId: authentication-api
       AuditProducer__BootstrapServers: kafka:29092
       AuditProducer__Topic: audit.events
@@ -345,6 +346,9 @@ services:
       KafkaConsumer__PersonalAccesoHabitacion__BootstrapServers: kafka:29092
       KafkaConsumer__PersonalAccesoHabitacion__GroupId: notification-personal-acceso-group
       KafkaConsumer__PersonalAccesoHabitacion__Topic: habitacion.personal-acceso
+      KafkaConsumer__PasswordReset__BootstrapServers: kafka:29092
+      KafkaConsumer__PasswordReset__GroupId: notification-password-reset-group
+      KafkaConsumer__PasswordReset__Topic: password-reset
       EmailSettings__ConnectionString: ${AZURE_COMMUNICATION_CONNECTION_STRING:?EmailSettings__ConnectionString is required. Set AZURE_COMMUNICATION_CONNECTION_STRING in your .env file}
       EmailSettings__Username: ${AZURE_COMMUNICATION_SENDER_ADDRESS:?EmailSettings__Username is required. Set AZURE_COMMUNICATION_SENDER_ADDRESS in your .env file}
       Ntfy__BaseUrl: https://ntfy:443

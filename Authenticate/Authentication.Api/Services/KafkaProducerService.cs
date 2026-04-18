@@ -9,6 +9,7 @@ namespace Authentication.Api.Services
     {
         Task PublishUserCreatedAsync(UserCreatedEvent userEvent, CancellationToken cancellationToken = default);
         Task PublishEmailConfirmationAsync(EmailConfirmationEvent confirmationEvent, CancellationToken cancellationToken = default);
+        Task PublishPasswordResetAsync(PasswordResetEvent resetEvent, CancellationToken cancellationToken = default);
     }
 
     public class KafkaProducerService : IKafkaProducerService, IDisposable
@@ -16,6 +17,7 @@ namespace Authentication.Api.Services
         private readonly IProducer<string, string> _producer;
         private readonly string _topic;
         private readonly string _emailConfirmationTopic;
+        private readonly string _passwordResetTopic;
         private readonly ILogger<KafkaProducerService> _logger;
         private bool _disposed;
 
@@ -23,6 +25,7 @@ namespace Authentication.Api.Services
         {
             _topic = config.Topic;
             _emailConfirmationTopic = config.EmailConfirmationTopic;
+            _passwordResetTopic = config.PasswordResetTopic;
             _logger = logger;
 
             var producerConfig = new ProducerConfig
@@ -88,6 +91,31 @@ namespace Authentication.Api.Services
             }
         }
 
+        public async Task PublishPasswordResetAsync(PasswordResetEvent resetEvent, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var message = new Message<string, string>
+                {
+                    Key = resetEvent.Email,
+                    Value = JsonSerializer.Serialize(resetEvent, new JsonSerializerOptions
+                    {
+                        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                    })
+                };
+
+                var result = await _producer.ProduceAsync(_passwordResetTopic, message, cancellationToken);
+
+                _logger.LogInformation("Published PasswordResetEvent for {Email} to partition {Partition} at offset {Offset}",
+                    resetEvent.Email, result.Partition.Value, result.Offset.Value);
+            }
+            catch (ProduceException<string, string> ex)
+            {
+                _logger.LogError(ex, "Failed to publish PasswordResetEvent for {Email}", resetEvent.Email);
+                throw;
+            }
+        }
+
         public void Dispose()
         {
             if (_disposed)
@@ -106,6 +134,7 @@ namespace Authentication.Api.Services
         public string BootstrapServers { get; set; } = string.Empty;
         public string Topic { get; set; } = "notifications";
         public string EmailConfirmationTopic { get; set; } = "email-confirmation";
+        public string PasswordResetTopic { get; set; } = "password-reset";
         public string? ClientId { get; set; }
     }
 }
