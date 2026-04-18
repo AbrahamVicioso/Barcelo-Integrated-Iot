@@ -65,13 +65,15 @@ public class CreateCredencialesAccesoCommandHandler : IRequestHandler<CreateCred
             await _credencialRepository.AddAsync(credencial, cancellationToken);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-            // Sync ThingsBoard credentials en scope fresco para evitar interferencias del DbContext actual
-            if (request.Credencial.ReservaId.HasValue)
-            {
-                using var scope = _scopeFactory.CreateScope();
-                var syncService = scope.ServiceProvider.GetRequiredService<ITbCredencialesSyncService>();
+            // Sync ThingsBoard: todas las cerraduras del usuario afectado
+            using var scope = _scopeFactory.CreateScope();
+            var syncService = scope.ServiceProvider.GetRequiredService<ITbCredencialesSyncService>();
+            if (request.Credencial.PersonalId.HasValue)
+                await syncService.SyncByPersonalIdAsync(request.Credencial.PersonalId.Value, cancellationToken);
+            else if (request.Credencial.HuespedId.HasValue)
+                await syncService.SyncByHuespedIdAsync(request.Credencial.HuespedId.Value, cancellationToken);
+            else if (request.Credencial.ReservaId.HasValue)
                 await syncService.SyncByReservaIdAsync(request.Credencial.ReservaId.Value, cancellationToken);
-            }
 
             return Result<int>.Success(credencial.CredencialId);
         }

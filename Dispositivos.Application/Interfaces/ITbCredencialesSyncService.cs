@@ -20,4 +20,16 @@ public interface ITbCredencialesSyncService
     /// Never throws — errors are logged and swallowed.
     /// </summary>
     Task SyncByReservaIdAsync(int reservaId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Finds all active/in-checkin reservations for the huesped, resolves their HabitacionIds,
+    /// and calls SyncAsync for each. Never throws.
+    /// </summary>
+    Task SyncByHuespedIdAsync(int huespedId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Finds all habitaciones where the personal has an active permission,
+    /// and calls SyncAsync for each. Never throws.
+    /// </summary>
+    Task SyncByPersonalIdAsync(int personalId, CancellationToken cancellationToken = default);
 }

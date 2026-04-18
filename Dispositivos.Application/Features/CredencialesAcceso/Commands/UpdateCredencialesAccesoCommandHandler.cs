@@ -49,6 +49,8 @@ public class UpdateCredencialesAccesoCommandHandler : IRequestHandler<UpdateCred
                 return Result<CredencialesAccesoDto>.Failure("La fecha de expiración debe ser posterior a la fecha de activación.");
 
             var oldReservaId = credencial.ReservaId;
+            var oldPersonalId = credencial.PersonalId;
+            var oldHuespedId = credencial.HuespedId;
             var oldPin = credencial.CodigoPin;
 
             _mapper.Map(request.Credencial, credencial);
@@ -60,11 +62,10 @@ public class UpdateCredencialesAccesoCommandHandler : IRequestHandler<UpdateCred
             await _credencialRepository.UpdateAsync(credencial, cancellationToken);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-            // Sync en scope fresco para evitar interferencias del DbContext actual
-            if (oldReservaId.HasValue)
-                await SyncAsync(oldReservaId.Value, cancellationToken);
-            if (request.Credencial.ReservaId.HasValue && request.Credencial.ReservaId != oldReservaId)
-                await SyncAsync(request.Credencial.ReservaId.Value, cancellationToken);
+            // Sync ThingsBoard: cerraduras del usuario anterior y nuevo (si cambió)
+            await TriggerSyncAsync(oldPersonalId, oldHuespedId, oldReservaId, cancellationToken);
+            if (request.Credencial.PersonalId != oldPersonalId || request.Credencial.HuespedId != oldHuespedId || request.Credencial.ReservaId != oldReservaId)
+                await TriggerSyncAsync(request.Credencial.PersonalId, request.Credencial.HuespedId, request.Credencial.ReservaId, cancellationToken);
 
             var credencialDto = _mapper.Map<CredencialesAccesoDto>(credencial);
             return Result<CredencialesAccesoDto>.Success(credencialDto);
@@ -82,10 +83,15 @@ public class UpdateCredencialesAccesoCommandHandler : IRequestHandler<UpdateCred
         }
     }
 
-    private async Task SyncAsync(int reservaId, CancellationToken cancellationToken)
+    private async Task TriggerSyncAsync(int? personalId, int? huespedId, int? reservaId, CancellationToken cancellationToken)
     {
         using var scope = _scopeFactory.CreateScope();
         var syncService = scope.ServiceProvider.GetRequiredService<ITbCredencialesSyncService>();
-        await syncService.SyncByReservaIdAsync(reservaId, cancellationToken);
+        if (personalId.HasValue)
+            await syncService.SyncByPersonalIdAsync(personalId.Value, cancellationToken);
+        else if (huespedId.HasValue)
+            await syncService.SyncByHuespedIdAsync(huespedId.Value, cancellationToken);
+        else if (reservaId.HasValue)
+            await syncService.SyncByReservaIdAsync(reservaId.Value, cancellationToken);
     }
 }
