@@ -669,6 +669,20 @@ Claim: `"nameid" ?? ClaimTypes.NameIdentifier` vía `IHttpContextAccessor`.
 - `PermissionAuthorizationHandler.cs` - Valida permisos desde JWT claims
 - `AuthorizationExtensions.cs` - `AddBarceloAuthorization()` para Registrar
 
+### Cómo funciona
+1. ** seed**: `DbSeeder.cs` crea roles y les asigna permisos como `RoleClaims`
+2. **Login**: El usuario recibe un JWT con claims de tipo `Permission` conteniendo los permisos del rol
+3. **Autorización**: `[HasPermission(Permissions.Xxx.View)]` en el controller/método valida contra los claims del JWT
+4. **Resultado**:
+   - Usuario con permiso → acceso permitido
+   - Usuario sin permiso → 403 Forbidden
+
+### Endpoints sin permiso
+Estos endpoints no requieren permisos específicos:
+- Login, Register, ForgotPassword, ResetPassword, ConfirmEmail
+- Endpoints `/me` (recurso propio del usuario autenticado)
+- Unlock door con JWT del personal
+
 ### Constants de Permisos
 ```csharp
 Permissions.Usuarios.View / Create / Edit / Delete
@@ -716,9 +730,15 @@ Los roles y permisos se gestionan vía API o via seed:
 ### Seed de Roles (Authenticate.API)
 `DbSeeder.cs` en `Authentication.Api/Data/` crea roles automáticamente al iniciar:
 - **Admin**: todos los permisos
-- **Manager**: permisos de vista/edit/create sin delete
-- **Recepcionist**: permisos operativos (reservas, habitaciones, cerraduras)
+- **Manager**: Usuarios.View/Create/Edit, Dispositivos.View/Create/Edit, Reservas.View/Create/Edit, Habitaciones.View/Create/Edit, Cerraduras.View/Create/Edit, Credenciales.View/Create/Edit, Hoteles.View/Create/Edit, Mantenimientos.View/Create/Edit, Roles.View/Create/Edit, Reports.View, Audit.View
+- **Recepcionist**: Reservas.View/Create/Edit, Habitaciones.View, Cerraduras.View/Create, Credenciales.View/Create, Hoteles.View
 - **Guest**: sin permisos
+
+> ⚠️ **Importante**: Tras cambios en el código, hacer rebuild sin cache:
+> ```bash
+> docker compose build --no-cache <servicio>
+> # Ejemplo: docker compose build --no-cache auth-api
+> ```
 
 Claim type: `Permission` (constante en `PermissionConstants.PermissionType`)
 
@@ -729,6 +749,64 @@ Claim type: `Permission` (constante en `PermissionConstants.PermissionType`)
 
 ### Claim en JWT
 Tipo: `Permission`, Valor: `Permissions.Xxx.View` (uno por cada permiso del rol).
+
+### Endpoints públicos (sin permiso requerido)
+Estos endpoints no requieren permisos porque son operaciones del recurso propio del usuario o funcionalidades públicas:
+
+| API | Endpoint | Razón |
+|----|----------|-------|
+| **Authenticate.API** | `POST /login` | Público - autenticación |
+| **Authenticate.API** | `POST /register` | Público - registro de usuario |
+| **Authenticate.API** | `POST /forgotpassword` | Público - recuperación de contraseña |
+| **Authenticate.API** | `POST /resetpassword` | Público - recuperación de contraseña |
+| **Authenticate.API** | `GET /confirmemail` | Público - confirmación de email |
+| **Authenticate.API** | `GET /info` | Usuario propio (requiere JWT, sin permiso) |
+| **Reservas.API** | `GET /reservas/me` | Reservas propias del usuario |
+| **Reservas.API** | `GET /reservas/me/reserva/{id}/credenciales` | Credenciales propias |
+| **Reservas.API** | `GET /reservas/user/{userId}` | Reservas propias |
+| **Reservas.API** | `POST /habitacion/{id}/unlock` | Personal con JWT - unlock propio |
+| **Usuarios.API** | `GET /huesped/me` | Perfil propio del huésped |
+| **Usuarios.API** | `POST /huesped/me` | Crear perfil propio |
+
+### Protección de endpoints por API
+
+#### Authenticate.API
+- **AuthController**: `POST /create` → `Permissions.Usuarios.Create`, `GET /getuserbyemail` → `Permissions.Usuarios.View`
+- **RolesController**: todo requiere `Permissions.Roles.*`
+- **UsersController**: requiere `Permissions.Usuarios.*` según operación
+
+#### Usuarios.API
+- **HuespedController**: `Permissions.Usuarios.*`. Excluir `/me` y `/me` (POST)
+- **PersonalController**: `Permissions.Usuarios.*`
+- **PermisoPersonalController**: `Permissions.Usuarios.*`
+- **DepartamentoController**: `Permissions.Usuarios.*`
+- **PuestoController**: `Permissions.Usuarios.*`
+- **TipoDocumentoController**: `Permissions.Usuarios.*`
+- **DashboardController**: `Permissions.Reports.View`
+
+#### Dispositivos.API
+- **DispositivoController**: `Permissions.Dispositivos.*`
+- **CerradurasInteligenteController**: `Permissions.Cerraduras.*`
+- **CredencialesAccesoController**: `Permissions.Credenciales.*`
+- **MantenimientoCerraduraController**: `Permissions.Mantenimientos.*`
+- **RegistrosAccesoController**: `Permissions.Audit.View`
+- **RegistrosAuditoriumController**: `Permissions.Audit.View`
+- **EstadosDispositivoController**: `Permissions.Dispositivos.*`
+- **TiposDispositivoController**: `Permissions.Dispositivos.*`
+- **DashboardController**: `Permissions.Reports.View`
+- **AnalyticsController**: `Permissions.Reports.View`
+
+#### Reservas.API
+- **ReservasController**: `Permissions.Reservas.*`. Excluir `/me`, `/me/reserva/{id}/credenciales`, `/user/{userId}`
+- **HabitacionController**: `Permissions.Habitaciones.*`. Excluir `/{id}/unlock`
+- **HotelController**: `Permissions.Hoteles.*`
+- **HuespedController**: `Permissions.Usuarios.View`
+- **TiposHabitacionController**: `Permissions.Habitaciones.*`
+- **EstadosHabitacionController**: `Permissions.Habitaciones.*`
+- **ActividadesRecreativasController**: `Permissions.Reservas.*`
+- **ReservasActividadesController**: `Permissions.Reservas.*`
+- **DashboardController**: `Permissions.Reports.View`
+- **AnalyticsController**: `Permissions.Reports.View`
 
 ---
 

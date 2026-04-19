@@ -1,4 +1,4 @@
-﻿using Authentication.Api.Contracts;
+using Authentication.Api.Contracts;
 using Authentication.Api.DTOs;
 using Authentication.Api.Services;
 using Authentication.Api.UseCases.Commands.CreateUserWithRandomPassword;
@@ -16,6 +16,7 @@ using Microsoft.AspNetCore.WebUtilities;
 using Notification.Domain.Events;
 using Notification.Domain.Interfaces;
 using System.Text;
+using Barcelo.Authorization.Shared;
 
 namespace Authentication.Api.Controllers
 {
@@ -95,6 +96,7 @@ namespace Authentication.Api.Controllers
         }
 
         [HttpPost]
+        [HasPermission(Permissions.Usuarios.Create)]
         public async Task<Results<Ok<CreateUserWithRandomPasswordResponse>, ValidationProblem>> Create([FromBody] EmailRequest request)
         {
             var confirmEmailBaseUrl = BuildConfirmEmailBaseUrl();
@@ -114,6 +116,7 @@ namespace Authentication.Api.Controllers
         }
 
         [HttpGet]
+        [HasPermission(Permissions.Usuarios.View)]
         public async Task<Results<Ok<UserInfoResponse>, NotFound, ProblemHttpResult>> GetUserByEmail([FromQuery] string email)
         {
             if (string.IsNullOrWhiteSpace(email))

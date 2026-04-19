@@ -11,6 +11,7 @@ namespace Dispositivos.API.Controllers;
 
 [Route("[controller]")]
 [ApiController]
+[HasPermission(Permissions.Audit.View)]
 public class RegistrosAccesoController : ControllerBase
 {
     private readonly IMediator _mediator;
@@ -21,7 +22,6 @@ public class RegistrosAccesoController : ControllerBase
     }
 
     [HttpGet]
-    [HasPermission(Permissions.Audit.View)]
     public async Task<IActionResult> GetAll([FromQuery] PaginationParams pagination)
     {
         var result = await _mediator.Send(new GetAllRegistrosAccesoQuery { Page = pagination.Page, PageSize = pagination.PageSize });

@@ -11,6 +11,7 @@ namespace Dispositivos.API.Controllers;
 
 [Route("[controller]")]
 [ApiController]
+[HasPermission(Permissions.Mantenimientos.View)]
 public class MantenimientoCerraduraController : ControllerBase
 {
     private readonly IMediator _mediator;
@@ -21,6 +22,7 @@ public class MantenimientoCerraduraController : ControllerBase
     }
 
     [HttpGet]
+    [HasPermission(Permissions.Mantenimientos.View)]
     public async Task<IActionResult> GetAll([FromQuery] PaginationParams pagination)
     {
         var result = await _mediator.Send(new GetAllMantenimientoCerraduraQuery { Page = pagination.Page, PageSize = pagination.PageSize });
@@ -30,6 +32,7 @@ public class MantenimientoCerraduraController : ControllerBase
     }
 
     [HttpGet("{id}")]
+    [HasPermission(Permissions.Mantenimientos.View)]
     public async Task<IActionResult> GetById(int id)
     {
         var result = await _mediator.Send(new GetMantenimientoCerraduraByIdQuery { MantenimientoId = id });

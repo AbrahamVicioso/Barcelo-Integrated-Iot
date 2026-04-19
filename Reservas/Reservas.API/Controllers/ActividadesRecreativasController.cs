@@ -2,10 +2,12 @@ using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Reservas.Application.Features.ActividadesRecreativas.Commands;
 using Reservas.Application.Features.ActividadesRecreativas.Queries;
+using Barcelo.Authorization.Shared;
 
 namespace Reservas.API.Controllers;
 
 [ApiController]
+[HasPermission(Permissions.Reservas.View)]
 [Route("[controller]")]
 public class ActividadesRecreativasController : ControllerBase
 {
@@ -31,6 +33,7 @@ public class ActividadesRecreativasController : ControllerBase
     }
 
     [HttpPost]
+    [HasPermission(Permissions.Reservas.Create)]
     public async Task<IActionResult> Create([FromBody] CreateActividadRecreativaCommand command)
     {
         var result = await _mediator.Send(command);
@@ -38,6 +41,7 @@ public class ActividadesRecreativasController : ControllerBase
     }
 
     [HttpPut("{id}")]
+    [HasPermission(Permissions.Reservas.Edit)]
     public async Task<IActionResult> Update(int id, [FromBody] UpdateActividadRecreativaCommand command)
     {
         if (id != command.ActividadId)
@@ -48,6 +52,7 @@ public class ActividadesRecreativasController : ControllerBase
     }
 
     [HttpDelete("{id}")]
+    [HasPermission(Permissions.Reservas.Delete)]
     public async Task<IActionResult> Delete(int id)
     {
         var result = await _mediator.Send(new DeleteActividadRecreativaCommand { ActividadId = id });

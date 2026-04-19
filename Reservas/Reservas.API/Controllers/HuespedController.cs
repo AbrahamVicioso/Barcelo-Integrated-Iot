@@ -2,10 +2,12 @@ using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Reservas.Application.DTOs;
 using Reservas.Application.Features.Huespedes.Queries;
+using Barcelo.Authorization.Shared;
 
 namespace Reservas.API.Controllers;
 
 [ApiController]
+[HasPermission(Permissions.Usuarios.View)]
 [Route("api/[controller]")]
 public class HuespedController : ControllerBase
 {

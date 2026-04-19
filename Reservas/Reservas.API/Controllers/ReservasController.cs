@@ -123,6 +123,7 @@ public class ReservasController : ControllerBase
     }
 
     [HttpDelete("{id}")]
+    [HasPermission(Permissions.Reservas.Delete)]
     public async Task<IActionResult> Delete(int id)
     {
         var result = await _mediator.Send(new DeleteReservaCommand { ReservaId = id });
@@ -130,6 +131,7 @@ public class ReservasController : ControllerBase
     }
 
     [HttpPost("{id}/unlock-door")]
+    [HasPermission(Permissions.Reservas.View)]
     public async Task<IActionResult> UnlockDoor(int id, [FromQuery] string pin)
     {
         var result = await _mediator.Send(new UnlockDoorCommand { ReservaId = id, Pin = pin });
@@ -137,6 +139,7 @@ public class ReservasController : ControllerBase
     }
 
     [HttpPost("{id}/checkin")]
+    [HasPermission(Permissions.Reservas.Edit)]
     public async Task<IActionResult> PerformCheckIn(int id)
     {
         var result = await _mediator.Send(new PerformCheckInCommand { ReservaId = id });
@@ -144,6 +147,7 @@ public class ReservasController : ControllerBase
     }
 
     [HttpPost("{id}/checkout")]
+    [HasPermission(Permissions.Reservas.Edit)]
     public async Task<IActionResult> PerformCheckOut(int id)
     {
         var result = await _mediator.Send(new PerformCheckOutCommand { ReservaId = id });
@@ -151,6 +155,7 @@ public class ReservasController : ControllerBase
     }
 
     [HttpGet("estados")]
+    [HasPermission(Permissions.Reservas.View)]
     public async Task<IActionResult> GetEstados()
     {
         var result = await _mediator.Send(new GetAllEstadosReservaQuery());

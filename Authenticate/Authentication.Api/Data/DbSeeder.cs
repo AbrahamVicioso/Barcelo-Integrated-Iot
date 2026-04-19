@@ -32,13 +32,17 @@ public static class DbSeeder
             await roleManager.CreateAsync(managerRole);
             var managerPermissions = new[]
             {
+                Permissions.Usuarios.View, Permissions.Usuarios.Create, Permissions.Usuarios.Edit,
                 Permissions.Dispositivos.View, Permissions.Dispositivos.Create, Permissions.Dispositivos.Edit,
                 Permissions.Reservas.View, Permissions.Reservas.Create, Permissions.Reservas.Edit,
                 Permissions.Habitaciones.View, Permissions.Habitaciones.Create, Permissions.Habitaciones.Edit,
                 Permissions.Cerraduras.View, Permissions.Cerraduras.Create, Permissions.Cerraduras.Edit,
                 Permissions.Credenciales.View, Permissions.Credenciales.Create, Permissions.Credenciales.Edit,
                 Permissions.Hoteles.View, Permissions.Hoteles.Create, Permissions.Hoteles.Edit,
+                Permissions.Mantenimientos.View, Permissions.Mantenimientos.Create, Permissions.Mantenimientos.Edit,
+                Permissions.Roles.View, Permissions.Roles.Create, Permissions.Roles.Edit,
                 Permissions.Reports.View,
+                Permissions.Audit.View,
             };
             foreach (var permission in managerPermissions)
             {
@@ -54,8 +58,8 @@ public static class DbSeeder
             {
                 Permissions.Reservas.View, Permissions.Reservas.Create, Permissions.Reservas.Edit,
                 Permissions.Habitaciones.View,
-                Permissions.Cerraduras.View, Permissions.Cerraduras.Create,
                 Permissions.Credenciales.View, Permissions.Credenciales.Create,
+                Permissions.Hoteles.View,
             };
             foreach (var permission in recepcionistPermissions)
             {
@@ -79,10 +83,6 @@ public static class DbSeeder
         var existingUser = await userManager.FindByNameAsync(username);
         if (existingUser is not null)
         {
-            if (!await userManager.IsInRoleAsync(existingUser, "Admin"))
-            {
-                await userManager.AddToRoleAsync(existingUser, "Admin");
-            }
             return;
         }
 

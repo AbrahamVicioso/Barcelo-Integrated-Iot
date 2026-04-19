@@ -6,10 +6,12 @@ using Usuarios.Application.UseCases.Puesto.Commands.DeletePuesto;
 using Usuarios.Application.UseCases.Puesto.Commands.UpdatePuesto;
 using Usuarios.Application.UseCases.Puesto.Queries.GetAllPuestos;
 using Usuarios.Application.UseCases.Puesto.Queries.GetPuestoById;
+using Barcelo.Authorization.Shared;
 
 namespace Usuarios.API.Controllers;
 
 [ApiController]
+[HasPermission(Permissions.Usuarios.View)]
 [Route("[controller]")]
 public class PuestoController : ControllerBase
 {
@@ -35,6 +37,7 @@ public class PuestoController : ControllerBase
     }
 
     [HttpPost]
+    [HasPermission(Permissions.Usuarios.Create)]
     public async Task<IActionResult> Create([FromBody] CreatePuestoDto dto)
     {
         var result = await _mediator.Send(new CreatePuestoCommand(dto));
@@ -42,6 +45,7 @@ public class PuestoController : ControllerBase
     }
 
     [HttpPut("{id}")]
+    [HasPermission(Permissions.Usuarios.Edit)]
     public async Task<IActionResult> Update(int id, [FromBody] UpdatePuestoDto dto)
     {
         if (id != dto.PuestoId)
@@ -52,6 +56,7 @@ public class PuestoController : ControllerBase
     }
 
     [HttpDelete("{id}")]
+    [HasPermission(Permissions.Usuarios.Delete)]
     public async Task<IActionResult> Delete(int id)
     {
         var result = await _mediator.Send(new DeletePuestoCommand(id));

@@ -8,12 +8,13 @@ using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
 using Notification.Domain.Events;
 using System.Text;
+using Barcelo.Authorization.Shared;
 
 namespace Authentication.Api.Controllers;
 
 [Route("[controller]")]
-//[Authorize(Roles = "Admin")]
 [ApiController]
+[HasPermission(Permissions.Usuarios.View)]
 public class UsersController : ControllerBase
 {
     private readonly UserManager<User> _userManager;
@@ -172,6 +173,7 @@ public class UsersController : ControllerBase
     /// Crea un nuevo usuario
     /// </summary>
     [HttpPost]
+    [HasPermission(Permissions.Usuarios.Create)]
     public async Task<ActionResult<UserResponseDto>> Create([FromBody] CreateUserDto model)
     {
         var existingUser = await _userManager.FindByEmailAsync(model.Email);
@@ -242,6 +244,7 @@ public class UsersController : ControllerBase
     /// Actualiza un usuario existente
     /// </summary>
     [HttpPut("{id}")]
+    [HasPermission(Permissions.Usuarios.Edit)]
     public async Task<ActionResult<UserResponseDto>> Update(string id, [FromBody] UpdateUserDto model)
     {
         var user = await _userManager.FindByIdAsync(id);
@@ -301,6 +304,7 @@ public class UsersController : ControllerBase
     /// Elimina un usuario
     /// </summary>
     [HttpDelete("{id}")]
+    [HasPermission(Permissions.Usuarios.Delete)]
     public async Task<IActionResult> Delete(string id)
     {
         var user = await _userManager.FindByIdAsync(id);
@@ -322,6 +326,7 @@ public class UsersController : ControllerBase
     /// Agrega un rol a un usuario
     /// </summary>
     [HttpPost("{id}/roles")]
+    [HasPermission(Permissions.Roles.Edit)]
     public async Task<IActionResult> AddToRole(string id, [FromBody] UserRoleDto model)
     {
         var user = await _userManager.FindByIdAsync(id);
@@ -351,6 +356,7 @@ public class UsersController : ControllerBase
     /// Remueve un rol de un usuario
     /// </summary>
     [HttpDelete("{id}/roles/{roleName}")]
+    [HasPermission(Permissions.Roles.Edit)]
     public async Task<IActionResult> RemoveFromRole(string id, string roleName)
     {
         var user = await _userManager.FindByIdAsync(id);
@@ -376,6 +382,7 @@ public class UsersController : ControllerBase
     /// Bloquea a un usuario por un tiempo especificado
     /// </summary>
     [HttpPost("{id}/lock")]
+    [HasPermission(Permissions.Usuarios.Edit)]
     public async Task<IActionResult> LockUser(string id, [FromQuery] int days = 0, [FromQuery] int hours = 0, [FromQuery] int minutes = 0)
     {
         var user = await _userManager.FindByIdAsync(id);
@@ -401,6 +408,7 @@ public class UsersController : ControllerBase
     /// Desbloquea a un usuario
     /// </summary>
     [HttpPost("{id}/unlock")]
+    [HasPermission(Permissions.Usuarios.Edit)]
     public async Task<IActionResult> UnlockUser(string id)
     {
         var user = await _userManager.FindByIdAsync(id);
@@ -425,6 +433,7 @@ public class UsersController : ControllerBase
     /// Cambia la contraseña de un usuario
     /// </summary>
     [HttpPost("{id}/change-password")]
+    [HasPermission(Permissions.Usuarios.Edit)]
     public async Task<IActionResult> ChangePassword(string id, [FromBody] ChangePasswordDto model)
     {
         var user = await _userManager.FindByIdAsync(id);
@@ -447,6 +456,7 @@ public class UsersController : ControllerBase
     /// Establece una contraseña para un usuario (sin necesidad de conocer la anterior)
     /// </summary>
     [HttpPost("{id}/set-password")]
+    [HasPermission(Permissions.Usuarios.Edit)]
     public async Task<IActionResult> SetPassword(string id, [FromBody] ChangePasswordDto model)
     {
         var user = await _userManager.FindByIdAsync(id);
@@ -486,6 +496,7 @@ public class UsersController : ControllerBase
     /// Confirma el email de un usuario
     /// </summary>
     [HttpPost("{id}/confirm-email")]
+    [HasPermission(Permissions.Usuarios.Edit)]
     public async Task<IActionResult> ConfirmEmail(string id)
     {
         var user = await _userManager.FindByIdAsync(id);
@@ -511,6 +522,7 @@ public class UsersController : ControllerBase
     /// Agrega un claim a un usuario
     /// </summary>
     [HttpPost("{id}/claims")]
+    [HasPermission(Permissions.Roles.ManagePermissions)]
     public async Task<IActionResult> AddClaim(string id, [FromBody] UserClaimDto model)
     {
         var user = await _userManager.FindByIdAsync(id);
@@ -533,6 +545,7 @@ public class UsersController : ControllerBase
     /// Remueve un claim de un usuario
     /// </summary>
     [HttpDelete("{id}/claims")]
+    [HasPermission(Permissions.Roles.ManagePermissions)]
     public async Task<IActionResult> RemoveClaim(string id, [FromQuery] string claimType, [FromQuery] string claimValue)
     {
         var user = await _userManager.FindByIdAsync(id);

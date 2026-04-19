@@ -11,6 +11,7 @@ namespace Dispositivos.API.Controllers;
 
 [Route("[controller]")]
 [ApiController]
+[HasPermission(Permissions.Audit.View)]
 public class RegistrosAuditoriumController : ControllerBase
 {
     private readonly IMediator _mediator;
@@ -21,7 +22,6 @@ public class RegistrosAuditoriumController : ControllerBase
     }
 
     [HttpGet]
-    [HasPermission(Permissions.Audit.View)]
     public async Task<IActionResult> GetAll([FromQuery] PaginationParams pagination)
     {
         var result = await _mediator.Send(new GetAllRegistrosAuditoriumQuery { Page = pagination.Page, PageSize = pagination.PageSize });
@@ -38,7 +38,6 @@ public class RegistrosAuditoriumController : ControllerBase
     }
 
     [HttpPost]
-    [HasPermission(Permissions.Audit.View)]
     public async Task<IActionResult> Create([FromBody] CreateRegistrosAuditoriumDto registroDto)
     {
         var result = await _mediator.Send(new CreateRegistrosAuditoriumCommand { Registro = registroDto });

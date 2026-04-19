@@ -11,6 +11,7 @@ namespace Reservas.API.Controllers
 {
     [Route("[controller]")]
     [ApiController]
+    [HasPermission(Permissions.Hoteles.View)]
     public class HotelController : ControllerBase
     {
         private readonly IMediator _mediator;

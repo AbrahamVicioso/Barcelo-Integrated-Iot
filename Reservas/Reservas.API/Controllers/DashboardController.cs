@@ -1,11 +1,13 @@
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Reservas.Application.Features.Dashboard.Queries;
+using Barcelo.Authorization.Shared;
 
 namespace Reservas.API.Controllers;
 
 [Route("[controller]")]
 [ApiController]
+[HasPermission(Permissions.Reports.View)]
 public class DashboardController : ControllerBase
 {
     private readonly IMediator _mediator;

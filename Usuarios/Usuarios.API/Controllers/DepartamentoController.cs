@@ -6,10 +6,12 @@ using Usuarios.Application.UseCases.Departamento.Commands.DeleteDepartamento;
 using Usuarios.Application.UseCases.Departamento.Commands.UpdateDepartamento;
 using Usuarios.Application.UseCases.Departamento.Queries.GetAllDepartamentos;
 using Usuarios.Application.UseCases.Departamento.Queries.GetDepartamentoById;
+using Barcelo.Authorization.Shared;
 
 namespace Usuarios.API.Controllers;
 
 [ApiController]
+[HasPermission(Permissions.Usuarios.View)]
 [Route("[controller]")]
 public class DepartamentoController : ControllerBase
 {
@@ -35,6 +37,7 @@ public class DepartamentoController : ControllerBase
     }
 
     [HttpPost]
+    [HasPermission(Permissions.Usuarios.Create)]
     public async Task<IActionResult> Create([FromBody] CreateDepartamentoDto dto)
     {
         var result = await _mediator.Send(new CreateDepartamentoCommand(dto));
@@ -42,6 +45,7 @@ public class DepartamentoController : ControllerBase
     }
 
     [HttpPut("{id}")]
+    [HasPermission(Permissions.Usuarios.Edit)]
     public async Task<IActionResult> Update(int id, [FromBody] UpdateDepartamentoDto dto)
     {
         if (id != dto.DepartamentoId)
@@ -52,6 +56,7 @@ public class DepartamentoController : ControllerBase
     }
 
     [HttpDelete("{id}")]
+    [HasPermission(Permissions.Usuarios.Delete)]
     public async Task<IActionResult> Delete(int id)
     {
         var result = await _mediator.Send(new DeleteDepartamentoCommand(id));

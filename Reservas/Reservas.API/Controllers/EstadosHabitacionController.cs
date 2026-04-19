@@ -3,11 +3,13 @@ using Microsoft.AspNetCore.Mvc;
 using Reservas.Application.DTOs;
 using Reservas.Application.Features.EstadosHabitacion.Commands;
 using Reservas.Application.Features.EstadosHabitacion.Queries;
+using Barcelo.Authorization.Shared;
 
 namespace Reservas.API.Controllers;
 
 [Route("[controller]")]
 [ApiController]
+[HasPermission(Permissions.Habitaciones.View)]
 public class EstadosHabitacionController : ControllerBase
 {
     private readonly IMediator _mediator;
@@ -32,6 +34,7 @@ public class EstadosHabitacionController : ControllerBase
     }
 
     [HttpPost]
+    [HasPermission(Permissions.Habitaciones.Create)]
     public async Task<IActionResult> Create([FromBody] CreateEstadoHabitacionDto dto)
     {
         var result = await _mediator.Send(new CreateEstadoHabitacionCommand { EstadoHabitacion = dto });
@@ -39,6 +42,7 @@ public class EstadosHabitacionController : ControllerBase
     }
 
     [HttpPut("{id}")]
+    [HasPermission(Permissions.Habitaciones.Edit)]
     public async Task<IActionResult> Update(int id, [FromBody] UpdateEstadoHabitacionCommand command)
     {
         if (id != command.EstadoHabitacionId)
@@ -49,6 +53,7 @@ public class EstadosHabitacionController : ControllerBase
     }
 
     [HttpDelete("{id}")]
+    [HasPermission(Permissions.Habitaciones.Delete)]
     public async Task<IActionResult> Delete(int id)
     {
         var result = await _mediator.Send(new DeleteEstadoHabitacionCommand { EstadoHabitacionId = id });

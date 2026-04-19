@@ -11,6 +11,7 @@ namespace Dispositivos.API.Controllers;
 
 [Route("[controller]")]
 [ApiController]
+[HasPermission(Permissions.Dispositivos.View)]
 public class DispositivoController : ControllerBase
 {
     private readonly IMediator _mediator;
@@ -21,6 +22,7 @@ public class DispositivoController : ControllerBase
     }
 
     [HttpGet]
+    [HasPermission(Permissions.Dispositivos.View)]
     public async Task<IActionResult> GetAll([FromQuery] PaginationParams pagination)
     {
         var result = await _mediator.Send(new GetAllDispositivosQuery { Page = pagination.Page, PageSize = pagination.PageSize });

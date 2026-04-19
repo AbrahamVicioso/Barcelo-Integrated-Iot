@@ -2,10 +2,12 @@ using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Usuarios.Application.UseCases.Dashboard.Queries.GetHuespedesStats;
 using Usuarios.Application.UseCases.Dashboard.Queries.GetPersonalStats;
+using Barcelo.Authorization.Shared;
 
 namespace Usuarios.API.Controllers;
 
 [ApiController]
+[HasPermission(Permissions.Reports.View)]
 [Route("[controller]")]
 public class DashboardController : ControllerBase
 {

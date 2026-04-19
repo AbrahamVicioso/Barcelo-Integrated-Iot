@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -8,6 +9,7 @@ namespace Authentication.Api.Controllers;
 
 [Route("[controller]")]
 [ApiController]
+[HasPermission(Permissions.Roles.View)]
 public class RolesController : ControllerBase
 {
     private readonly RoleManager<IdentityRole> roleManager;
@@ -18,6 +20,7 @@ public class RolesController : ControllerBase
     }
 
     [HttpGet]
+    [HasPermission(Permissions.Roles.View)]
     public async Task<IActionResult> GetRoles()
     {
         var roles = await roleManager.Roles.ToListAsync();
@@ -25,6 +28,7 @@ public class RolesController : ControllerBase
     }
 
     [HttpPost]
+    [HasPermission(Permissions.Roles.Create)]
     public async Task<IActionResult> CreateRole([FromBody] string roleName)
     {
         if (string.IsNullOrWhiteSpace(roleName))
@@ -50,6 +54,7 @@ public class RolesController : ControllerBase
     }
 
     [HttpGet("{roleId}/permissions")]
+    [HasPermission(Permissions.Roles.View)]
     public async Task<IActionResult> GetRolePermissions(string roleId)
     {
         var role = await roleManager.FindByIdAsync(roleId);
@@ -68,6 +73,7 @@ public class RolesController : ControllerBase
     }
 
     [HttpPost("{roleId}/permissions")]
+    [HasPermission(Permissions.Roles.ManagePermissions)]
     public async Task<IActionResult> AddPermissionToRole(string roleId, [FromBody] string permission)
     {
         var role = await roleManager.FindByIdAsync(roleId);
@@ -99,6 +105,7 @@ public class RolesController : ControllerBase
     }
 
     [HttpDelete("{roleId}/permissions/{permission}")]
+    [HasPermission(Permissions.Roles.ManagePermissions)]
     public async Task<IActionResult> RemovePermissionFromRole(string roleId, string permission)
     {
         var role = await roleManager.FindByIdAsync(roleId);

@@ -2,11 +2,13 @@ using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Reservas.Application.Features.Analytics.Queries;
+using Barcelo.Authorization.Shared;
 
 namespace Reservas.API.Controllers;
 
 [Authorize]
 [ApiController]
+[HasPermission(Permissions.Reports.View)]
 [Route("analytics")]
 public class AnalyticsController : ControllerBase
 {

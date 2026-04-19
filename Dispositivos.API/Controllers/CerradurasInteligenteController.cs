@@ -11,6 +11,7 @@ namespace Dispositivos.API.Controllers;
 
 [Route("[controller]")]
 [ApiController]
+[HasPermission(Permissions.Cerraduras.View)]
 public class CerradurasInteligenteController : ControllerBase
 {
     private readonly IMediator _mediator;
@@ -21,6 +22,7 @@ public class CerradurasInteligenteController : ControllerBase
     }
 
     [HttpGet]
+    [HasPermission(Permissions.Cerraduras.View)]
     public async Task<IActionResult> GetAll([FromQuery] PaginationParams pagination)
     {
         var result = await _mediator.Send(new GetAllCerradurasInteligenteQuery { Page = pagination.Page, PageSize = pagination.PageSize });
@@ -30,6 +32,7 @@ public class CerradurasInteligenteController : ControllerBase
     }
 
     [HttpGet("{id}")]
+    [HasPermission(Permissions.Cerraduras.View)]
     public async Task<IActionResult> GetById(int id)
     {
         var result = await _mediator.Send(new GetCerradurasInteligenteByIdQuery { CerraduraId = id });

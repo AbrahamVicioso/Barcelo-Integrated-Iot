@@ -10,6 +10,7 @@ namespace Dispositivos.API.Controllers;
 
 [Route("[controller]")]
 [ApiController]
+[HasPermission(Permissions.Dispositivos.View)]
 public class TiposDispositivoController : ControllerBase
 {
     private readonly IMediator _mediator;
@@ -55,6 +56,7 @@ public class TiposDispositivoController : ControllerBase
     }
 
     [HttpDelete("{id}")]
+    [HasPermission(Permissions.Dispositivos.Delete)]
     public async Task<IActionResult> Delete(int id)
     {
         var result = await _mediator.Send(new DeleteTipoDispositivoCommand { TipoDispositivoId = id });

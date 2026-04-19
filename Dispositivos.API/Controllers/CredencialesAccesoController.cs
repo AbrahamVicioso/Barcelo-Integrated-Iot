@@ -12,6 +12,7 @@ namespace Dispositivos.API.Controllers;
 
 [Route("[controller]")]
 [ApiController]
+[HasPermission(Permissions.Credenciales.View)]
 public class CredencialesAccesoController : ControllerBase
 {
     private readonly IMediator _mediator;
@@ -22,6 +23,7 @@ public class CredencialesAccesoController : ControllerBase
     }
 
     [HttpGet]
+    [HasPermission(Permissions.Credenciales.View)]
     public async Task<IActionResult> GetAll([FromQuery] PaginationParams pagination)
     {
         var result = await _mediator.Send(new GetAllCredencialesAccesoQuery { Page = pagination.Page, PageSize = pagination.PageSize });
@@ -31,6 +33,7 @@ public class CredencialesAccesoController : ControllerBase
     }
 
     [HttpGet("huesped/{huespedId}")]
+    [HasPermission(Permissions.Credenciales.View)]
     public async Task<IActionResult> GetByHuespedId(int huespedId, [FromQuery] PaginationParams pagination)
     {
         var result = await _mediator.Send(new GetCredencialesByHuespedIdQuery { HuespedId = huespedId, Page = pagination.Page, PageSize = pagination.PageSize });
@@ -40,6 +43,7 @@ public class CredencialesAccesoController : ControllerBase
     }
 
     [HttpGet("{id}")]
+    [HasPermission(Permissions.Credenciales.View)]
     public async Task<IActionResult> GetById(int id)
     {
         var result = await _mediator.Send(new GetCredencialesAccesoByIdQuery { CredencialId = id });
