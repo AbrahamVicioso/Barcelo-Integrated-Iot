@@ -49,30 +49,59 @@ public class CredencialesAccesoService : ICredencialesAccesoService
         return result is null || result == DBNull.Value ? null : Convert.ToInt32(result);
     }
 
-    public async Task RegistrarUsoAsync(int credencialId, CancellationToken cancellationToken = default)
+    public async Task RegistrarAccesoAsync(int habitacionId, int? credencialId = null, CancellationToken cancellationToken = default)
     {
         var connection = _context.Database.GetDbConnection();
         if (connection.State != ConnectionState.Open)
             await connection.OpenAsync(cancellationToken);
 
-        using var command = connection.CreateCommand();
-        command.CommandText = @"
-            UPDATE CredencialesAcceso
-            SET NumeroUsos = NumeroUsos + 1,
-                UltimoUso  = @now
-            WHERE CredencialId = @credencialId";
+        var now = DateTime.UtcNow;
 
-        var pCredencialId = command.CreateParameter();
-        pCredencialId.ParameterName = "@credencialId";
-        pCredencialId.Value = credencialId;
-        command.Parameters.Add(pCredencialId);
+        // Incrementar ContadorAperturas en CerradurasInteligentes
+        using (var command = connection.CreateCommand())
+        {
+            command.CommandText = @"
+                UPDATE CerradurasInteligentes
+                SET ContadorAperturas = ContadorAperturas + 1,
+                    UltimaApertura = @now
+                WHERE HabitacionId = @habitacionId
+                  AND EstaActiva = 1";
 
-        var pNow = command.CreateParameter();
-        pNow.ParameterName = "@now";
-        pNow.Value = DateTime.UtcNow;
-        command.Parameters.Add(pNow);
+            var pHabitacionId = command.CreateParameter();
+            pHabitacionId.ParameterName = "@habitacionId";
+            pHabitacionId.Value = habitacionId;
+            command.Parameters.Add(pHabitacionId);
 
-        await command.ExecuteNonQueryAsync(cancellationToken);
+            var pNow = command.CreateParameter();
+            pNow.ParameterName = "@now";
+            pNow.Value = now;
+            command.Parameters.Add(pNow);
+
+            await command.ExecuteNonQueryAsync(cancellationToken);
+        }
+
+        // Incrementar NumeroUsos en CredencialesAcceso si se proporciona credencialId
+        if (credencialId.HasValue)
+        {
+            using var command = connection.CreateCommand();
+            command.CommandText = @"
+                UPDATE CredencialesAcceso
+                SET NumeroUsos = NumeroUsos + 1,
+                    UltimoUso  = @now
+                WHERE CredencialId = @credencialId";
+
+            var pCredencialId = command.CreateParameter();
+            pCredencialId.ParameterName = "@credencialId";
+            pCredencialId.Value = credencialId.Value;
+            command.Parameters.Add(pCredencialId);
+
+            var pNow = command.CreateParameter();
+            pNow.ParameterName = "@now";
+            pNow.Value = now;
+            command.Parameters.Add(pNow);
+
+            await command.ExecuteNonQueryAsync(cancellationToken);
+        }
     }
 
     public async Task<bool> HabitacionTieneCerraduraActivaAsync(int habitacionId, CancellationToken cancellationToken = default)

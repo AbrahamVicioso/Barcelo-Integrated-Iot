@@ -281,7 +281,7 @@ SyncByReservaIdAsync(int reservaId, CancellationToken)  ← resuelve HabitacionI
 ### `ICredencialesAccesoService` (Reservas — SQL raw, cross-table)
 ```
 GetCredencialIdAsync(reservaId, pin) → int?
-RegistrarUsoAsync(credencialId)
+RegistrarAccesoAsync(habitacionId, credencialId?) → incrementa ContadorAperturas + NumeroUsos si credencialId presente
 HabitacionTieneCerraduraActivaAsync(habitacionId) → bool
 PersonalTienePermisoAsync(personalId, habitacionId) → bool
 GetReservaActivaByHabitacionIdAsync(habitacionId) → int?
@@ -497,13 +497,14 @@ Todos los repositorios usan `.AsNoTracking()`. Al update con FK + nav prop carga
 | `audit.events` | Todos los APIs | Audit.Worker | `AuditEvent` |
 
 ### Flujo unlock-door (huésped con PIN)
-`POST /reservas/{id}/unlock-door?pin=` → `UnlockDoorCommand` → valida reserva activa + habitación + PIN → `RegistrarUsoAsync` → publica `UnlockDoorEvent` → `UnlockDoorKafkaConsumer`: cerradura activa por HabitacionId → ThingsBoard `lockState="unlocked"` → crea `RegistrosAcceso`.
+`POST /reservas/{id}/unlock-door?pin=` → `UnlockDoorCommand` → valida reserva activa + habitación + PIN → `RegistrarAccesoAsync(habitacionId, credencialId)` (incrementa `ContadorAperturas` + `NumeroUsos`) → publica `UnlockDoorEvent` → `UnlockDoorKafkaConsumer`: cerradura activa por HabitacionId → ThingsBoard `lockState="unlocked"` → crea `RegistrosAcceso`.
 
 ### Flujo unlock-door personal
 `POST /habitacion/{habitacionId}/unlock` `[Authorize]` → `UnlockDoorPersonalCommandHandler`:
 - Extrae `UsuarioId` del JWT → `GetPersonalByUsuarioIdAsync` (raw SQL `Personal WHERE UsuarioId AND EstaActivo=1`)
 - `PersonalTienePermisoAsync` → `HabitacionTieneCerraduraActivaAsync` → `GetReservaActivaByHabitacionIdAsync`
 - Si hay reserva: obtiene emails huéspedes vía `IUsuariosApiService`
+- `RegistrarAccesoAsync(habitacionId, null)` (incrementa solo `ContadorAperturas`)
 - Publica `PersonalUnlockDoorEvent` → topic `habitacion.personal-unlock`
 
 `PersonalUnlockDoorKafkaConsumer`: ThingsBoard **no-bloqueante** (try/catch solo loguea) → crea `RegistrosAcceso` (TipoAcceso="Personal") → si `Huespedes.Count > 0` publica `PersonalAccesoHabitacionEvent`.

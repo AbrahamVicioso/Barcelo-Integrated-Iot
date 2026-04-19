@@ -108,6 +108,9 @@ public class UnlockDoorPersonalCommandHandler : IRequestHandler<UnlockDoorPerson
                 }
             }
 
+            // Registrar el acceso (incrementar contadores)
+            await _credencialesService.RegistrarAccesoAsync(request.HabitacionId, null, cancellationToken);
+
             var personalUnlockEvent = new PersonalUnlockDoorEvent
             {
                 HabitacionId = request.HabitacionId,
