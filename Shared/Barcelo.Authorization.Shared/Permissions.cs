@@ -109,3 +109,61 @@ public static class Permissions
         ];
     }
 }
+
+public class PermissionDescription
+{
+    public required string Permission { get; init; }
+    public required string Description { get; init; }
+    public required string Category { get; init; }
+    public required string Action { get; init; }
+}
+
+public static class PermissionDescriptions
+{
+    public static IReadOnlyList<PermissionDescription> GetAll()
+    {
+        return
+        [
+            new() { Permission = Permissions.Admin.All, Description = "Acceso completo a todas las funciones del sistema", Category = "Administración", Action = "Admin" },
+            new() { Permission = Permissions.Usuarios.View, Description = "Ver lista de usuarios y perfiles", Category = "Usuarios", Action = "Ver" },
+            new() { Permission = Permissions.Usuarios.Create, Description = "Crear nuevos usuarios y perfiles de	huésped/personal", Category = "Usuarios", Action = "Crear" },
+            new() { Permission = Permissions.Usuarios.Edit, Description = "Editar información de usuarios y perfiles", Category = "Usuarios", Action = "Editar" },
+            new() { Permission = Permissions.Usuarios.Delete, Description = "Eliminar usuarios y perfiles", Category = "Usuarios", Action = "Eliminar" },
+            new() { Permission = Permissions.Dispositivos.View, Description = "Ver lista de dispositivos", Category = "Dispositivos", Action = "Ver" },
+            new() { Permission = Permissions.Dispositivos.Create, Description = "Registrar nuevos dispositivos", Category = "Dispositivos", Action = "Crear" },
+            new() { Permission = Permissions.Dispositivos.Edit, Description = "Editar información de dispositivos", Category = "Dispositivos", Action = "Editar" },
+            new() { Permission = Permissions.Dispositivos.Delete, Description = "Eliminar dispositivos", Category = "Dispositivos", Action = "Eliminar" },
+            new() { Permission = Permissions.Reservas.View, Description = "Ver lista de reservas", Category = "Reservas", Action = "Ver" },
+            new() { Permission = Permissions.Reservas.Create, Description = "Crear nuevas reservas", Category = "Reservas", Action = "Crear" },
+            new() { Permission = Permissions.Reservas.Edit, Description = "Editar reservas existentes", Category = "Reservas", Action = "Editar" },
+            new() { Permission = Permissions.Reservas.Delete, Description = "Cancelar reservas", Category = "Reservas", Action = "Eliminar" },
+            new() { Permission = Permissions.Hoteles.View, Description = "Ver lista de hoteles", Category = "Hoteles", Action = "Ver" },
+            new() { Permission = Permissions.Hoteles.Create, Description = "Crear nuevos hoteles", Category = "Hoteles", Action = "Crear" },
+            new() { Permission = Permissions.Hoteles.Edit, Description = "Editar información de hoteles", Category = "Hoteles", Action = "Editar" },
+            new() { Permission = Permissions.Hoteles.Delete, Description = "Eliminar hoteles", Category = "Hoteles", Action = "Eliminar" },
+            new() { Permission = Permissions.Habitaciones.View, Description = "Ver lista de habitaciones", Category = "Habitaciones", Action = "Ver" },
+            new() { Permission = Permissions.Habitaciones.Create, Description = "Crear nuevas habitaciones", Category = "Habitaciones", Action = "Crear" },
+            new() { Permission = Permissions.Habitaciones.Edit, Description = "Editar información de habitaciones", Category = "Habitaciones", Action = "Editar" },
+            new() { Permission = Permissions.Habitaciones.Delete, Description = "Eliminar habitaciones", Category = "Habitaciones", Action = "Eliminar" },
+            new() { Permission = Permissions.Cerraduras.View, Description = "Ver lista de cerraduras inteligentes", Category = "Cerraduras", Action = "Ver" },
+            new() { Permission = Permissions.Cerraduras.Create, Description = "Registrar nuevas cerraduras", Category = "Cerraduras", Action = "Crear" },
+            new() { Permission = Permissions.Cerraduras.Edit, Description = "Editar configuración de cerraduras", Category = "Cerraduras", Action = "Editar" },
+            new() { Permission = Permissions.Cerraduras.Delete, Description = "Eliminar cerraduras", Category = "Cerraduras", Action = "Eliminar" },
+            new() { Permission = Permissions.Credenciales.View, Description = "Ver lista de credenciales de acceso", Category = "Credenciales", Action = "Ver" },
+            new() { Permission = Permissions.Credenciales.Create, Description = "Crear credenciales de acceso", Category = "Credenciales", Action = "Crear" },
+            new() { Permission = Permissions.Credenciales.Edit, Description = "Editar credenciales de acceso", Category = "Credenciales", Action = "Editar" },
+            new() { Permission = Permissions.Credenciales.Delete, Description = "Eliminar credenciales de acceso", Category = "Credenciales", Action = "Eliminar" },
+            new() { Permission = Permissions.Mantenimientos.View, Description = "Ver lista de mantenimientos", Category = "Mantenimientos", Action = "Ver" },
+            new() { Permission = Permissions.Mantenimientos.Create, Description = "Programar mantenimientos", Category = "Mantenimientos", Action = "Crear" },
+            new() { Permission = Permissions.Mantenimientos.Edit, Description = "Editar mantenimientos", Category = "Mantenimientos", Action = "Editar" },
+            new() { Permission = Permissions.Mantenimientos.Delete, Description = "Eliminar mantenimientos", Category = "Mantenimientos", Action = "Eliminar" },
+            new() { Permission = Permissions.Roles.View, Description = "Ver lista de roles", Category = "Roles", Action = "Ver" },
+            new() { Permission = Permissions.Roles.Create, Description = "Crear nuevos roles", Category = "Roles", Action = "Crear" },
+            new() { Permission = Permissions.Roles.Edit, Description = "Editar roles existentes", Category = "Roles", Action = "Editar" },
+            new() { Permission = Permissions.Roles.Delete, Description = "Eliminar roles", Category = "Roles", Action = "Eliminar" },
+            new() { Permission = Permissions.Roles.ManagePermissions, Description = "Asignar permisos a roles", Category = "Roles", Action = "Administrar" },
+            new() { Permission = Permissions.Reports.View, Description = "Ver reportes y estadísticas", Category = "Reportes", Action = "Ver" },
+            new() { Permission = Permissions.Audit.View, Description = "Ver registros de auditoría", Category = "Auditoría", Action = "Ver" },
+        ];
+    }
+}

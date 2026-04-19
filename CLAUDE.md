@@ -721,6 +721,28 @@ public class DispositivoController : ControllerBase
 | GET | `/roles/{roleId}/permissions` | Listar permisos de un rol |
 | POST | `/roles/{roleId}/permissions` | Añadir permiso a rol (body: permission string) |
 | DELETE | `/roles/{roleId}/permissions/{permission}` | Eliminar permiso de rol |
+| GET | `/roles/permissions` | Liste todos los permisos disponibles con descripción |
+
+### Obtención de permisos con descripción
+`GET /roles/permissions` retorna lista de todos los permisos disponibles para asignar:
+
+```json
+[
+  {
+    "permission": "Permissions.Usuarios.View",
+    "description": "Ver lista de usuarios y perfiles",
+    "category": "Usuarios",
+    "action": "Ver"
+  },
+  ...
+]
+```
+
+También disponible en código:
+```csharp
+using Barcelo.Authorization.Shared;
+var permisos = PermissionDescriptions.GetAll();
+```
 
 ### Gestión de Roles
 Los roles y permisos se gestionan vía API o via seed:

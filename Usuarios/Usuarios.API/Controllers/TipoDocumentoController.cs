@@ -11,7 +11,7 @@ using Barcelo.Authorization.Shared;
 namespace Usuarios.API.Controllers;
 
 [ApiController]
-[HasPermission(Permissions.Usuarios.View)]
+// [HasPermission(Permissions.Usuarios.View)]
 [Route("[controller]")]
 public class TipoDocumentoController : ControllerBase
 {

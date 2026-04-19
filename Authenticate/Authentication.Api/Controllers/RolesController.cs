@@ -131,4 +131,12 @@ public class RolesController : ControllerBase
 
         return StatusCode(StatusCodes.Status500InternalServerError, "Error removing permission.");
     }
+
+    [HttpGet("permissions")]
+    [HasPermission(Permissions.Roles.ManagePermissions)]
+    public IActionResult GetAllPermissions()
+    {
+        var permissions = PermissionDescriptions.GetAll();
+        return Ok(permissions);
+    }
 }
