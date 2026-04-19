@@ -25,6 +25,7 @@
     <ProjectReference Include="..\Reservas.Application\Reservas.Application.csproj" />
     <ProjectReference Include="..\Reservas.Infrastructure\Reservas.Infrastructure.csproj" />
     <ProjectReference Include="..\Reservas.Persistence\Reservas.Persistence.csproj" />
+    <ProjectReference Include="..\..\Shared\Barcelo.Authorization.Shared\Barcelo.Authorization.Shared.csproj" />
   </ItemGroup>
 
 </Project>

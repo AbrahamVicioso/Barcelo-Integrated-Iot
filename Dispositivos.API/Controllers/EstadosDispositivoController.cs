@@ -4,6 +4,7 @@ using Dispositivos.Application.Common;
 using Dispositivos.Application.DTOs;
 using Dispositivos.Application.Features.EstadosDispositivo.Commands;
 using Dispositivos.Application.Features.EstadosDispositivo.Queries;
+using Barcelo.Authorization.Shared;
 
 namespace Dispositivos.API.Controllers;
 
@@ -35,6 +36,7 @@ public class EstadosDispositivoController : ControllerBase
     }
 
     [HttpPost]
+    [HasPermission(Permissions.Dispositivos.Create)]
     public async Task<IActionResult> Create([FromBody] CreateEstadoDispositivoDto dto)
     {
         var result = await _mediator.Send(new CreateEstadoDispositivoCommand { EstadoDispositivo = dto });
@@ -42,6 +44,7 @@ public class EstadosDispositivoController : ControllerBase
     }
 
     [HttpPut("{id}")]
+    [HasPermission(Permissions.Dispositivos.Edit)]
     public async Task<IActionResult> Update(int id, [FromBody] UpdateEstadoDispositivoCommand command)
     {
         if (id != command.EstadoDispositivoId)

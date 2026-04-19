@@ -11,10 +11,12 @@ using Usuarios.Application.UseCases.Huespedes.Queries.GetAllHuespedes;
 using Usuarios.Application.UseCases.Huespedes.Queries.GetHuespedeById;
 using Usuarios.Application.UseCases.Huespedes.Queries.GetHuespedeByUserId;
 using Usuarios.Application.UseCases.Huespedes.Queries.GetHuespedesVip;
+using Barcelo.Authorization.Shared;
 
 namespace Usuarios.API.Controllers;
 
 [ApiController]
+[HasPermission(Permissions.Usuarios.View)]
 [Route("[controller]")]
 public class HuespedController : ControllerBase
 {
@@ -78,6 +80,7 @@ public class HuespedController : ControllerBase
     }
 
     [HttpPost]
+    [HasPermission(Permissions.Usuarios.Create)]
     public async Task<IActionResult> Create([FromBody] CreateHuespedeDto dto)
     {
         var result = await _mediator.Send(new CreateHuespedeCommand(dto));
@@ -85,6 +88,7 @@ public class HuespedController : ControllerBase
     }
 
     [HttpPut("{id}")]
+    [HasPermission(Permissions.Usuarios.Edit)]
     public async Task<IActionResult> Update(int id, [FromBody] UpdateHuespedeDto dto)
     {
         if (id != dto.HuespedId)
@@ -95,6 +99,7 @@ public class HuespedController : ControllerBase
     }
 
     [HttpDelete("{id}")]
+    [HasPermission(Permissions.Usuarios.Delete)]
     public async Task<IActionResult> Delete(int id)
     {
         var result = await _mediator.Send(new DeleteHuespedeCommand(id));

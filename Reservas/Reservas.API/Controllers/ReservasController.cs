@@ -5,10 +5,12 @@ using System.Security.Claims;
 using Reservas.Application.Features.Reservas.Commands;
 using Reservas.Application.Features.Reservas.Queries;
 using System.IdentityModel.Tokens.Jwt;
+using Barcelo.Authorization.Shared;
 
 namespace Reservas.API.Controllers;
 
 [ApiController]
+[HasPermission(Permissions.Reservas.View)]
 [Route("")]
 public class ReservasController : ControllerBase
 {
@@ -101,6 +103,7 @@ public class ReservasController : ControllerBase
     }
 
     [Authorize]
+    [HasPermission(Permissions.Reservas.Create)]
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateReservaCommand command)
     {
@@ -108,7 +111,7 @@ public class ReservasController : ControllerBase
         return result.IsSuccess ? CreatedAtAction(nameof(GetById), new { id = result.Data?.ReservaId }, result.Data) : BadRequest(result.ErrorMessage);
     }
 
-    [Authorize]
+    [HasPermission(Permissions.Reservas.Edit)]
     [HttpPut("{id}")]
     public async Task<IActionResult> Update(int id, [FromBody] UpdateReservaCommand command)
     {

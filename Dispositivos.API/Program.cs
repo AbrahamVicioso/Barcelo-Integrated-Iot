@@ -1,4 +1,5 @@
 using Dispositivos.API.GrpcServices;
+using Barcelo.Authorization.Shared;
 using Dispositivos.Application;
 using Dispositivos.Infrastructure;
 using Dispositivos.Persistence;
@@ -66,7 +67,7 @@ namespace Dispositivos.API
                     NameClaimType = ClaimTypes.NameIdentifier
                 };
             });
-            builder.Services.AddAuthorization();
+            builder.Services.AddBarceloAuthorization();
 
             builder.Services.AddCors(options =>
             {

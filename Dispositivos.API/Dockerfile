@@ -14,6 +14,7 @@ COPY ["Dispositivos.Infrastructure/Dispositivos.Infrastructure.csproj", "Disposi
 COPY ["Dispositivos.Persistence/Dispositivos.Persistence.csproj", "Dispositivos.Persistence/"]
 COPY ["Notification.Domain/Notification.Domain.csproj", "Notification.Domain/"]
 COPY ["Grpc.Contracts/Grpc.Contracts.csproj", "Grpc.Contracts/"]
+COPY ["Shared/Barcelo.Authorization.Shared/Barcelo.Authorization.Shared.csproj", "Shared/Barcelo.Authorization.Shared/"]
 COPY NuGet.config .
 
 # Restaurar dependencias (retry por conexión inestable)
@@ -30,6 +31,7 @@ COPY Dispositivos.Infrastructure/ Dispositivos.Infrastructure/
 COPY Dispositivos.Persistence/ Dispositivos.Persistence/
 COPY Notification.Domain/ Notification.Domain/
 COPY Grpc.Contracts/ Grpc.Contracts/
+COPY Shared/Barcelo.Authorization.Shared/ Shared/Barcelo.Authorization.Shared/
 
 # Build
 WORKDIR "/src/Dispositivos.API"

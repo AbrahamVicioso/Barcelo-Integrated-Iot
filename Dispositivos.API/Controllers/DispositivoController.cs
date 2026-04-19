@@ -5,6 +5,7 @@ using Dispositivos.Application.Common;
 using Dispositivos.Application.DTOs;
 using Dispositivos.Application.Features.Dispositivos.Commands;
 using Dispositivos.Application.Features.Dispositivos.Queries;
+using Barcelo.Authorization.Shared;
 
 namespace Dispositivos.API.Controllers;
 
@@ -44,6 +45,7 @@ public class DispositivoController : ControllerBase
       
 
     [HttpPost]
+    [HasPermission(Permissions.Dispositivos.Create)]
     public async Task<IActionResult> Create([FromBody] CreateDispositivoDto dispositivoDto)
     {
         var result = await _mediator.Send(new CreateDispositivoCommand { Dispositivo = dispositivoDto });
@@ -51,6 +53,7 @@ public class DispositivoController : ControllerBase
     }
 
     [HttpPut("{id}")]
+    [HasPermission(Permissions.Dispositivos.Edit)]
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateDispositivoDto dispositivoDto)
     {
         if (id != dispositivoDto.DispositivoId)
@@ -63,6 +66,7 @@ public class DispositivoController : ControllerBase
     }
 
     [HttpDelete("{id}")]
+    [HasPermission(Permissions.Dispositivos.Delete)]
     public async Task<IActionResult> Delete(Guid id)
     {
         var result = await _mediator.Send(new DeleteDispositivoCommand { DispositivoId = id });

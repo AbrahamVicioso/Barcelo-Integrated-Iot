@@ -6,6 +6,7 @@ using Dispositivos.Application.Common;
 using Dispositivos.Application.DTOs;
 using Dispositivos.Application.Features.CredencialesAcceso.Commands;
 using Dispositivos.Application.Features.CredencialesAcceso.Queries;
+using Barcelo.Authorization.Shared;
 
 namespace Dispositivos.API.Controllers;
 
@@ -47,8 +48,8 @@ public class CredencialesAccesoController : ControllerBase
         return Ok(result.Data);
     }
 
-    [Authorize]
     [HttpPost]
+    [HasPermission(Permissions.Credenciales.Create)]
     public async Task<IActionResult> Create([FromBody] CreateCredencialesAccesoDto credencialDto)
     {
         var result = await _mediator.Send(new CreateCredencialesAccesoCommand { Credencial = credencialDto });
@@ -58,6 +59,7 @@ public class CredencialesAccesoController : ControllerBase
     }
 
     [HttpPut("{id}")]
+    [HasPermission(Permissions.Credenciales.Edit)]
     public async Task<IActionResult> Update(int id, [FromBody] UpdateCredencialesAccesoDto credencialDto)
     {
         if (id != credencialDto.CredencialId)
@@ -70,6 +72,7 @@ public class CredencialesAccesoController : ControllerBase
     }
 
     [HttpDelete("{id}")]
+    [HasPermission(Permissions.Credenciales.Delete)]
     public async Task<IActionResult> Delete(int id)
     {
         var result = await _mediator.Send(new DeleteCredencialesAccesoCommand { CredencialId = id });

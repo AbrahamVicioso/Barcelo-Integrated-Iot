@@ -17,6 +17,7 @@ using Usuarios.Persistence.Data;
 using Usuarios.Persistence.Repositories;
 using Usuarios.Application;
 using Usuarios.ExternalService;
+using Barcelo.Authorization.Shared;
 
 namespace Usuarios.API
 {
@@ -100,7 +101,7 @@ namespace Usuarios.API
                     NameClaimType = ClaimTypes.NameIdentifier
                 };
             });
-            builder.Services.AddAuthorization();
+            builder.Services.AddBarceloAuthorization();
 
             // Add Controllers + gRPC
             builder.Services.AddControllers();

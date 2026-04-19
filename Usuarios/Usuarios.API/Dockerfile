@@ -15,6 +15,7 @@ COPY ["Usuarios/Usuarios.Persistence/Usuarios.Persistence.csproj", "Usuarios/Usu
 COPY ["Grpc.Contracts/Grpc.Contracts.csproj", "Grpc.Contracts/"]
 COPY ["Notification.Domain/Notification.Domain.csproj", "Notification.Domain/"]
 COPY ["Usuarios.ExternalService/Usuarios.ExternalService.csproj", "Usuarios.ExternalService/"]
+COPY ["Shared/Barcelo.Authorization.Shared/Barcelo.Authorization.Shared.csproj", "Shared/Barcelo.Authorization.Shared/"]
 COPY NuGet.config .
 
 # Restaurar dependencias (retry por conexión inestable)
@@ -28,6 +29,7 @@ COPY Usuarios/ Usuarios/
 COPY Grpc.Contracts/ Grpc.Contracts/
 COPY Notification.Domain/ Notification.Domain/
 COPY Usuarios.ExternalService/ Usuarios.ExternalService/
+COPY Shared/Barcelo.Authorization.Shared/ Shared/Barcelo.Authorization.Shared/
 
 # Build
 WORKDIR "/src/Usuarios/Usuarios.API"

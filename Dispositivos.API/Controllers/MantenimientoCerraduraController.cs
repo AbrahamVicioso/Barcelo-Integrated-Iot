@@ -5,6 +5,7 @@ using Dispositivos.Application.Common;
 using Dispositivos.Application.DTOs;
 using Dispositivos.Application.Features.MantenimientoCerradura.Commands;
 using Dispositivos.Application.Features.MantenimientoCerradura.Queries;
+using Barcelo.Authorization.Shared;
 
 namespace Dispositivos.API.Controllers;
 
@@ -36,6 +37,7 @@ public class MantenimientoCerraduraController : ControllerBase
     }
 
     [HttpPost]
+    [HasPermission(Permissions.Mantenimientos.Create)]
     public async Task<IActionResult> Create([FromBody] CreateMantenimientoCerraduraDto mantenimientoDto)
     {
         var result = await _mediator.Send(new CreateMantenimientoCerraduraCommand { Mantenimiento = mantenimientoDto });
@@ -43,6 +45,7 @@ public class MantenimientoCerraduraController : ControllerBase
     }
 
     [HttpPut("{id}")]
+    [HasPermission(Permissions.Mantenimientos.Edit)]
     public async Task<IActionResult> Update(int id, [FromBody] UpdateMantenimientoCerraduraDto mantenimientoDto)
     {
         if (id != mantenimientoDto.MantenimientoId)
@@ -55,6 +58,7 @@ public class MantenimientoCerraduraController : ControllerBase
     }
 
     [HttpDelete("{id}")]
+    [HasPermission(Permissions.Mantenimientos.Delete)]
     public async Task<IActionResult> Delete(int id)
     {
         var result = await _mediator.Send(new DeleteMantenimientoCerraduraCommand { MantenimientoId = id });

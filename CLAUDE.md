@@ -659,8 +659,97 @@ Claim: `"nameid" ?? ClaimTypes.NameIdentifier` vía `IHttpContextAccessor`.
 
 ---
 
-## Pendientes conocidos
+## Sistema de Permisos por Roles
 
-- **Controllers de Reservas**: migrar de `BadRequest(result.ErrorMessage)` → `BadRequest(new { error = result.ErrorMessage })` + usar 404 cuando corresponda
-- **`UpdateReservaCommandHandler`**: agregar `catch (Exception ex) when (ex.GetType().Name == "DbUpdateException")`
-- **Otros handlers de Reservas**: verificar que capturen DbUpdateException antes de Exception genérico
+### Librería Compartida
+`Shared/Barcelo.Authorization.Shared/` contiene:
+- `Permissions.cs` - Constantes de permisos (View, Create, Edit, Delete por entidad + Admin.All)
+- `HasPermissionAttribute.cs` - Atributo `[HasPermission("Permissions.Xxx.View")]`
+- `PermissionRequirement.cs` - IAuthorizationRequirement
+- `PermissionAuthorizationHandler.cs` - Valida permisos desde JWT claims
+- `AuthorizationExtensions.cs` - `AddBarceloAuthorization()` para Registrar
+
+### Constants de Permisos
+```csharp
+Permissions.Usuarios.View / Create / Edit / Delete
+Permissions.Dispositivos.View / Create / Edit / Delete
+Permissions.Reservas.View / Create / Edit / Delete
+Permissions.Hoteles.View / Create / Edit / Delete
+Permissions.Habitaciones.View / Create / Edit / Delete
+Permissions.Cerraduras.View / Create / Edit / Delete
+Permissions.Credenciales.View / Create / Edit / Delete
+Permissions.Mantenimientos.View / Create / Edit / Delete
+Permissions.Roles.View / Create / Edit / Delete / ManagePermissions
+Permissions.Reports.View
+Permissions.Audit.View
+Permissions.Admin.All
+```
+
+### Uso en Controllers
+```csharp
+using Barcelo.Authorization.Shared;
+
+[HasPermission(Permissions.Dispositivos.View)]  //-Level class
+public class DispositivoController : ControllerBase
+{
+    [HttpGet]                             // hereda permission
+    [HttpPost]
+    [HasPermission(Permissions.Xxx.Create)]  // override
+    public async Task<IActionResult> Create(...)
+}
+```
+
+### Endpoints de Gestión (Authenticate.API)
+| Verbo | Ruta | Descripción |
+|---|---|---|
+| GET | `/roles` | Listar roles |
+| POST | `/roles` | Crear rol |
+| GET | `/roles/{roleId}/permissions` | Listar permisos de un rol |
+| POST | `/roles/{roleId}/permissions` | Añadir permiso a rol (body: permission string) |
+| DELETE | `/roles/{roleId}/permissions/{permission}` | Eliminar permiso de rol |
+
+### Gestión de Roles
+Los roles y permisos se gestionan vía API o via seed:
+- `POST /roles` - Crear rol
+- `POST /roles/{roleId}/permissions` - Añadir permisos al rol (RoleClaims)
+
+### Seed de Roles (Authenticate.API)
+`DbSeeder.cs` en `Authentication.Api/Data/` crea roles automáticamente al iniciar:
+- **Admin**: todos los permisos
+- **Manager**: permisos de vista/edit/create sin delete
+- **Recepcionist**: permisos operativos (reservas, habitaciones, cerraduras)
+- **Guest**: sin permisos
+
+Claim type: `Permission` (constante en `PermissionConstants.PermissionType`)
+
+### Usuario Adminseed
+- **Username**: `admin`
+- **Password**: `Admin1234.`
+- **Rol**: Admin (con todos los permisos)
+
+### Claim en JWT
+Tipo: `Permission`, Valor: `Permissions.Xxx.View` (uno por cada permiso del rol).
+
+---
+
+## Shared Project (Barcelo.Authorization.Shared)
+
+Ubicación: `Shared/Barcelo.Authorization.Shared/`
+
+Contiene:
+- `Permissions.cs` - Constantes de permisos
+- `HasPermissionAttribute.cs` - Atributo `[HasPermission]`
+- `PermissionAuthorizationHandler.cs` - Handler de autorización
+- `PermissionRequirement.cs` - Requisito
+- `PermissionConstants.cs` - Constantes (PermissionType = "Permission")
+- `AuthorizationExtensions.cs` - `AddBarceloAuthorization()`
+
+### Dockerfiles
+Todo Dockerfile que referencie este proyecto debe incluir:
+```dockerfile
+COPY ["Shared/Barcelo.Authorization.Shared/Barcelo.Authorization.Shared.csproj", "Shared/Barcelo.Authorization.Shared/"]
+# ... en la sección de copia de código:
+COPY Shared/Barcelo.Authorization.Shared/ Shared/Barcelo.Authorization.Shared/
+```
+
+APIs que lo usan: Dispositivos.API, Authenticate.API, Reservas.API, Usuarios.API

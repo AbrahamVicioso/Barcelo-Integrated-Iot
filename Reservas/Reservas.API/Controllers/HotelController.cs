@@ -1,10 +1,11 @@
-﻿using MediatR;
+using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Reservas.Application.DTOs;
 using Reservas.Application.Features.Hoteles.Commands;
 using Reservas.Application.Features.Hoteles.Queries;
 using System.Threading.Tasks;
+using Barcelo.Authorization.Shared;
 
 namespace Reservas.API.Controllers
 {
@@ -34,6 +35,7 @@ namespace Reservas.API.Controllers
         }
 
         [HttpPost]
+        [HasPermission(Permissions.Hoteles.Create)]
         public async Task<IActionResult> Create([FromBody] CreateHotelDto hotelDto)
         {
             var result = await _mediator.Send(new CreateHotelCommand { Hotel = hotelDto });
@@ -41,6 +43,7 @@ namespace Reservas.API.Controllers
         }
 
         [HttpPut("{id}")]
+        [HasPermission(Permissions.Hoteles.Edit)]
         public async Task<IActionResult> Update(int id, [FromBody] UpdateHotelCommand command)
         {
             if (id != command.HotelId)
@@ -53,6 +56,7 @@ namespace Reservas.API.Controllers
         }
 
         [HttpDelete("{id}")]
+        [HasPermission(Permissions.Hoteles.Delete)]
         public async Task<IActionResult> Delete(int id)
         {
             var result = await _mediator.Send(new DeleteHotelCommand { HotelId = id });

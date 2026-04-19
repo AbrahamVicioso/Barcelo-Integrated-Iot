@@ -6,6 +6,7 @@ using Reservas.Application.DTOs;
 using Reservas.Application.Features.Habitaciones.Commands;
 using Reservas.Application.Features.Habitaciones.Queries;
 using System.Threading.Tasks;
+using Barcelo.Authorization.Shared;
 
 namespace Reservas.API.Controllers
 {
@@ -42,6 +43,7 @@ namespace Reservas.API.Controllers
         }
 
         [HttpPost]
+        [HasPermission(Permissions.Habitaciones.Create)]
         public async Task<IActionResult> Create([FromBody] CreateHabitacionDto habitacionDto)
         {
             var result = await _mediator.Send(new CreateHabitacionCommand { Habitacion = habitacionDto });
@@ -49,6 +51,7 @@ namespace Reservas.API.Controllers
         }
 
         [HttpPut("{id}")]
+        [HasPermission(Permissions.Habitaciones.Edit)]
         public async Task<IActionResult> Update(int id, [FromBody] UpdateHabitacionCommand command)
         {
             if (id != command.HabitacionId)
@@ -63,6 +66,7 @@ namespace Reservas.API.Controllers
         }
 
         [HttpDelete("{id}")]
+        [HasPermission(Permissions.Habitaciones.Delete)]
         public async Task<IActionResult> Delete(int id)
         {
             var result = await _mediator.Send(new DeleteHabitacionCommand { HabitacionId = id });

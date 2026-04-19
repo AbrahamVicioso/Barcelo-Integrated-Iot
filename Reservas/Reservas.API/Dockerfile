@@ -14,8 +14,9 @@
     COPY ["Reservas/Reservas.Persistence/Reservas.Persistence.csproj", "Reservas/Reservas.Persistence/"]
     COPY ["Reservas.Email/Reservas.Email.csproj", "Reservas.Email/"]
     COPY ["Grpc.Contracts/Grpc.Contracts.csproj", "Grpc.Contracts/"]
-    COPY ["Notification.Domain/Notification.Domain.csproj", "Notification.Domain/"]
-    COPY NuGet.config .
+COPY ["Notification.Domain/Notification.Domain.csproj", "Notification.Domain/"]
+COPY ["Shared/Barcelo.Authorization.Shared/Barcelo.Authorization.Shared.csproj", "Shared/Barcelo.Authorization.Shared/"]
+COPY NuGet.config .
 
     # Restaurar dependencias (retry por conexión inestable)
     RUN for i in 1 2 3 4 5; do \
@@ -27,9 +28,10 @@
     COPY Reservas/ Reservas/
     COPY Reservas.Email/ Reservas.Email/
     COPY Grpc.Contracts/ Grpc.Contracts/
-    COPY Notification.Domain/ Notification.Domain/
+COPY Notification.Domain/ Notification.Domain/
+COPY Shared/Barcelo.Authorization.Shared/ Shared/Barcelo.Authorization.Shared/
 
-    # Build
+# Build
     WORKDIR "/src/Reservas/Reservas.API"
     RUN dotnet build "Reservas.API.csproj" -c Release -o /app/build --no-restore
 

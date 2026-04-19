@@ -5,6 +5,7 @@ using Dispositivos.Application.Common;
 using Dispositivos.Application.DTOs;
 using Dispositivos.Application.Features.RegistrosAcceso.Commands;
 using Dispositivos.Application.Features.RegistrosAcceso.Queries;
+using Barcelo.Authorization.Shared;
 
 namespace Dispositivos.API.Controllers;
 
@@ -20,6 +21,7 @@ public class RegistrosAccesoController : ControllerBase
     }
 
     [HttpGet]
+    [HasPermission(Permissions.Audit.View)]
     public async Task<IActionResult> GetAll([FromQuery] PaginationParams pagination)
     {
         var result = await _mediator.Send(new GetAllRegistrosAccesoQuery { Page = pagination.Page, PageSize = pagination.PageSize });
@@ -52,6 +54,7 @@ public class RegistrosAccesoController : ControllerBase
     }
 
     [HttpDelete("{id}")]
+    [HasPermission(Permissions.Audit.View)]
     public async Task<IActionResult> Delete(int id)
     {
         var result = await _mediator.Send(new DeleteRegistrosAccesoCommand { RegistroId = id });

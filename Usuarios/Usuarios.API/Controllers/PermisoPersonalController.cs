@@ -11,10 +11,12 @@ using Usuarios.Application.UseCases.PermisosPersonal.Queries.GetPermisosActivos;
 using Usuarios.Application.UseCases.PermisosPersonal.Queries.GetPermisosByActividad;
 using Usuarios.Application.UseCases.PermisosPersonal.Queries.GetPermisosByHabitacion;
 using Usuarios.Application.UseCases.PermisosPersonal.Queries.GetPermisosByPersonal;
+using Barcelo.Authorization.Shared;
 
 namespace Usuarios.API.Controllers;
 
 [Authorize]
+[HasPermission(Permissions.Usuarios.View)]
 [ApiController]
 [Route("[controller]")]
 public class PermisoPersonalController : ControllerBase
@@ -69,6 +71,7 @@ public class PermisoPersonalController : ControllerBase
     }
 
     [HttpPost]
+    [HasPermission(Permissions.Usuarios.Create)]
     public async Task<IActionResult> Create([FromBody] CreatePermisosPersonalDto dto)
     {
         var result = await _mediator.Send(new CreatePermisoCommand(dto));
@@ -76,6 +79,7 @@ public class PermisoPersonalController : ControllerBase
     }
 
     [HttpPut("{id}")]
+    [HasPermission(Permissions.Usuarios.Edit)]
     public async Task<IActionResult> Update(int id, [FromBody] UpdatePermisosPersonalDto dto)
     {
         if (id != dto.PermisoId)
@@ -86,6 +90,7 @@ public class PermisoPersonalController : ControllerBase
     }
 
     [HttpDelete("{id}")]
+    [HasPermission(Permissions.Usuarios.Delete)]
     public async Task<IActionResult> Delete(int id)
     {
         var result = await _mediator.Send(new DeletePermisoCommand(id));

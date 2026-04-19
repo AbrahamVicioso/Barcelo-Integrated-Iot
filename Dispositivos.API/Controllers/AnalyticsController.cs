@@ -2,11 +2,13 @@ using Dispositivos.Application.Features.Analytics.Queries;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Barcelo.Authorization.Shared;
 
 namespace Dispositivos.API.Controllers;
 
 [Authorize]
 [ApiController]
+[HasPermission(Permissions.Reports.View)]
 [Route("analytics")]
 public class AnalyticsController : ControllerBase
 {

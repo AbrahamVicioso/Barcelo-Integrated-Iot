@@ -1,5 +1,6 @@
-﻿using Authentication.Api.Data;
+using Authentication.Api.Data;
 using Authentication.Domain.Entities;
+using Barcelo.Authorization.Shared;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
@@ -52,6 +53,8 @@ namespace Authentication.Api
             .AddEntityFrameworkStores<AuthenticationDbContext>()
             .AddApiEndpoints();
 
+            services.AddBarceloAuthorization();
+
             // AddIdentity overrides DefaultAuthenticateScheme and DefaultChallengeScheme to
             // cookies, so JWT tokens are never evaluated. Re-set JWT as default after AddIdentity.
             services.Configure<AuthenticationOptions>(options =>
@@ -62,8 +65,6 @@ namespace Authentication.Api
 
             // Add RoleManager explicitly
             services.AddScoped<RoleManager<IdentityRole>>();
-
-            services.AddAuthorization();
 
             return services;
         }

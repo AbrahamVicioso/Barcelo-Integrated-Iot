@@ -25,6 +25,7 @@
     <ProjectReference Include="..\..\Usuarios.ExternalService\Usuarios.ExternalService.csproj" />
     <ProjectReference Include="..\Usuarios.Application\Usuarios.Application.csproj" />
     <ProjectReference Include="..\Usuarios.Persistence\Usuarios.Persistence.csproj" />
+    <ProjectReference Include="..\..\Shared\Barcelo.Authorization.Shared\Barcelo.Authorization.Shared.csproj" />
   </ItemGroup>
 
 </Project>

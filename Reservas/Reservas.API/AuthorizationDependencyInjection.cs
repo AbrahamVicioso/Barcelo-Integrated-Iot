@@ -1,40 +1,40 @@
-﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using System.Security.Claims;
+using Barcelo.Authorization.Shared;
 
-namespace Reservas.API
+namespace Reservas.API;
+
+public static class AuthorizationDependencyInjection
 {
-    public static class AuthorizationDependencyInjection
+    public static IServiceCollection AddAuthorizationServices(this IServiceCollection services)
     {
-        public static IServiceCollection AddAuthorizationServices(this IServiceCollection services)
+        IConfiguration? configuration = services.BuildServiceProvider().GetService<IConfiguration>();
+
+        services.AddAuthentication(options =>
         {
-            IConfiguration? configuration = services.BuildServiceProvider().GetService<IConfiguration>();
+            options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+            options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+        }).AddJwtBearer(options =>
+        {
+            options.MapInboundClaims = false;
 
-            services.AddAuthentication(options =>
+            options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
             {
-                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-            }).AddJwtBearer(options =>
-            {
-                options.MapInboundClaims = false;
+                ValidateIssuer = true,
+                ValidateAudience = true,
+                ValidateLifetime = true,
+                ValidateIssuerSigningKey = true,
+                ValidIssuer = configuration["Jwt:Issuer"],
+                ValidAudience = configuration["Jwt:Audience"],
+                IssuerSigningKey = new Microsoft.IdentityModel.Tokens.SymmetricSecurityKey(
+                    System.Text.Encoding.UTF8.GetBytes(configuration["Jwt:Key"])
+                ),
+                NameClaimType = ClaimTypes.NameIdentifier
+            };
+        });
 
-                options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
-                {
-                    ValidateIssuer = true,
-                    ValidateAudience = true,
-                    ValidateLifetime = true,
-                    ValidateIssuerSigningKey = true,
-                    ValidIssuer = configuration["Jwt:Issuer"],
-                    ValidAudience = configuration["Jwt:Audience"],
-                    IssuerSigningKey = new Microsoft.IdentityModel.Tokens.SymmetricSecurityKey(
-                        System.Text.Encoding.UTF8.GetBytes(configuration["Jwt:Key"])
-                    ),
-                    NameClaimType = ClaimTypes.NameIdentifier
-                };
-            });
+        services.AddBarceloAuthorization();
 
-            services.AddAuthorization();
-
-            return services;
-        }
+        return services;
     }
 }

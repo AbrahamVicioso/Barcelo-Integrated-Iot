@@ -5,6 +5,7 @@ using Dispositivos.Application.Common;
 using Dispositivos.Application.DTOs;
 using Dispositivos.Application.Features.RegistrosAuditorium.Commands;
 using Dispositivos.Application.Features.RegistrosAuditorium.Queries;
+using Barcelo.Authorization.Shared;
 
 namespace Dispositivos.API.Controllers;
 
@@ -20,6 +21,7 @@ public class RegistrosAuditoriumController : ControllerBase
     }
 
     [HttpGet]
+    [HasPermission(Permissions.Audit.View)]
     public async Task<IActionResult> GetAll([FromQuery] PaginationParams pagination)
     {
         var result = await _mediator.Send(new GetAllRegistrosAuditoriumQuery { Page = pagination.Page, PageSize = pagination.PageSize });
@@ -36,6 +38,7 @@ public class RegistrosAuditoriumController : ControllerBase
     }
 
     [HttpPost]
+    [HasPermission(Permissions.Audit.View)]
     public async Task<IActionResult> Create([FromBody] CreateRegistrosAuditoriumDto registroDto)
     {
         var result = await _mediator.Send(new CreateRegistrosAuditoriumCommand { Registro = registroDto });
@@ -43,6 +46,7 @@ public class RegistrosAuditoriumController : ControllerBase
     }
 
     [HttpDelete("{id}")]
+    [HasPermission(Permissions.Audit.View)]
     public async Task<IActionResult> Delete(int id)
     {
         var result = await _mediator.Send(new DeleteRegistrosAuditoriumCommand { RegistroId = id });

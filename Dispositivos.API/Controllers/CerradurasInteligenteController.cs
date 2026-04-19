@@ -5,6 +5,7 @@ using Dispositivos.Application.Common;
 using Dispositivos.Application.DTOs;
 using Dispositivos.Application.Features.CerradurasInteligente.Commands;
 using Dispositivos.Application.Features.CerradurasInteligente.Queries;
+using Barcelo.Authorization.Shared;
 
 namespace Dispositivos.API.Controllers;
 
@@ -38,6 +39,7 @@ public class CerradurasInteligenteController : ControllerBase
     }
 
     [HttpPost]
+    [HasPermission(Permissions.Cerraduras.Create)]
     public async Task<IActionResult> Create([FromBody] CreateCerradurasInteligenteDto cerraduraDto)
     {
         var result = await _mediator.Send(new CreateCerradurasInteligenteCommand { Cerradura = cerraduraDto });
@@ -47,6 +49,7 @@ public class CerradurasInteligenteController : ControllerBase
     }
 
     [HttpPut("{id}")]
+    [HasPermission(Permissions.Cerraduras.Edit)]
     public async Task<IActionResult> Update(int id, [FromBody] UpdateCerradurasInteligenteDto cerraduraDto)
     {
         if (id != cerraduraDto.CerraduraId)
@@ -59,6 +62,7 @@ public class CerradurasInteligenteController : ControllerBase
     }
 
     [HttpDelete("{id}")]
+    [HasPermission(Permissions.Cerraduras.Delete)]
     public async Task<IActionResult> Delete(int id)
     {
         var result = await _mediator.Send(new DeleteCerradurasInteligenteCommand { CerraduraId = id });
