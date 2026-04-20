@@ -494,7 +494,14 @@ Todos los repositorios usan `.AsNoTracking()`. Al update con FK + nav prop carga
 | `habitacion.personal-unlock` | Reservas.API | Dispositivos.Infrastructure (`PersonalUnlockDoorKafkaConsumer`) | `PersonalUnlockDoorEvent` |
 | `habitacion.personal-acceso` | Dispositivos.Infrastructure | Notification.Worker (`PersonalAccesoHabitacionEventConsumer`) | `PersonalAccesoHabitacionEvent` |
 | `habitacion.permiso-personal` | Usuarios.API | Dispositivos.Infrastructure (`PermisoPersonalCreadoKafkaConsumer`) | `PermisoPersonalCreadoEvent` |
+| `cerradura.acceso` | ThingsBoard | Dispositivos.Infrastructure (`CerraduraAccesoKafkaConsumer`) | `CerraduraAccesoEvent` |
 | `audit.events` | Todos los APIs | Audit.Worker | `AuditEvent` |
+
+### Flujo cerradura física → registro de acceso
+ThingsBoard reporta intentos de acceso desde la cerradura física (PIN/NFC) → topic `cerradura.acceso` → `CerraduraAccesoKafkaConsumer`:
+- **Siempre** crea `RegistrosAcceso` con `FueExitoso = accessGranted`
+- **Si accessGranted=true y credId != null**: incrementa `Cerradura.ContadorAperturas++` y `Credencial.NumeroUsos++` + `UltimoUso=UtcNow`
+- Si credencial expiró → marca `EstaActiva = false`
 
 ### Flujo unlock-door (huésped con PIN)
 `POST /reservas/{id}/unlock-door?pin=` → `UnlockDoorCommand` → valida reserva activa + habitación + PIN → `RegistrarAccesoAsync(habitacionId, credencialId)` (incrementa `ContadorAperturas` + `NumeroUsos`) → publica `UnlockDoorEvent` → `UnlockDoorKafkaConsumer`: cerradura activa por HabitacionId → ThingsBoard `lockState="unlocked"` → crea `RegistrosAcceso`.
@@ -549,13 +556,14 @@ Config Usuarios: `ExternalServices:Dispositivos:GrpcUrl` (local: `http://localho
 ## Kafka — patrón nuevo consumer (checklist)
 
 1. **Evento** en `Notification.Domain/Events/`: campos + `Guid Id = Guid.NewGuid()` + `DateTime CreatedAt = UtcNow`
-2. **Config** en `Notification.Kafka/Configuration/`: clase hereda `KafkaConsumerConfig`, constructor setea `GroupId` y `Topic`
-3. **Consumer** en `Notification.Kafka/Services/`: seguir patrón `CredencialesCheckInEventConsumer` — `StartAsync` → `EnsureTopicExists` → `Subscribe` → `Task.Run(ConsumeMessages)`; `StopAsync` cancela + `Close()`; `Dispose` libera consumer/adminClient/cts
-4. **Program.cs** en Notification.Worker: bind config, `AddSingleton` config + consumer, `AddHostedService` worker
+2. **Config** en `Dispositivos.Infrastructure/Services/`: clase hereda `KafkaConsumerConfig`, constructor setea `GroupId` y `Topic`
+3. **Consumer** en `Dispositivos.Infrastructure/Services/`: seguir patrón `CerraduraAccesoKafkaConsumer` — `ExecuteAsync` → `WaitForKafka` → `EnsureTopicExists` → `Subscribe` → `Consume` loop; crear topic automáticamente si no existe
+4. **DependencyInjection.cs**: bind config de `KafkaConsumer:Xxx`, registrar `AddHostedService<NewConsumer>()`
 5. **docker-compose.yml** (OBLIGATORIO): `KafkaConsumer__Xxx__BootstrapServers: kafka:29092` + GroupId + Topic
 6. **appsettings.json**: mismas keys con `localhost:9092`
 
 > ⚠️ Docker: red interna `kafka:29092`. Host: `localhost:9092`. El docker-compose sobreescribe appsettings.
+> **Nota:** Los consumers en Dispositivos.Infrastructure siguen otro patrón (BackgroundService con `EnsureTopicExists` automático). Los de Notification.Worker usan `IKafkaConsumer` con `StartAsync`/`StopAsync`.
 
 Si el productor es BackgroundService en Dispositivos.Infrastructure: `new ProducerBuilder<string,string>(new ProducerConfig { BootstrapServers, Acks=Acks.Leader }).Build()`. Dispose: `Flush(5s)` + `Dispose`.
 

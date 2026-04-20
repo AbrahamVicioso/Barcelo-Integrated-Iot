@@ -287,6 +287,9 @@ services:
       KafkaConsumer__PermisoPersonal__BootstrapServers: kafka:29092
       KafkaConsumer__PermisoPersonal__GroupId: dispositivos-permiso-personal-group
       KafkaConsumer__PermisoPersonal__Topic: habitacion.permiso-personal
+      KafkaConsumer__CerraduraAcceso__BootstrapServers: kafka:29092
+      KafkaConsumer__CerraduraAcceso__GroupId: dispositivos-cerradura-acceso-group
+      KafkaConsumer__CerraduraAcceso__Topic: cerradura.acceso
     networks:
       - barcelo-net
     depends_on:

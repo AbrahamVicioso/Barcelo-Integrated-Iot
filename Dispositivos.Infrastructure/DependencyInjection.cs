@@ -65,6 +65,12 @@ public static class DependencyInjection
         services.AddSingleton(permisoPersonalConfig);
         services.AddHostedService<PermisoPersonalCreadoKafkaConsumer>();
 
+        // Register Kafka consumer for cerradura acceso events (records access attempts from physical lock)
+        var cerraduraAccesoConfig = new CerraduraAccesoKafkaConsumerConfig();
+        configuration.GetSection("KafkaConsumer:CerraduraAcceso").Bind(cerraduraAccesoConfig);
+        services.AddSingleton(cerraduraAccesoConfig);
+        services.AddHostedService<CerraduraAccesoKafkaConsumer>();
+
         // Register Audit Kafka Producer
         var auditConfig = new AuditKafkaProducerConfig();
         configuration.GetSection("AuditProducer").Bind(auditConfig);
