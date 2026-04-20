@@ -66,6 +66,42 @@
 
 ---
 
+## Reglas de oro (memorizar)
+
+### 🚫 NUNCA hacer:
+1. **NUNCA** configurar Kestrel en Program.cs si existe appsettings.Docker.json
+2. **NUNCA** lanzar excepciones en handlers de Dispositivos/Reservas → usar `Result<T>`
+3. **NUNCA** pasar Kestrel\_\_Endpoints\_\_ por docker-compose si ya está en appsettings
+4. **NUNCA** usar HTTP para conectar a gRPC si el servidor usa HTTPS (puertos 5285, 5118, 7288)
+5. **NUNCA** olvidar HttpClientHandler con bypass de certificado en llamadas gRPC
+6. **NUNCA** modificar código sin leer CLAUDE.md primero
+
+### ✅ SIEMPRE hacer:
+1. **SIEMPRE** usar retry pattern (3 intentos, delay 500ms * attempt) en llamadas gRPC
+2. **SIEMPRE** validar FKs antes de insert/update (GetBy* del repositorio)
+3. **SIEMPRE** capturar DbUpdateException por nombre de string (sin EF Core en Application)
+4. **SIEMPRE** loguear con prefijo `[Servicio]` para facilitar debugging
+5. **SIEMPRE** usar `Result<T>.NotFound()` cuando entidad no existe (no Failure)
+6. **SIEMPRE** limpiar navigation properties antes de UpdateAsync si FK cambió
+7. **SIEMPRE** usar appsettings.Docker.json como única fuente de verdad para Kestrel
+8. **SIEMPRE** separar puertos y protocolos: HTTP/1.1 (REST) ≠ HTTP/2 (gRPC)
+
+### 🔑 Patrones clave:
+- **gRPC client:** HttpHandler → SkipCertValidation → GrpcChannel → Client → 3 retries
+- **Email credenciales:** HuespedId → gRPC Usuarios (UsuarioId) → gRPC Auth (Email) → Kafka
+- **Handler error:** validar FK → try insert → catch DbUpdateException → match constraint → Result.Failure
+- **Controller response:** `!IsSuccess ? (IsNotFound ? NotFound : BadRequest) : Ok/CreatedAtAction`
+- **ThingsBoard:** no-bloqueante (try/catch solo loguea), siempre continúa con RegistrosAcceso
+
+### 📊 Valores importantes:
+- JWT: Issuer=`barcelo`, Audience=`BarceloIoT`, Key=`u9Z3fBq7M!8@R2L#A4xCkWmP0EJvH5Ys`
+- PIN: 6 dígitos (100000-999999), SHA256 Base64 en HashPIN
+- Kafka Docker: `kafka:29092` (red interna) · Host: `localhost:9092`
+- Retry gRPC: 3 intentos, delay = 500ms * attempt
+- ThingsBoard sync horizonte: credenciales FechaActivacion <= NOW+7d, permisos FechaExpiracion >= NOW
+
+---
+
 ## Infraestructura
 
 - **.NET 9** · SQL Server (sqlserver:1433) · Kafka (kafka:9092) · ThingsBoard CE (thingsboard-ce:8080)
