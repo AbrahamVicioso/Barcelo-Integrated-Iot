@@ -210,6 +210,39 @@ public class CerraduraAccesoKafkaConsumer : BackgroundService
         var accessGranted = evento.Data?.AccessGranted ?? false;
         var accessMethod = evento.Data?.AccessMethod ?? "desconocido";
 
+        if (accessGranted && evento.Data?.CredPin.HasValue == true 
+            && evento.Data.CredAct.HasValue == true 
+            && evento.Data.CredExp.HasValue == true)
+        {
+            var pin = evento.Data.CredPin.Value.ToString();
+            var fechaActivacion = evento.Data.CredAct.Value;
+            var fechaExpiracion = evento.Data.CredExp.Value;
+
+            _logger.LogInformation(
+                "Buscando credencial por PIN {Pin}, Activacion {Activacion}, Expiracion {Expiracion}",
+                pin, fechaActivacion, fechaExpiracion);
+
+            var credencialRepo = unitOfWork.CredencialesAcceso;
+            var credencialPorPin = await credencialRepo.GetByPinAndFechas(pin, fechaActivacion, fechaExpiracion);
+
+            if (credencialPorPin != null)
+            {
+                _logger.LogInformation("Credencial {CredencialId} encontrada por PIN y fechas", credencialPorPin.CredencialId);
+                credencialId = credencialPorPin.CredencialId;
+                await ActualizarCredencialConId(unitOfWork, cerradura, credencialPorPin.CredencialId, cancellationToken);
+            }
+            else
+            {
+                _logger.LogWarning(
+                    "No se encontró credencial para PIN {Pin} con las fechas especificadas",
+                    pin);
+            }
+        }
+        else if (accessGranted && credencialId.HasValue)
+        {
+            await ActualizarCredencialConId(unitOfWork, cerradura, credencialId.Value, cancellationToken);
+        }
+
         var resultadoAcceso = accessGranted ? "Concedido" : "Denegado";
         var codigoError = accessGranted ? null : "ACCESS_DENIED";
         var motivoAcceso = accessGranted
@@ -238,35 +271,35 @@ public class CerraduraAccesoKafkaConsumer : BackgroundService
 
         await unitOfWork.RegistrosAcceso.AddAsync(registro, cancellationToken);
 
-        if (accessGranted && credencialId.HasValue)
-        {
-            cerradura.ContadorAperturas += 1;
-            cerradura.UltimaApertura = DateTime.UtcNow;
-            await unitOfWork.CerradurasInteligente.UpdateAsync(cerradura, cancellationToken);
-
-            var credencialRepo = unitOfWork.CredencialesAcceso;
-            var credencial = await credencialRepo.GetById(credencialId.Value);
-
-            if (credencial != null)
-            {
-                credencial.NumeroUsos += 1;
-                credencial.UltimoUso = DateTime.UtcNow;
-
-                if (credencial.FechaExpiracion < DateTime.UtcNow && credencial.EstaActiva)
-                {
-                    credencial.EstaActiva = false;
-                    _logger.LogInformation("Credencial {CredencialId} marcada como inactiva por expiración", credencialId);
-                }
-
-                await credencialRepo.UpdateAsync(credencial, cancellationToken);
-            }
-        }
-
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
         _logger.LogInformation(
             "RegistrosAcceso creado para cerradura {CerraduraId}, acceso {Resultado}, credencial {CredencialId}",
             cerradura.CerraduraId, resultadoAcceso, credencialId);
+    }
+
+    private async Task ActualizarCredencialConId(IUnitOfWork unitOfWork, CerradurasInteligente cerradura, int credId, CancellationToken cancellationToken)
+    {
+        cerradura.ContadorAperturas += 1;
+        cerradura.UltimaApertura = DateTime.UtcNow;
+        await unitOfWork.CerradurasInteligente.UpdateAsync(cerradura, cancellationToken);
+
+        var credencialRepo = unitOfWork.CredencialesAcceso;
+        var credencial = await credencialRepo.GetById(credId);
+
+        if (credencial != null)
+        {
+            credencial.NumeroUsos += 1;
+            credencial.UltimoUso = DateTime.UtcNow;
+
+            if (credencial.FechaExpiracion < DateTime.UtcNow && credencial.EstaActiva)
+            {
+                credencial.EstaActiva = false;
+                _logger.LogInformation("Credencial {CredencialId} marcada como inactiva por expiración", credId);
+            }
+
+            await credencialRepo.UpdateAsync(credencial, cancellationToken);
+        }
     }
 
     public override void Dispose()

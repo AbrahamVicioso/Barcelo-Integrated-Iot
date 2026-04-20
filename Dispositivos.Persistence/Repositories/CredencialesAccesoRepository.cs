@@ -68,6 +68,16 @@ public class CredencialesAccesoRepository : ICredencialesAccesoRepository
             .FirstOrDefaultAsync();
     }
 
+    public async Task<CredencialesAcceso?> GetByPinAndFechas(string codigoPin, DateTime fechaActivacion, DateTime fechaExpiracion)
+    {
+        return await _context.CredencialesAccesos
+            .Where(c => c.CodigoPin == codigoPin 
+                && c.FechaActivacion == fechaActivacion 
+                && c.FechaExpiracion == fechaExpiracion)
+            .AsNoTracking()
+            .FirstOrDefaultAsync();
+    }
+
     public async Task AddAsync(CredencialesAcceso credencial, CancellationToken cancellationToken = default)
     {
         await _context.CredencialesAccesos.AddAsync(credencial, cancellationToken);

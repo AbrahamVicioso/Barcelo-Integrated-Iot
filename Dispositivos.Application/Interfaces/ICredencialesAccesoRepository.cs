@@ -11,6 +11,7 @@ public interface ICredencialesAccesoRepository
     Task<IEnumerable<CredencialesAcceso>> GetByEstaActiva(bool estaActiva);
     Task<IEnumerable<CredencialesAcceso>> GetByTipoCredencial(string tipoCredencial);
     Task<CredencialesAcceso?> GetByCodigoPin(string codigoPin);
+    Task<CredencialesAcceso?> GetByPinAndFechas(string codigoPin, DateTime fechaActivacion, DateTime fechaExpiracion);
     Task AddAsync(CredencialesAcceso credencial, CancellationToken cancellationToken = default);
     Task UpdateAsync(CredencialesAcceso credencial, CancellationToken cancellationToken = default);
     Task DeleteAsync(CredencialesAcceso credencial, CancellationToken cancellationToken = default);
