@@ -241,9 +241,11 @@ public class CerraduraAccesoKafkaConsumer : BackgroundService
         if (accessGranted && credencialId.HasValue)
         {
             cerradura.ContadorAperturas += 1;
+            cerradura.UltimaApertura = DateTime.UtcNow;
+            await unitOfWork.CerradurasInteligente.UpdateAsync(cerradura, cancellationToken);
 
-            var credenciales = await unitOfWork.CredencialesAcceso.GetAll();
-            var credencial = credenciales.FirstOrDefault(c => c.CredencialId == credencialId.Value);
+            var credencialRepo = unitOfWork.CredencialesAcceso;
+            var credencial = await credencialRepo.GetById(credencialId.Value);
 
             if (credencial != null)
             {
@@ -255,6 +257,8 @@ public class CerraduraAccesoKafkaConsumer : BackgroundService
                     credencial.EstaActiva = false;
                     _logger.LogInformation("Credencial {CredencialId} marcada como inactiva por expiración", credencialId);
                 }
+
+                await credencialRepo.UpdateAsync(credencial, cancellationToken);
             }
         }
 
