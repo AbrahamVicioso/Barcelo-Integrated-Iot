@@ -30,19 +30,6 @@ namespace Usuarios.API
 
             var builder = WebApplication.CreateBuilder(args);
 
-            // Si hay endpoints específicos en appsettings (ej: Docker con HTTPS gRPC en 5285),
-            // Kestrel los usa directamente. En dev local se usa h2c en todos los endpoints.
-            if (!builder.Configuration.GetSection("Kestrel:Endpoints").Exists())
-            {
-                builder.WebHost.ConfigureKestrel(options =>
-                {
-                    options.ConfigureEndpointDefaults(listenOptions =>
-                    {
-                        listenOptions.Protocols = Microsoft.AspNetCore.Server.Kestrel.Core.HttpProtocols.Http1AndHttp2;
-                    });
-                });
-            }
-
             // Add DbContext
             builder.Services.AddDbContext<BarceloIoTSystemContext>(options =>
                 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -150,6 +137,7 @@ namespace Usuarios.API
 
             // gRPC endpoints
             app.MapGrpcService<HuespedeGrpcService>();
+            app.MapGrpcService<PersonalGrpcService>();
 
             await app.RunAsync();
         }

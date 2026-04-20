@@ -77,6 +77,12 @@ public static class DependencyInjection
         services.AddSingleton(auditConfig);
         services.AddSingleton<IAuditProducer, AuditKafkaProducer>();
 
+        // Register Credentials Kafka Producer (for sending email/push on credential creation)
+        var credencialesProducerConfig = new CredencialesKafkaProducerConfig();
+        configuration.GetSection("KafkaProducer").Bind(credencialesProducerConfig);
+        services.AddSingleton(credencialesProducerConfig);
+        services.AddSingleton<ICredencialesKafkaProducer, CredencialesKafkaProducer>();
+
         return services;
     }
 }

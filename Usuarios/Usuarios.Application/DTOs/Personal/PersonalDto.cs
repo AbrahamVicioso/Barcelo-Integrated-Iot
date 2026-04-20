@@ -16,4 +16,5 @@ public class PersonalDto
     public string? Turno { get; set; }
     public int? Supervisor { get; set; }
     public DateTime FechaCreacion { get; set; }
+    public string? CorreoElectronico { get; set; }
 }

@@ -37,3 +37,30 @@ message HuespedeResponse {
   string notas_especiales = 14;
   string correo_electronico = 15;
 }
+
+// Servicio de consulta de personal para comunicación inter-servicio
+service Personal {
+  // Obtiene un personal por su ID
+  rpc GetPersonalById (GetPersonalByIdRequest) returns (PersonalResponse);
+  // Obtiene un personal por su UsuarioId de Identity
+  rpc GetPersonalByUserId (GetPersonalByUserIdRequest) returns (PersonalResponse);
+}
+
+message GetPersonalByIdRequest {
+  int32 personal_id = 1;
+}
+
+message GetPersonalByUserIdRequest {
+  string usuario_id = 1;
+}
+
+message PersonalResponse {
+  bool found = 1;
+  int32 personal_id = 2;
+  string usuario_id = 3;
+  string nombre_completo = 4;
+  string cargo = 5;
+  string departamento = 6;
+  bool esta_activo = 7;
+  string correo_electronico = 8;
+}

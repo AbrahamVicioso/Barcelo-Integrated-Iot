@@ -13,11 +13,56 @@
 - Métodos de repositorio → sección "Repositorios"
 - Constraints DB → lista en "DbUpdateException"
 - Campos de entidad o DTO → secciones de inventario abajo
+- Llamadas gRPC entre servicios → "Comunicación gRPC entre servicios"
+- Flujo de creación de credenciales → "Flujo creación de credenciales + notificación por email"
+- Configuración Kestrel HTTP/2 → "Kestrel endpoints configuration"
 
 ### Cuándo SÍ leer archivos (mínimo)
 - Modificar código existente → leer solo ese archivo
 - Dudar si método existe → leer solo la interfaz
 - Nuevo feature en entidad no tocada → leer solo el archivo más cercano
+
+---
+
+## Índice rápido
+
+### Fundamentos
+- [Infraestructura](#infraestructura) — DB, Kafka, ThingsBoard, JWT
+- [Servicios y puertos](#servicios-y-puertos) — Tabla completa con HTTP/1.1 y HTTP/2
+- [Convención de nombres](#convención-de-nombres) — Rutas de archivos estándar
+- [Patrones de arquitectura](#patrones-de-arquitectura-por-servicio) — MediatR, CQRS, Result<T>, excepciones
+
+### Comunicación entre servicios
+- [Comunicación gRPC](#comunicación-grpc-entre-servicios) — Configuración, clientes, retry pattern
+- [Kafka topics y flujos](#kafka--topics-y-flujos) — Tabla completa de events
+- [Flujo creación credenciales](#flujo-creación-de-credenciales--notificación-por-email) — gRPC chain: HuespedId → UsuarioId → Email
+
+### Base de datos
+- [Inventario de entidades](#inventario-de-entidades) — Dispositivos, Reservas, Usuarios
+- [DTOs](#dtos--dispositivos) — Dispositivos, Reservas
+- [Repositorios](#repositorios--métodos-completos) — Métodos disponibles por repositorio
+- [Constraints DB](#constraints-db-conocidos) — UQ, FK, CHK con mensajes de error
+
+### API Endpoints
+- [Dispositivos.API](#endpoints--dispositivosapi) — CRUD + paginación
+- [Authenticate.API](#endpoints--authenticateapi) — Login, register, password reset
+- [Reservas.API](#endpoints--reservasapi) — CRUD + unlock door + check-in
+- [Usuarios.API](#endpoints--usuariosapi) — Huéspedes, personal, permisos
+
+### Patrones y reglas
+- [Manejo de errores](#regla-obligatoria-manejo-de-errores-en-handlers) — DbUpdateException, Result<T>, NotFound
+- [Respuesta HTTP](#regla-obligatoria-respuesta-http-en-controllers) — 200, 201, 400, 404
+- [Paginación](#estándar-de-paginación) — PaginationParams, PagedResult<T>
+- [Sistema de permisos](#sistema-de-permisos-por-roles) — HasPermission, roles, claims
+
+### Integraciones
+- [ThingsBoard](#thingsboard) — API, sync de credenciales, devices
+- [Notification.Worker](#notification-worker--consumers-registrados) — Email, push notifications
+- [Sistema de auditoría](#sistema-de-auditoría) — AuditBehavior, AuditEvent
+
+### Troubleshooting
+- [Troubleshooting común](#troubleshooting-común) — Errores gRPC, puertos, email, ntfy
+- [Checklist servicio gRPC](#checklist-para-agregar-nuevo-servicio-grpc) — Pasos completos
 
 ---
 
@@ -32,16 +77,121 @@
 
 ## Servicios y puertos
 
-| Servicio | Docker |
-|---|---|
-| Reservas.API | 5141 |
-| Dispositivos.API | 5185 |
-| Usuarios.API | 5284/5285 |
-| Authenticate.API | 5117 (REST) / 5118 (gRPC) |
-| ApiGateway | 5019/5020 |
-| Audit.Worker | 5250/5251 |
-| Notification.Worker | — |
-| ntfy (push) | 8081 (HTTPS) / 8082 (HTTP) |
+| Servicio | HTTP/1.1 (REST) | HTTP/2 (gRPC) | Protocolo |
+|---|---|---|---|
+| Reservas.API | 5141 | — | HTTP |
+| Dispositivos.API | 5185 | 7288 | HTTPS (cert) |
+| Usuarios.API | 5284 | 5285 | HTTPS (cert) |
+| Authenticate.API | 5117 | 5118 | HTTPS (cert) |
+| ApiGateway | 5019/5020 | — | HTTP/HTTPS |
+| Audit.Worker | 5250/5251 | — | HTTP |
+| Notification.Worker | — | — | — |
+| ntfy (push) | 8082 | 8081 | HTTP/HTTPS |
+
+**Regla:** APIs con gRPC usan **puertos separados** y **protocolos separados** (Http1 para REST, Http2 para gRPC). En Docker, gRPC endpoints usan **HTTPS con certificado** (`/https/barcelo-dev.pfx`).
+
+---
+
+## Comunicación gRPC entre servicios
+
+### Servicios gRPC disponibles
+
+| Servicio | Puerto | Proto | Namespaces | Métodos |
+|---|---|---|---|---|
+| **Usuarios.API** | 5285 (HTTPS) | `usuarios.proto` | `Grpc.Contracts.Usuarios.Huesped`<br>`Grpc.Contracts.Usuarios.Personal` | `GetHuespedById`<br>`GetPersonalById` |
+| **Authenticate.API** | 5118 (HTTPS) | `authentication.proto` | `Grpc.Contracts.Authentication.UserLookup` | `GetEmailByUserId` |
+| **Dispositivos.API** | 7288 (HTTPS) | `dispositivos.proto` | `Grpc.Contracts.Dispositivos.PersonalEstado` | `SincronizarEstadoPersonal` |
+
+### Configuración de clientes gRPC
+
+**Patrón obligatorio:** Usar `HttpClientHandler` con bypass de certificado en desarrollo:
+
+```csharp
+var grpcUrl = _configuration["ExternalServices:Usuarios:GrpcUrl"] ?? "https://usuarios-api:5285";
+var skipCertValidation = _configuration.GetValue<bool>("ExternalServices:Usuarios:SkipCertValidation");
+
+var httpHandler = new System.Net.Http.HttpClientHandler();
+if (skipCertValidation)
+{
+    httpHandler.ServerCertificateCustomValidationCallback =
+        System.Net.Http.HttpClientHandler.DangerousAcceptAnyServerCertificateValidator;
+}
+
+using var channel = GrpcChannel.ForAddress(grpcUrl, new GrpcChannelOptions
+{
+    HttpHandler = httpHandler,
+    DisposeHttpClient = true
+});
+var client = new Grpc.Contracts.Usuarios.Huesped.HuespedClient(channel);
+```
+
+**Configuración en appsettings:**
+```json
+"ExternalServices": {
+  "Usuarios": {
+    "GrpcUrl": "https://usuarios-api:5285",
+    "SkipCertValidation": "true"
+  },
+  "Authenticate": {
+    "GrpcUrl": "https://auth-api:5118",
+    "SkipCertValidation": "true"
+  }
+}
+```
+
+**Docker-compose:** Siempre pasar `ExternalServices__Xxx__GrpcUrl` y `ExternalServices__Xxx__SkipCertValidation` como variables de ambiente.
+
+### Patrón de retry con logging
+
+**3 intentos con delay exponencial (500ms * attempt):**
+
+```csharp
+for (int attempt = 1; attempt <= 3; attempt++)
+{
+    try
+    {
+        // ... llamada gRPC
+        return resultado;
+    }
+    catch (Exception ex) when (attempt < 3)
+    {
+        _logger.LogWarning(ex, "[Prefix] Error gRPC (attempt {Attempt}/3): {Message}", attempt, ex.Message);
+        await Task.Delay(500 * attempt, cancellationToken);
+    }
+    catch (Exception ex)
+    {
+        _logger.LogError(ex, "[Prefix] Error gRPC final: {Message}", ex.Message);
+    }
+}
+return null;
+```
+
+### Kestrel endpoints configuration
+
+**Patrón obligatorio** en `appsettings.Docker.json`:
+
+```json
+{
+  "Kestrel": {
+    "Endpoints": {
+      "Http": {
+        "Url": "http://+:5284",
+        "Protocols": "Http1"
+      },
+      "Grpc": {
+        "Url": "https://+:5285",
+        "Protocols": "Http2",
+        "Certificate": {
+          "Path": "/https/barcelo-dev.pfx",
+          "Password": "barcelo-dev"
+        }
+      }
+    }
+  }
+}
+```
+
+**NUNCA** configurar Kestrel en `Program.cs` si ya existe `appsettings.Docker.json`. **NUNCA** pasar `Kestrel__Endpoints__*` por docker-compose si ya está en appsettings.Docker.json.
 
 ---
 
@@ -58,7 +208,17 @@
 | Controller | `{Svc}.API/Controllers/{Entidad}Controller.cs` |
 | EF Config | `{Svc}.Persistence/Data/Configurations/{Entidad}Configuration.cs` |
 
-Servicios extra: `Reservas.Application/Interfaces/` ← `ICredencialesAccesoService`, `IUsuariosApiService` · impl en `Reservas.Persistence/Services/` · `Usuarios.API/Services/` ← `AuditKafkaProducer`, `PermisoHabitacionKafkaProducer` · `Dispositivos.Infrastructure/Services/` ← `TbDeviceService`, `TbCredencialesSyncService`, BackgroundServices (Kafka consumers)
+**Servicios extra:**
+- `Reservas.Application/Interfaces/` ← `ICredencialesAccesoService`, `IUsuariosApiService` · impl en `Reservas.Persistence/Services/`
+- `Usuarios.API/Services/` ← `AuditKafkaProducer`, `PermisoHabitacionKafkaProducer`
+- `Dispositivos.Application/Interfaces/` ← `ICredencialesKafkaProducer` · impl en `Dispositivos.Infrastructure/Services/`
+- `Dispositivos.Infrastructure/Services/` ← `TbDeviceService`, `TbCredencialesSyncService`, `CredencialesKafkaProducer`, BackgroundServices (Kafka consumers)
+
+**gRPC Services:**
+- `Usuarios.API/GrpcServices/` ← `HuespedGrpcService.cs`, `PersonalGrpcService.cs`
+- `Authenticate.API/Services/` ← `UserLookupService.cs`
+- `Dispositivos.API/GrpcServices/` ← `PersonalEstadoGrpcService.cs`
+- Todos implementan servicios definidos en `Grpc.Contracts/Protos/*.proto`
 
 ---
 
@@ -290,6 +450,13 @@ GetPersonalByUsuarioIdAsync(usuarioId) → (PersonalId, NombreCompleto)?
 GetCredencialesForHuespedAsync(reservaId, huespedId) → IEnumerable<CredencialHuespedDto>
 ```
 
+### `ICredencialesKafkaProducer` (Dispositivos)
+```
+PublishCredencialCreadaAsync(CredencialCreadaEvent, CancellationToken)
+```
+Impl: `Dispositivos.Infrastructure/Services/CredencialesKafkaProducer.cs`
+Config: `KafkaProducer:BootstrapServers`, `KafkaProducer:Topic` (`credenciales.creada`), `KafkaProducer:ClientId`
+
 ---
 
 ## Handlers/Queries existentes — Usuarios
@@ -488,6 +655,7 @@ Todos los repositorios usan `.AsNoTracking()`. Al update con FK + nav prop carga
 | `email-confirmation` | Authenticate.API | Notification.Worker (`EmailConfirmationEventConsumer`) | `EmailConfirmationEvent` |
 | `password-reset` | Authenticate.API | Notification.Worker (`PasswordResetEventConsumer`) | `PasswordResetEvent` |
 | `reservas` | Reservas.API | Notification.Worker (`ReservaCreadaEventConsumer`) | `ReservaCreadaEvent` |
+| `credenciales.creada` | Dispositivos.API | Notification.Worker (`CredencialCreadaEventConsumer`) | `CredencialCreadaEvent` |
 | `dispositivos.unlock-door` | Reservas.API | Dispositivos.Infrastructure (`UnlockDoorKafkaConsumer`) | `UnlockDoorEvent` |
 | `reservas.checkin-realizado` | Reservas.API | Dispositivos.Infrastructure (`CheckInRealizadoKafkaConsumer`) | `CheckInRealizadoEvent` |
 | `checkin.credenciales` | Dispositivos.Infrastructure | Notification.Worker (`CredencialesCheckInEventConsumer`) | `CredencialesCheckInEvent` |
@@ -496,6 +664,73 @@ Todos los repositorios usan `.AsNoTracking()`. Al update con FK + nav prop carga
 | `habitacion.permiso-personal` | Usuarios.API | Dispositivos.Infrastructure (`PermisoPersonalCreadoKafkaConsumer`) | `PermisoPersonalCreadoEvent` |
 | `cerradura.acceso` | ThingsBoard | Dispositivos.Infrastructure (`CerraduraAccesoKafkaConsumer`) | `CerraduraAccesoEvent` |
 | `audit.events` | Todos los APIs | Audit.Worker | `AuditEvent` |
+
+### Flujo creación de credenciales + notificación por email
+
+`POST /credencialesacceso` → `CreateCredencialesAccesoCommandHandler`:
+
+1. **Validación y guardado**:
+   - Valida fechas (FechaExpiracion > FechaActivacion, FechaActivacion >= hoy)
+   - Genera `HashPin` (SHA256 Base64)
+   - Guarda `CredencialesAcceso` en DB
+
+2. **Sync ThingsBoard** (según tipo):
+   - Si `PersonalId` → `SyncByPersonalIdAsync`
+   - Si `HuespedId` → `SyncByHuespedIdAsync`
+   - Si `ReservaId` → `SyncByReservaIdAsync`
+
+3. **Obtención de email vía gRPC** (cadena de 2 llamadas):
+
+   **Paso 3.1:** Obtener `UsuarioId` desde Usuarios.API:
+   - Si `HuespedId` → `ObtenerUsuarioIdDeHuespedAsync`:
+     - gRPC: `Huesped.GetHuespedById` (Usuarios.API:5285 HTTPS)
+     - Retry: 3 intentos con delay 500ms * attempt
+     - Retorna: `UsuarioId` o null
+
+   - Si `PersonalId` → `ObtenerUsuarioIdDePersonalAsync`:
+     - gRPC: `Personal.GetPersonalById` (Usuarios.API:5285 HTTPS)
+     - Retry: 3 intentos con delay 500ms * attempt
+     - Retorna: `UsuarioId` o null
+
+   **Paso 3.2:** Obtener `Email` desde Authenticate.API:
+   - `ObtenerEmailDeAuthAsync(usuarioId)`:
+     - gRPC: `UserLookup.GetEmailByUserId` (Authenticate.API:5118 HTTPS)
+     - Retry: 3 intentos con delay 500ms * attempt
+     - Retorna: `Email` o null
+
+4. **Publicación a Kafka**:
+   - Evento: `CredencialCreadaEvent` con campos:
+     - `CredencialId`, `HuespedId?`, `PersonalId?`, `ReservaId?`
+     - `CodigoPin`, `FechaActivacion`, `FechaExpiracion`, `TipoCredencial`
+     - `Email?` (obtenido en paso 3)
+     - `NombreCompleto?` (null, no se usa)
+   - Topic: `credenciales.creada`
+   - Producer: `ICredencialesKafkaProducer`
+   - **No bloquea** la operación si falla (try/catch solo loguea)
+
+5. **Consumer en Notification.Worker**:
+   - `CredencialCreadaEventConsumer` recibe evento
+   - Si `Email != null` → envía email HTML + push notification
+   - Si `Email == null` → loguea warning y omite notificación
+
+**Logging obligatorio:**
+```csharp
+_logger.LogInformation("[Credenciales] Iniciando obtención de email para HuespedId {HuespedId}", huespedId);
+_logger.LogInformation("[Credenciales] Obteniendo UsuarioId de Huesped {HuespedId} desde {GrpcUrl}", huespedId, grpcUrl);
+_logger.LogInformation("[Credenciales] UsuarioId obtenido: {UsuarioId} para Huesped {HuespedId}", usuarioId, huespedId);
+_logger.LogInformation("[Credenciales] Obteniendo Email de Usuario {UsuarioId} desde {GrpcUrl}", usuarioId, grpcUrl);
+_logger.LogInformation("[Credenciales] Email obtenido: {Email} para Usuario {UsuarioId}", email, usuarioId);
+_logger.LogInformation("[Credenciales] Email obtenido: {Email}, publicando evento a Kafka", email);
+_logger.LogWarning("[Credenciales] Email no obtenido, evento se publicará sin email");
+```
+
+**Handler location:** `Dispositivos.Application/Features/CredencialesAcceso/Commands/CreateCredencialesAccesoCommandHandler.cs`
+
+**Métodos privados obligatorios:**
+- `ObtenerUsuarioIdDeHuespedAsync(int huespedId, CancellationToken)` → string?
+- `ObtenerUsuarioIdDePersonalAsync(int personalId, CancellationToken)` → string?
+- `ObtenerEmailDeAuthAsync(string usuarioId, CancellationToken)` → string?
+- `GenerarHash(string texto)` → string (SHA256 Base64)
 
 ### Flujo cerradura física → registro de acceso
 ThingsBoard reporta intentos de acceso desde la cerradura física (PIN/NFC) → topic `cerradura.acceso` → `CerraduraAccesoKafkaConsumer`:
@@ -643,12 +878,21 @@ Authenticate.API: auditoría manual en `AuthController` (Login/Register). `AddHt
 | `UserCreatedEventConsumer` | `users` | Email bienvenida + push notification |
 | `ReservaCreadaEventConsumer` | `reservas` | Email confirmación reserva |
 | `EmailConfirmationEventConsumer` | `email-confirmation` | Email con link de confirmación |
-| `CredencialesCheckInEventConsumer` | `checkin.credenciales` | Email HTML con PIN + push notification |
+| `CredencialCreadaEventConsumer` | `credenciales.creada` | Email HTML con PIN + push notification (POST manual) |
+| `CredencialesCheckInEventConsumer` | `checkin.credenciales` | Email HTML con PIN + push notification (Check-in) |
 | `PersonalAccesoHabitacionEventConsumer` | `habitacion.personal-acceso` | Email HTML + push alerta acceso personal a todos los huéspedes |
 | `PasswordResetEventConsumer` | `password-reset` | Email HTML con botón de restablecimiento de contraseña |
 
-Email HTML credenciales: PIN monospace destacado, NumeroReserva, fechas CheckIn/CheckOut, advertencia no compartir.
-Servicios: `IEmailService` (Azure Communication Services), `IPushNotificationService` (ntfy.sh)
+**Email HTML credenciales (ambos consumers):**
+- PIN monospace destacado
+- NumeroReserva (si aplica)
+- Fechas CheckIn/CheckOut (si aplica)
+- Advertencia de no compartir PIN
+- Si Email es null → no envía nada, solo loguea warning
+
+**Servicios:** `IEmailService` (Azure Communication Services), `IPushNotificationService` (ntfy.sh con AccessToken)
+
+**ntfy:** Requiere autenticación con token (`Ntfy:AccessToken`). Topic = email del usuario sin @ ni puntos (ej: `abrahanviciosoatgmailcom`)
 
 ---
 
@@ -861,3 +1105,216 @@ COPY Shared/Barcelo.Authorization.Shared/ Shared/Barcelo.Authorization.Shared/
 ```
 
 APIs que lo usan: Dispositivos.API, Authenticate.API, Reservas.API, Usuarios.API
+
+---
+
+## Troubleshooting común
+
+### Error: "HTTP/2 connection could not be established" (gRPC)
+
+**Síntomas:**
+```
+Status(StatusCode="Unavailable", Detail="Error starting gRPC call. HttpRequestException:
+An HTTP/2 connection could not be established because the server did not complete the HTTP/2 handshake")
+```
+
+**Causas posibles:**
+
+1. **Cliente usa HTTP pero servidor usa HTTPS**:
+   - Verificar: `ExternalServices:Xxx:GrpcUrl` debe coincidir con el protocolo del servidor
+   - Solución: Si servidor usa HTTPS (puerto 5285/5118/7288), cliente debe usar `https://`
+
+2. **Servidor no tiene HTTP/2 habilitado**:
+   - Verificar: `appsettings.Docker.json` tiene `"Protocols": "Http2"` en endpoint gRPC
+   - Verificar: Puerto está separado del endpoint HTTP/1.1
+
+3. **Falta certificado o está mal configurado**:
+   - Verificar: `Certificate.Path` apunta a `/https/barcelo-dev.pfx` en Docker
+   - Verificar: Volumen `./docker/certs:/https:ro` está montado en docker-compose
+
+4. **Cliente no tiene bypass de certificado**:
+   - Verificar: `HttpClientHandler` con `ServerCertificateCustomValidationCallback` configurado
+   - Verificar: `SkipCertValidation: true` en configuración
+
+**Checklist de verificación:**
+```bash
+# 1. Verificar logs del servidor (debe mostrar ambos puertos)
+docker compose logs usuarios-api | grep "Now listening"
+# Esperado: Now listening on: http://[::]:5284
+#           Now listening on: https://[::]:5285
+
+# 2. Verificar configuración del cliente
+docker compose exec dispositivos-api cat /app/appsettings.Docker.json | grep -A 5 ExternalServices
+
+# 3. Verificar certificado existe
+docker compose exec usuarios-api ls -la /https/barcelo-dev.pfx
+
+# 4. Rebuild sin cache
+docker compose build --no-cache usuarios-api dispositivos-api
+docker compose restart usuarios-api dispositivos-api
+```
+
+### Error: "Address already in use" (puerto ocupado)
+
+**Causa:** Múltiples configuraciones de Kestrel conflictivas (Program.cs + appsettings.json + docker-compose)
+
+**Solución:**
+1. **NUNCA** configurar Kestrel manualmente en `Program.cs` si existe `appsettings.Docker.json`
+2. **NUNCA** pasar `Kestrel__Endpoints__*` por docker-compose si ya está en appsettings
+3. Usar **solo** `appsettings.Docker.json` para configuración de puertos en Docker
+
+**Regla:** `appsettings.Docker.json` es la **única fuente de verdad** para Kestrel en Docker.
+
+### Error: Email no se envía en credenciales (Email = null)
+
+**Síntomas:**
+```
+[Credenciales] Email no obtenido, evento se publicará sin email
+Credencial X no tiene email asociado, omitiendo notificación
+```
+
+**Causas posibles:**
+
+1. **Huesped/Personal no existe en BD**:
+   - Log: `"Huesped X no encontrado en Users API"`
+   - Solución: Verificar que HuespedId/PersonalId existen en tabla correspondiente
+
+2. **Usuario no vinculado a Huesped/Personal**:
+   - Log: `"UsuarioId obtenido: null para Huesped X"`
+   - Solución: Campo `UsuarioId` en tabla `Huespedes` o `Personal` debe tener valor (GUID de Identity)
+
+3. **Usuario no existe en Identity**:
+   - Log: `"Usuario X no encontrado en Auth API"`
+   - Solución: Usuario debe existir en `AspNetUsers` (creado via `/register` o `/create`)
+
+4. **Servicio gRPC no responde**:
+   - Log: `"Error gRPC final: ..."`
+   - Solución: Verificar que usuarios-api y auth-api están corriendo y accesibles
+
+**Flujo correcto:**
+```
+HuespedId (1)
+  → gRPC Usuarios.API → UsuarioId (7d2feb79-...)
+  → gRPC Authenticate.API → Email (user@example.com)
+  → Kafka credenciales.creada
+  → Notification.Worker → Email enviado
+```
+
+### Error: ntfy 401 Unauthorized (push notifications)
+
+**Causa:** ntfy requiere autenticación pero no se está enviando token
+
+**Solución:**
+1. Verificar `Ntfy:AccessToken` en `appsettings.Docker.json` o docker-compose
+2. Token debe ser generado desde ntfy server (no desde cliente)
+3. En desarrollo, usar `NTFY_AUTH_DEFAULT_ACCESS: deny-all` en docker-compose
+4. Si no se usa ntfy, el error es esperado y no bloquea el flujo (try/catch en consumer)
+
+### Rebuild sin cache (después de cambios importantes)
+
+**Cuándo hacer rebuild:**
+- Cambios en Dockerfile
+- Cambios en archivos `.csproj` (referencias)
+- Cambios en configuración de Kestrel
+- Cambios en servicios gRPC
+- Cambios en el proyecto `Barcelo.Authorization.Shared`
+
+**Comando:**
+```bash
+docker compose build --no-cache <servicio>
+docker compose up -d <servicio>
+
+# Ejemplo: cambios en Dispositivos.API
+docker compose build --no-cache dispositivos-api
+docker compose up -d dispositivos-api
+
+# Ver logs en tiempo real
+docker compose logs -f dispositivos-api
+```
+
+---
+
+## Checklist para agregar nuevo servicio gRPC
+
+1. **Crear .proto** en `Grpc.Contracts/Protos/`:
+   ```protobuf
+   syntax = "proto3";
+   option csharp_namespace = "Grpc.Contracts.MiServicio";
+
+   service MiServicio {
+     rpc MiMetodo (MiRequest) returns (MiResponse);
+   }
+   ```
+
+2. **Implementar servicio** en `MiAPI/GrpcServices/MiServicioGrpcService.cs`:
+   ```csharp
+   public class MiServicioGrpcService : Grpc.Contracts.MiServicio.MiServicioBase
+   {
+       public override async Task<MiResponse> MiMetodo(MiRequest request, ServerCallContext context)
+       {
+           // implementación
+       }
+   }
+   ```
+
+3. **Registrar en Program.cs**:
+   ```csharp
+   builder.Services.AddGrpc();
+   // ...
+   app.MapGrpcService<MiServicioGrpcService>();
+   ```
+
+4. **Configurar Kestrel** en `appsettings.Docker.json`:
+   ```json
+   {
+     "Kestrel": {
+       "Endpoints": {
+         "Grpc": {
+           "Url": "https://+:5XXX",
+           "Protocols": "Http2",
+           "Certificate": {
+             "Path": "/https/barcelo-dev.pfx",
+             "Password": "barcelo-dev"
+           }
+         }
+       }
+     }
+   }
+   ```
+
+5. **Cliente en servicio consumidor**:
+   ```csharp
+   var grpcUrl = _configuration["ExternalServices:MiServicio:GrpcUrl"];
+   var skipCert = _configuration.GetValue<bool>("ExternalServices:MiServicio:SkipCertValidation");
+
+   var httpHandler = new HttpClientHandler();
+   if (skipCert)
+       httpHandler.ServerCertificateCustomValidationCallback =
+           HttpClientHandler.DangerousAcceptAnyServerCertificateValidator;
+
+   using var channel = GrpcChannel.ForAddress(grpcUrl, new GrpcChannelOptions
+   {
+       HttpHandler = httpHandler,
+       DisposeHttpClient = true
+   });
+   var client = new Grpc.Contracts.MiServicio.MiServicioClient(channel);
+   ```
+
+6. **Configurar docker-compose**:
+   ```yaml
+   mi-api:
+     ports:
+       - "5XXX:5XXX"  # Puerto gRPC
+     volumes:
+       - ./docker/certs:/https:ro
+
+   mi-cliente-api:
+     environment:
+       ExternalServices__MiServicio__GrpcUrl: https://mi-api:5XXX
+       ExternalServices__MiServicio__SkipCertValidation: "true"
+   ```
+
+7. **Documentar en CLAUDE.md**:
+   - Agregar servicio a tabla "Servicios gRPC disponibles"
+   - Documentar métodos en sección correspondiente
+   - Agregar a "Cuándo NO leer archivos" si tiene flujo complejo

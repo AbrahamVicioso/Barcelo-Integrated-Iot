@@ -1,8 +1,9 @@
-﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Notification.Domain.Interfaces;
 using Notification.Email;
+using Notification.Kafka.Configuration;
 using Notification.Kafka.Configuration;
 using Notification.Kafka.Services;
 using Notification.Push;
@@ -74,6 +75,11 @@ namespace Notification.Worker
                 context.Configuration.GetSection("KafkaConsumer:PasswordReset").Bind(passwordResetConsumerConfig);
                 services.AddSingleton(passwordResetConsumerConfig);
 
+                // Configure CredencialCreadaConsumerConfig
+                var credencialCreadaConsumerConfig = new CredencialCreadaConsumerConfig();
+                context.Configuration.GetSection("KafkaConsumer:CredencialCreada").Bind(credencialCreadaConsumerConfig);
+                services.AddSingleton(credencialCreadaConsumerConfig);
+
                 // Add Kafka Consumers as separate instances
                 services.AddSingleton<UserCreatedEventConsumer>();
                 services.AddSingleton<ReservaCreadaEventConsumer>();
@@ -81,6 +87,7 @@ namespace Notification.Worker
                 services.AddSingleton<CredencialesCheckInEventConsumer>();
                 services.AddSingleton<PersonalAccesoHabitacionEventConsumer>();
                 services.AddSingleton<PasswordResetEventConsumer>();
+                services.AddSingleton<CredencialCreadaEventConsumer>();
 
                 // Add Background Services for Kafka Consumers
                 services.AddHostedService<UserCreatedNotificationWorker>();
@@ -89,6 +96,7 @@ namespace Notification.Worker
                 services.AddHostedService<CredencialesCheckInNotificationWorker>();
                 services.AddHostedService<PersonalAccesoHabitacionNotificationWorker>();
                 services.AddHostedService<PasswordResetNotificationWorker>();
+                services.AddHostedService<CredencialCreadaNotificationWorker>();
             });
 
             IHost host = builder.Build();
@@ -280,6 +288,35 @@ namespace Notification.Worker
         public override async Task StopAsync(CancellationToken cancellationToken)
         {
             _logger.LogInformation("Stopping Password Reset Notification Worker...");
+            await _kafkaConsumer.StopAsync(cancellationToken);
+            await base.StopAsync(cancellationToken);
+        }
+    }
+
+    public class CredencialCreadaNotificationWorker : BackgroundService
+    {
+        private readonly CredencialCreadaEventConsumer _kafkaConsumer;
+        private readonly ILogger<CredencialCreadaNotificationWorker> _logger;
+
+        public CredencialCreadaNotificationWorker(
+            CredencialCreadaEventConsumer kafkaConsumer,
+            ILogger<CredencialCreadaNotificationWorker> logger)
+        {
+            _kafkaConsumer = kafkaConsumer;
+            _logger = logger;
+        }
+
+        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+        {
+            _logger.LogInformation("Starting Credencial Creada Notification Worker...");
+            await _kafkaConsumer.StartAsync(stoppingToken);
+            while (!stoppingToken.IsCancellationRequested)
+                await Task.Delay(Timeout.Infinite, stoppingToken);
+        }
+
+        public override async Task StopAsync(CancellationToken cancellationToken)
+        {
+            _logger.LogInformation("Stopping Credencial Creada Notification Worker...");
             await _kafkaConsumer.StopAsync(cancellationToken);
             await base.StopAsync(cancellationToken);
         }
