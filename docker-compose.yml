@@ -35,6 +35,11 @@ services:
   ntfy:
     image: binwiederhier/ntfy
     container_name: barcelo-ntfy
+    deploy:
+      resources:
+        limits:
+          memory: 64M
+          cpus: '0.25'
     command: serve
     ports:
       - "8081:443"
@@ -67,6 +72,11 @@ services:
   sqlserver:
     image: mcr.microsoft.com/mssql/server:2022-latest
     container_name: barcelo-sqlserver
+    deploy:
+      resources:
+        limits:
+          memory: 3G
+          cpus: '1.0'
     environment:
       SA_PASSWORD: "Testing1234"
       ACCEPT_EULA: "Y"
@@ -88,6 +98,11 @@ services:
     image: apache/kafka:4.2.0-rc3
     hostname: kafka
     container_name: kafka
+    deploy:
+      resources:
+        limits:
+          memory: 384M
+          cpus: '0.5'
     user: root
     ports:
       - "9092:9092"
@@ -115,6 +130,11 @@ services:
     restart: always
     image: "postgres:16"
     container_name: barcelo-postgres
+    deploy:
+      resources:
+        limits:
+          memory: 192M
+          cpus: '0.25'
     ports:
       - "5432:5432"
     environment:
@@ -129,6 +149,11 @@ services:
     restart: always
     image: "thingsboard/tb-node:4.3.0.1"
     container_name: barcelo-thingsboard
+    deploy:
+      resources:
+        limits:
+          memory: 1500M
+          cpus: '1.0'
     ports:
       - "8080:8080"
       - "7070:7070"
@@ -158,6 +183,11 @@ services:
       dockerfile: Authenticate/Authentication.Api/Dockerfile
     image: barcelo-auth-api:latest
     container_name: barcelo-auth
+    deploy:
+      resources:
+        limits:
+          memory: 64M
+          cpus: '0.25'
     volumes:
       - ./docker/certs:/https:ro
     ports:
@@ -193,6 +223,11 @@ services:
       dockerfile: Usuarios/Usuarios.API/Dockerfile
     image: barcelo-usuarios-api:latest
     container_name: barcelo-usuarios
+    deploy:
+      resources:
+        limits:
+          memory: 64M
+          cpus: '0.25'
     volumes:
       - ./docker/certs:/https:ro
     ports:
@@ -227,6 +262,11 @@ services:
       dockerfile: Reservas/Reservas.API/Dockerfile
     image: barcelo-reservas-api:latest
     container_name: barcelo-reservas
+    deploy:
+      resources:
+        limits:
+          memory: 64M
+          cpus: '0.25'
     volumes:
       - ./docker/certs:/https:ro
     ports:
@@ -263,6 +303,11 @@ services:
       dockerfile: Dispositivos.API/Dockerfile
     image: barcelo-dispositivos-api:latest
     container_name: barcelo-dispositivos
+    deploy:
+      resources:
+        limits:
+          memory: 64M
+          cpus: '0.25'
     volumes:
       - ./docker/certs:/https:ro
     ports:
@@ -316,6 +361,11 @@ services:
       dockerfile: ApiGateway/Dockerfile
     image: barcelo-api-gateway:latest
     container_name: barcelo-gateway
+    deploy:
+      resources:
+        limits:
+          memory: 32M
+          cpus: '0.25'
     volumes:
       - ./docker/certs:/https:ro
     ports:
@@ -343,6 +393,11 @@ services:
       dockerfile: Notification.Worker/Dockerfile
     image: barcelo-notification-worker:latest
     container_name: barcelo-notification
+    deploy:
+      resources:
+        limits:
+          memory: 64M
+          cpus: '0.25'
     volumes:
       - ./docker/certs:/https:ro
     environment:
@@ -390,6 +445,11 @@ services:
       dockerfile: Audit.Worker/Dockerfile
     image: barcelo-audit-worker:latest
     container_name: barcelo-audit
+    deploy:
+      resources:
+        limits:
+          memory: 32M
+          cpus: '0.25'
     volumes:
       - ./docker/certs:/https:ro
     ports:
