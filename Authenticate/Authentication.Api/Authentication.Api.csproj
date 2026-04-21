@@ -21,6 +21,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\Grpc.Contracts\Grpc.Contracts.csproj" />
     <ProjectReference Include="..\..\Notification.Domain\Notification.Domain.csproj" />
+    <ProjectReference Include="..\..\Notification.Kafka\Notification.Kafka.csproj" />
     <ProjectReference Include="..\..\Notification.Push\Notification.Push.csproj" />
     <ProjectReference Include="..\..\Shared\Barcelo.Authorization.Shared\Barcelo.Authorization.Shared.csproj" />
   </ItemGroup>

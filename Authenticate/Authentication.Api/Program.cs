@@ -5,6 +5,8 @@ using Authentication.Domain.Entities;
 using Grpc.AspNetCore;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
+using Microsoft.EntityFrameworkCore;
+using Notification.Kafka.Data;
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -48,6 +50,12 @@ builder.Services.AddCors(options =>
               .AllowAnyHeader();
     });
 });
+
+// Add NotificacionDbContext for preferencias and historial
+var notificationConnectionString = builder.Configuration.GetConnectionString("BarceloIoTDatabase")
+    ?? throw new InvalidOperationException("Missing required configuration 'ConnectionStrings:BarceloIoTDatabase'");
+builder.Services.AddDbContext<NotificacionDbContext>(options =>
+    options.UseSqlServer(notificationConnectionString));
 
 var app = builder.Build();
 

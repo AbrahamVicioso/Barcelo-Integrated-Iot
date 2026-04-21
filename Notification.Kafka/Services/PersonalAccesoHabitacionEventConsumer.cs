@@ -10,12 +10,10 @@ using Notification.Kafka.Configuration;
 
 namespace Notification.Kafka.Services
 {
-    public class PersonalAccesoHabitacionEventConsumer : IKafkaConsumer
+    public class PersonalAccesoHabitacionEventConsumer : NotificacionHandlerBase, IKafkaConsumer
     {
         private readonly IConsumer<string, string> _consumer;
         private readonly IAdminClient _adminClient;
-        private readonly IEmailService _emailService;
-        private readonly IPushNotificationService _pushService;
         private readonly PersonalAccesoHabitacionConsumerConfig _config;
         private readonly ILogger<PersonalAccesoHabitacionEventConsumer> _logger;
         private CancellationTokenSource? _cancellationTokenSource;
@@ -26,13 +24,15 @@ namespace Notification.Kafka.Services
 
         public PersonalAccesoHabitacionEventConsumer(
             PersonalAccesoHabitacionConsumerConfig config,
+            IPreferenciasRepository preferenciasRepo,
+            INotificacionesRepository notificacionesRepo,
+            AuthApiClient authApiClient,
             IEmailService emailService,
             IPushNotificationService pushService,
             ILogger<PersonalAccesoHabitacionEventConsumer> logger)
+            : base(preferenciasRepo, notificacionesRepo, authApiClient, emailService, pushService, logger)
         {
             _config = config;
-            _emailService = emailService;
-            _pushService = pushService;
             _logger = logger;
 
             var consumerConfig = new ConsumerConfig
@@ -174,17 +174,6 @@ namespace Notification.Kafka.Services
                         IsHtml = true
                     };
 
-                    var enviado = await _emailService.SendEmailAsync(emailNotification, cancellationToken);
-
-                    if (enviado)
-                        _logger.LogInformation(
-                            "Email de acceso personal enviado a {Email}, habitacion {NumeroHabitacion}",
-                            huesped.Email, accesoEvent.NumeroHabitacion);
-                    else
-                        _logger.LogError(
-                            "Fallo al enviar email de acceso personal a {Email}, habitacion {NumeroHabitacion}",
-                            huesped.Email, accesoEvent.NumeroHabitacion);
-
                     var pushNotification = new PushNotification
                     {
                         Topic = NtfyTopicHelper.GetUserTopic(huesped.Email),
@@ -194,7 +183,13 @@ namespace Notification.Kafka.Services
                         Tags = ["hotel", "warning"]
                     };
 
-                    await _pushService.SendAsync(pushNotification, cancellationToken);
+                    // Usar métodos de la clase base que verifican preferencias
+                    await EnviarNotificacionCompletaAsync(
+                        huesped.Email,
+                        "AccesoPersonal",
+                        emailNotification,
+                        pushNotification,
+                        cancellationToken);
                 }
                 catch (Exception ex)
                 {

@@ -10,12 +10,10 @@ using Notification.Kafka.Configuration;
 
 namespace Notification.Kafka.Services
 {
-    public class CredencialCreadaEventConsumer : IKafkaConsumer
+    public class CredencialCreadaEventConsumer : NotificacionHandlerBase, IKafkaConsumer
     {
         private readonly IConsumer<string, string> _consumer;
         private readonly IAdminClient _adminClient;
-        private readonly IEmailService _emailService;
-        private readonly IPushNotificationService _pushService;
         private readonly CredencialCreadaConsumerConfig _config;
         private readonly ILogger<CredencialCreadaEventConsumer> _logger;
         private CancellationTokenSource? _cancellationTokenSource;
@@ -26,13 +24,15 @@ namespace Notification.Kafka.Services
 
         public CredencialCreadaEventConsumer(
             CredencialCreadaConsumerConfig config,
+            IPreferenciasRepository preferenciasRepo,
+            INotificacionesRepository notificacionesRepo,
+            AuthApiClient authApiClient,
             IEmailService emailService,
             IPushNotificationService pushService,
             ILogger<CredencialCreadaEventConsumer> logger)
+            : base(preferenciasRepo, notificacionesRepo, authApiClient, emailService, pushService, logger)
         {
             _config = config;
-            _emailService = emailService;
-            _pushService = pushService;
             _logger = logger;
 
             var consumerConfig = new ConsumerConfig
@@ -167,6 +167,7 @@ namespace Notification.Kafka.Services
             {
                 var tipoTexto = credencialEvent.TipoCredencial == "Huesped" ? "de huésped" : "de personal";
                 var emailBody = GenerarEmailCredencial(credencialEvent);
+
                 var emailNotification = new EmailNotification
                 {
                     To = credencialEvent.Email,
@@ -174,17 +175,6 @@ namespace Notification.Kafka.Services
                     Body = emailBody,
                     IsHtml = true
                 };
-
-                var enviado = await _emailService.SendEmailAsync(emailNotification, cancellationToken);
-
-                if (enviado)
-                    _logger.LogInformation(
-                        "Email con credencial enviado a {Email}, credencial {CredencialId}",
-                        credencialEvent.Email, credencialEvent.CredencialId);
-                else
-                    _logger.LogError(
-                        "Fallo al enviar email con credencial a {Email}, credencial {CredencialId}",
-                        credencialEvent.Email, credencialEvent.CredencialId);
 
                 var pushNotification = new PushNotification
                 {
@@ -195,7 +185,13 @@ namespace Notification.Kafka.Services
                     Tags = ["key", "hotel"]
                 };
 
-                await _pushService.SendAsync(pushNotification, cancellationToken);
+                // Usar métodos de la clase base que verifican preferencias
+                await EnviarNotificacionCompletaAsync(
+                    credencialEvent.Email,
+                    "Credencial",
+                    emailNotification,
+                    pushNotification,
+                    cancellationToken);
             }
             catch (Exception ex)
             {

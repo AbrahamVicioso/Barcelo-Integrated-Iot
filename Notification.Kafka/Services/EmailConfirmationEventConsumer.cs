@@ -9,11 +9,10 @@ using Notification.Kafka.Configuration;
 
 namespace Notification.Kafka.Services
 {
-    public class EmailConfirmationEventConsumer : IKafkaConsumer
+    public class EmailConfirmationEventConsumer : NotificacionHandlerBase, IKafkaConsumer
     {
         private readonly IConsumer<string, string> _consumer;
         private readonly IAdminClient _adminClient;
-        private readonly IEmailService _emailService;
         private readonly EmailConfirmationConsumerConfig _config;
         private readonly ILogger<EmailConfirmationEventConsumer> _logger;
         private CancellationTokenSource? _cancellationTokenSource;
@@ -24,11 +23,15 @@ namespace Notification.Kafka.Services
 
         public EmailConfirmationEventConsumer(
             EmailConfirmationConsumerConfig config,
+            IPreferenciasRepository preferenciasRepo,
+            INotificacionesRepository notificacionesRepo,
+            AuthApiClient authApiClient,
             IEmailService emailService,
+            IPushNotificationService pushService,
             ILogger<EmailConfirmationEventConsumer> logger)
+            : base(preferenciasRepo, notificacionesRepo, authApiClient, emailService, pushService, logger)
         {
             _config = config;
-            _emailService = emailService;
             _logger = logger;
 
             var consumerConfig = new ConsumerConfig
@@ -182,12 +185,12 @@ namespace Notification.Kafka.Services
                 IsHtml = true
             };
 
-            var emailSent = await _emailService.SendEmailAsync(emailNotification, cancellationToken);
-
-            if (emailSent)
-                _logger.LogInformation("Confirmation email sent successfully to {Email}", confirmationEvent.Email);
-            else
-                _logger.LogError("Failed to send confirmation email to {Email}", confirmationEvent.Email);
+            // Usar método de la clase base que verifica preferencias (solo email)
+            await EnviarEmailAsync(
+                confirmationEvent.Email,
+                "ConfirmacionEmail",
+                emailNotification,
+                cancellationToken);
         }
 
         private string GenerateConfirmationEmailBody(EmailConfirmationEvent confirmationEvent)

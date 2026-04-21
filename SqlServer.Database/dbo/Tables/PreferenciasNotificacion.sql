@@ -1,4 +1,4 @@
-﻿CREATE TABLE [dbo].[PreferenciasNotificacion](
+CREATE TABLE [dbo].[PreferenciasNotificacion](
 	[PreferenciaId] [int] IDENTITY(1,1) NOT NULL,
 	[UsuarioId] [nvarchar](450) NOT NULL,
 	[HabilitarNotificacionesPush] [bit] NOT NULL,
@@ -7,6 +7,12 @@
 	[NotificarAccesoPersonal] [bit] NOT NULL,
 	[NotificarRecordatorioActividad] [bit] NOT NULL,
 	[NotificarPromocionesOfertas] [bit] NOT NULL,
+	[NotificarReservas] [bit] NOT NULL,
+	[NotificarCredenciales] [bit] NOT NULL,
+	[NotificarCheckIn] [bit] NOT NULL,
+	[NotificarCuentaCreada] [bit] NOT NULL,
+	[NotificarConfirmacionEmail] [bit] NOT NULL,
+	[NotificarRestablecerPassword] [bit] NOT NULL,
 	[HorarioNoMolestar] [bit] NOT NULL,
 	[HoraInicioNoMolestar] [time](7) NULL,
 	[HoraFinNoMolestar] [time](7) NULL,
@@ -38,6 +44,18 @@ GO
 ALTER TABLE [dbo].[PreferenciasNotificacion] ADD  DEFAULT ((1)) FOR [NotificarRecordatorioActividad]
 GO
 ALTER TABLE [dbo].[PreferenciasNotificacion] ADD  DEFAULT ((1)) FOR [NotificarPromocionesOfertas]
+GO
+ALTER TABLE [dbo].[PreferenciasNotificacion] ADD  DEFAULT ((1)) FOR [NotificarReservas]
+GO
+ALTER TABLE [dbo].[PreferenciasNotificacion] ADD  DEFAULT ((1)) FOR [NotificarCredenciales]
+GO
+ALTER TABLE [dbo].[PreferenciasNotificacion] ADD  DEFAULT ((1)) FOR [NotificarCheckIn]
+GO
+ALTER TABLE [dbo].[PreferenciasNotificacion] ADD  DEFAULT ((1)) FOR [NotificarCuentaCreada]
+GO
+ALTER TABLE [dbo].[PreferenciasNotificacion] ADD  DEFAULT ((1)) FOR [NotificarConfirmacionEmail]
+GO
+ALTER TABLE [dbo].[PreferenciasNotificacion] ADD  DEFAULT ((1)) FOR [NotificarRestablecerPassword]
 GO
 ALTER TABLE [dbo].[PreferenciasNotificacion] ADD  DEFAULT ((0)) FOR [HorarioNoMolestar]
 GO

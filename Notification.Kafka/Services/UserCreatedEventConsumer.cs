@@ -10,12 +10,10 @@ using Notification.Kafka.Configuration;
 
 namespace Notification.Kafka.Services
 {
-    public class UserCreatedEventConsumer : IKafkaConsumer
+    public class UserCreatedEventConsumer : NotificacionHandlerBase, IKafkaConsumer
     {
         private readonly IConsumer<string, string> _consumer;
         private readonly IAdminClient _adminClient;
-        private readonly IEmailService _emailService;
-        private readonly IPushNotificationService _pushService;
         private readonly INtfyAdminService _ntfyAdmin;
         private readonly AuthApiClient _authApiClient;
         private readonly UserCreatedConsumerConfig _config;
@@ -28,15 +26,16 @@ namespace Notification.Kafka.Services
 
         public UserCreatedEventConsumer(
             UserCreatedConsumerConfig config,
+            IPreferenciasRepository preferenciasRepo,
+            INotificacionesRepository notificacionesRepo,
+            AuthApiClient authApiClient,
             IEmailService emailService,
             IPushNotificationService pushService,
             INtfyAdminService ntfyAdmin,
-            AuthApiClient authApiClient,
             ILogger<UserCreatedEventConsumer> logger)
+            : base(preferenciasRepo, notificacionesRepo, authApiClient, emailService, pushService, logger)
         {
             _config = config;
-            _emailService = emailService;
-            _pushService = pushService;
             _ntfyAdmin = ntfyAdmin;
             _authApiClient = authApiClient;
             _logger = logger;
@@ -208,27 +207,22 @@ namespace Notification.Kafka.Services
                 IsHtml = true
             };
 
-            var emailSent = await _emailService.SendEmailAsync(emailNotification, cancellationToken);
-
-            if (emailSent)
-                _logger.LogInformation("User created email sent successfully to {Email}", userEvent.Email);
-            else
-                _logger.LogError("Failed to send user created email to {Email}", userEvent.Email);
-
-            // 4. Welcome push notification (the token is already stored, so publishing works)
-            if (ntfyToken != null)
+            var pushNotification = new PushNotification
             {
-                var pushNotification = new PushNotification
-                {
-                    Topic = ntfyTopic,
-                    Title = "Bienvenido a Barcelo IoT",
-                    Message = $"Hola {userEvent.UserName}, tu cuenta ha sido creada exitosamente.",
-                    Priority = PushPriority.Default,
-                    Tags = ["wave", "hotel"]
-                };
+                Topic = ntfyTopic,
+                Title = "Bienvenido a Barcelo IoT",
+                Message = $"Hola {userEvent.UserName}, tu cuenta ha sido creada exitosamente.",
+                Priority = PushPriority.Default,
+                Tags = ["wave", "hotel"]
+            };
 
-                await _pushService.SendAsync(pushNotification, cancellationToken);
-            }
+            // Usar métodos de la clase base que verifican preferencias
+            await EnviarNotificacionCompletaAsync(
+                userEvent.Email,
+                "CuentaCreada",
+                emailNotification,
+                pushNotification,
+                cancellationToken);
         }
 
         private string GenerateUserCreatedEmailBody(UserCreatedEvent userEvent)

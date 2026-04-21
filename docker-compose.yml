@@ -431,6 +431,7 @@ services:
       Ntfy__AdminPassword: ${NTFY_ADMIN_PASSWORD:-}
       Ntfy__IgnoreCertificateErrors: "true"
       AuthApi__BaseUrl: http://auth-api:5117
+      ConnectionStrings__BarceloIoTDatabase: "Data source=sqlserver;Database=BarceloIoTDatabase;User Id=sa;Password=Testing1234;TrustServerCertificate=True"
     networks:
       - barcelo-net
     depends_on:

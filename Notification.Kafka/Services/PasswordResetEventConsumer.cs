@@ -9,11 +9,10 @@ using Notification.Kafka.Configuration;
 
 namespace Notification.Kafka.Services
 {
-    public class PasswordResetEventConsumer : IKafkaConsumer
+    public class PasswordResetEventConsumer : NotificacionHandlerBase, IKafkaConsumer
     {
         private readonly IConsumer<string, string> _consumer;
         private readonly IAdminClient _adminClient;
-        private readonly IEmailService _emailService;
         private readonly PasswordResetConsumerConfig _config;
         private readonly ILogger<PasswordResetEventConsumer> _logger;
         private CancellationTokenSource? _cancellationTokenSource;
@@ -24,11 +23,15 @@ namespace Notification.Kafka.Services
 
         public PasswordResetEventConsumer(
             PasswordResetConsumerConfig config,
+            IPreferenciasRepository preferenciasRepo,
+            INotificacionesRepository notificacionesRepo,
+            AuthApiClient authApiClient,
             IEmailService emailService,
+            IPushNotificationService pushService,
             ILogger<PasswordResetEventConsumer> logger)
+            : base(preferenciasRepo, notificacionesRepo, authApiClient, emailService, pushService, logger)
         {
             _config = config;
-            _emailService = emailService;
             _logger = logger;
 
             var consumerConfig = new ConsumerConfig
@@ -182,12 +185,12 @@ namespace Notification.Kafka.Services
                 IsHtml = true
             };
 
-            var emailSent = await _emailService.SendEmailAsync(emailNotification, cancellationToken);
-
-            if (emailSent)
-                _logger.LogInformation("Password reset email sent successfully to {Email}", resetEvent.Email);
-            else
-                _logger.LogError("Failed to send password reset email to {Email}", resetEvent.Email);
+            // Usar método de la clase base que verifica preferencias (solo email)
+            await EnviarEmailAsync(
+                resetEvent.Email,
+                "RestablecerPassword",
+                emailNotification,
+                cancellationToken);
         }
 
         private string GeneratePasswordResetEmailBody(PasswordResetEvent resetEvent)

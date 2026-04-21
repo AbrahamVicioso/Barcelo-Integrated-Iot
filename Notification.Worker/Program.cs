@@ -4,10 +4,11 @@ using Microsoft.Extensions.Hosting;
 using Notification.Domain.Interfaces;
 using Notification.Email;
 using Notification.Kafka.Configuration;
-using Notification.Kafka.Configuration;
 using Notification.Kafka.Services;
 using Notification.Push;
 using Microsoft.Extensions.Logging;
+using Microsoft.EntityFrameworkCore;
+using Notification.Kafka.Data;
 
 namespace Notification.Worker
 {
@@ -26,6 +27,18 @@ namespace Notification.Worker
 
             builder.ConfigureServices((context, services) =>
             {
+                // Add DbContext for NotificacionDbContext
+                var connectionString = context.Configuration.GetConnectionString("BarceloIoTDatabase")
+                    ?? throw new InvalidOperationException(
+                        "Missing required configuration 'ConnectionStrings:BarceloIoTDatabase'. " +
+                        "Add it to appsettings.json or set the environment variable 'ConnectionStrings__BarceloIoTDatabase'.");
+                services.AddDbContext<NotificacionDbContext>(options =>
+                    options.UseSqlServer(connectionString));
+
+                // Add Repositories
+                services.AddScoped<IPreferenciasRepository, PreferenciasRepository>();
+                services.AddScoped<INotificacionesRepository, NotificacionesRepository>();
+
                 // Configure SmtpSettings
                 services.AddEmailService(context.Configuration);
 

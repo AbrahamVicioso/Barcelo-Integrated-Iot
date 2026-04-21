@@ -15,6 +15,7 @@ COPY ["Authenticate/Authentication.Persistence/Authentication.Persistence.csproj
 COPY ["Grpc.Contracts/Grpc.Contracts.csproj", "Grpc.Contracts/"]
 COPY ["Notification.Domain/Notification.Domain.csproj", "Notification.Domain/"]
 COPY ["Notification.Push/Notification.Push.csproj", "Notification.Push/"]
+COPY ["Notification.Kafka/Notification.Kafka.csproj", "Notification.Kafka/"]
 COPY ["Shared/Barcelo.Authorization.Shared/Barcelo.Authorization.Shared.csproj", "Shared/Barcelo.Authorization.Shared/"]
 COPY NuGet.config .
 
@@ -29,6 +30,7 @@ COPY Authenticate/ Authenticate/
 COPY Grpc.Contracts/ Grpc.Contracts/
 COPY Notification.Domain/ Notification.Domain/
 COPY Notification.Push/ Notification.Push/
+COPY Notification.Kafka/ Notification.Kafka/
 COPY Shared/Barcelo.Authorization.Shared/ Shared/Barcelo.Authorization.Shared/
 
 # Build

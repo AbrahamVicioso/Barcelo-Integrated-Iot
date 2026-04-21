@@ -43,4 +43,49 @@ public class AuthApiClient
             _logger.LogError(ex, "Error storing ntfy token for {Email}", email);
         }
     }
+
+    public async Task<string?> GetUserIdByEmailAsync(string email, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(email))
+        {
+            _logger.LogWarning("GetUserIdByEmailAsync called with empty email");
+            return null;
+        }
+
+        try
+        {
+            var response = await _httpClient.GetAsync($"/getuserbyemail?email={Uri.EscapeDataString(email)}", cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogWarning("Failed to get user ID for email {Email}. Status: {Status}", email, response.StatusCode);
+                return null;
+            }
+
+            var userInfo = await response.Content.ReadFromJsonAsync<UserInfoResponse>(cancellationToken: cancellationToken);
+
+            if (userInfo == null)
+            {
+                _logger.LogWarning("UserInfo response is null for email {Email}", email);
+                return null;
+            }
+
+            _logger.LogDebug("User ID {UserId} obtained for email {Email}", userInfo.Id, email);
+            return userInfo.Id;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting user ID for email {Email}", email);
+            return null;
+        }
+    }
+}
+
+public class UserInfoResponse
+{
+    public string Id { get; set; } = string.Empty;
+    public string Email { get; set; } = string.Empty;
+    public string UserName { get; set; } = string.Empty;
+    public string? PhoneNumber { get; set; }
+    public bool IsEmailConfirmed { get; set; }
 }
