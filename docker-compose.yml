@@ -38,7 +38,7 @@ services:
     deploy:
       resources:
         limits:
-          memory: 64M
+          memory: 300M
           cpus: '0.25'
     command: serve
     ports:
@@ -101,7 +101,7 @@ services:
     deploy:
       resources:
         limits:
-          memory: 384M
+          memory: 1024M
           cpus: '0.5'
     user: root
     ports:
@@ -364,7 +364,7 @@ services:
     deploy:
       resources:
         limits:
-          memory: 32M
+          memory: 300M
           cpus: '0.25'
     volumes:
       - ./docker/certs:/https:ro
@@ -449,7 +449,7 @@ services:
     deploy:
       resources:
         limits:
-          memory: 32M
+          memory: 300M
           cpus: '0.25'
     volumes:
       - ./docker/certs:/https:ro
