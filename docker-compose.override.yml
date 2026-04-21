@@ -4,8 +4,13 @@ services:
     container_name: barcelo-nginx
     ports:
       - "80:80"
+      - "443:443"
     volumes:
       - ./docker/nginx/nginx-generated.conf:/etc/nginx/nginx.conf:ro
+      - ./docker/certs/live/${DOMINIO_PRINCIPAL:-smartstay.es}:/etc/letsencrypt:ro
+      - ./docker/certs/www:/var/www/certbot:rw
+    environment:
+      NGINX_HOST: ${DOMINIO_PRINCIPAL:-smartstay.es}
     networks:
       - barcelo-net
     depends_on:

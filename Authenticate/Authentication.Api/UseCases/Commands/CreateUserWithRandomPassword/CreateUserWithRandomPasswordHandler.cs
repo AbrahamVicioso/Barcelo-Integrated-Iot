@@ -18,7 +18,8 @@ namespace Authentication.Api.UseCases.Commands.CreateUserWithRandomPassword
             EmailRequest request,
             UserManager<User> userManager,
             IKafkaProducerService kafkaProducerService,
-            string confirmEmailBaseUrl
+            string confirmEmailBaseUrl,
+            string confirmEmailSuffix = "/ConfirmEmail"
             )
         {
             EmailAddressAttribute _emailAddressAttribute = new EmailAddressAttribute();
@@ -77,7 +78,7 @@ namespace Authentication.Api.UseCases.Commands.CreateUserWithRandomPassword
             // Publish EmailConfirmationEvent so the user must confirm their email
             var token = await userManager.GenerateEmailConfirmationTokenAsync(user);
             var encodedToken = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));
-            var confirmationUrl = $"{confirmEmailBaseUrl}/ConfirmEmail?userId={user.Id}&token={encodedToken}";
+            var confirmationUrl = $"{confirmEmailBaseUrl}{confirmEmailSuffix}?userId={user.Id}&token={encodedToken}";
 
             await kafkaProducerService.PublishEmailConfirmationAsync(new EmailConfirmationEvent
             {

@@ -76,7 +76,8 @@ namespace Authentication.Api.Controllers
         public async Task<Results<Ok, ValidationProblem>> Register(RegisterRequest registerRequest)
         {
             var confirmEmailBaseUrl = BuildConfirmEmailBaseUrl();
-            var result = await RegisterUserHandler.Handle(registerRequest, userManager, userStore, kafkaProducerService, confirmEmailBaseUrl);
+            var confirmEmailSuffix = configuration["ConfirmEmail:Suffix"] ?? "/ConfirmEmail";
+            var result = await RegisterUserHandler.Handle(registerRequest, userManager, userStore, kafkaProducerService, confirmEmailBaseUrl, confirmEmailSuffix);
 
             var isSuccess = result.Result is Ok;
             var user = isSuccess ? await userManager.FindByEmailAsync(registerRequest.Email) : null;
@@ -100,7 +101,8 @@ namespace Authentication.Api.Controllers
         public async Task<Results<Ok<CreateUserWithRandomPasswordResponse>, ValidationProblem>> Create([FromBody] EmailRequest request)
         {
             var confirmEmailBaseUrl = BuildConfirmEmailBaseUrl();
-            return await CreateUserWithRandomPasswordHandler.Handle(request, userManager, kafkaProducerService, confirmEmailBaseUrl);
+            var confirmEmailSuffix = configuration["ConfirmEmail:Suffix"] ?? "/ConfirmEmail";
+            return await CreateUserWithRandomPasswordHandler.Handle(request, userManager, kafkaProducerService, confirmEmailBaseUrl, confirmEmailSuffix);
         }
 
         [Authorize]
@@ -146,8 +148,9 @@ namespace Authentication.Api.Controllers
         [HttpPost]
         public async Task<Ok> ForgotPassword([FromBody] EmailRequest request)
         {
-            var baseUrl = BuildConfirmEmailBaseUrl();
-            return await ForgotPasswordHandler.Handle(request.Email, userManager, kafkaProducerService, baseUrl);
+            var baseUrl = BuildForgotPasswordBaseUrl();
+            var resetPasswordSuffix = configuration["ForgotPassword:Suffix"] ?? "/ResetPassword";
+            return await ForgotPasswordHandler.Handle(request.Email, userManager, kafkaProducerService, baseUrl, resetPasswordSuffix);
         }
 
         [HttpPost]
@@ -222,6 +225,21 @@ namespace Authentication.Api.Controllers
             }
 
             return configuration["ConfirmEmail:BaseUrl"] ?? $"{Request.Scheme}://{Request.Host}";
+        }
+
+        private string BuildForgotPasswordBaseUrl()
+        {
+            var forwardedHost = Request.Headers["X-Forwarded-Host"].FirstOrDefault();
+            var forwardedProto = Request.Headers["X-Forwarded-Proto"].FirstOrDefault();
+
+            if (!string.IsNullOrEmpty(forwardedHost))
+            {
+                var proto = forwardedProto ?? Request.Scheme;
+                var pathPrefix = configuration["ForgotPassword:PathPrefix"] ?? "/api/auth";
+                return $"{proto}://{forwardedHost}{pathPrefix}";
+            }
+
+            return configuration["ForgotPassword:BaseUrl"] ?? $"{Request.Scheme}://{Request.Host}";
         }
     }
 }

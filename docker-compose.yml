@@ -180,7 +180,7 @@ services:
     image: certbot/certbot:latest
     container_name: smartstay-certbot
     volumes:
-      - ./docker/certs/live/smartstay.es:/etc/letsencrypt/live:ro
+      - ./docker/certs/live/${DOMINIO_PRINCIPAL:-smartstay.es}:/etc/letsencrypt/live:ro
       - ./docker/certs/archive:/etc/letsencrypt/archive:rw
       - ./docker/certs/www:/var/www/certbot:rw
     ports:
@@ -188,9 +188,9 @@ services:
       - "443:443"
     command: >
       certonly --webroot -w /var/www/certbot
-      --email admin@smartstay.es
+      --email admin@${DOMINIO_PRINCIPAL:-smartstay.es}
       --agree-tos --no-eff-email
-      -d smartstay.es
+      -d ${CERT_DOMAIN:-smartstay.es}
       --keep-until-expiring
     restart: unless-stopped
     networks:
@@ -223,8 +223,12 @@ services:
       AuditProducer__BootstrapServers: kafka:29092
       AuditProducer__Topic: audit.events
       AuditProducer__ClientId: authenticate-audit
-      ConfirmEmail__BaseUrl: ${GATEWAY_PUBLIC_BASE_URL:-https://smartstay.es:5020}
-      ConfirmEmail__PathPrefix: /api/auth
+      ConfirmEmail__BaseUrl: ${GATEWAY_PUBLIC_BASE_URL}
+      ConfirmEmail__PathPrefix: ${CONFIRM_EMAIL_PATH:-/api/auth}
+      ConfirmEmail__Suffix: ${CONFIRM_EMAIL_SUFFIX:-/ConfirmEmail}
+      ForgotPassword__BaseUrl: ${GATEWAY_PUBLIC_BASE_URL}
+      ForgotPassword__PathPrefix: ${RESET_PASSWORD_PATH:-/api/auth}
+      ForgotPassword__Suffix: ${RESET_PASSWORD_SUFFIX:-/ResetPassword}
       Ntfy__BaseUrl: https://ntfy:443
       Ntfy__PublicBaseUrl: https://smartstay.es:8081/ntfy
       Ntfy__IgnoreCertificateErrors: "true"

@@ -14,7 +14,8 @@ namespace Authentication.Api.UseCases.Commands.ForgotPassword
             string email,
             UserManager<User> userManager,
             IKafkaProducerService kafkaProducerService,
-            string resetPasswordBaseUrl)
+            string resetPasswordBaseUrl,
+            string resetPasswordSuffix = "/ResetPassword")
         {
             // Always return 200 to avoid user enumeration
             var user = await userManager.FindByEmailAsync(email);
@@ -22,7 +23,7 @@ namespace Authentication.Api.UseCases.Commands.ForgotPassword
             {
                 var token = await userManager.GeneratePasswordResetTokenAsync(user);
                 var encodedToken = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));
-                var resetUrl = $"{resetPasswordBaseUrl}/ResetPassword?email={Uri.EscapeDataString(email)}&token={encodedToken}";
+                var resetUrl = $"{resetPasswordBaseUrl}{resetPasswordSuffix}?email={Uri.EscapeDataString(email)}&token={encodedToken}";
 
                 await kafkaProducerService.PublishPasswordResetAsync(new PasswordResetEvent
                 {
