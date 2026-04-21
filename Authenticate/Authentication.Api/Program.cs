@@ -1,4 +1,4 @@
-﻿using Authentication.Api;
+using Authentication.Api;
 using Authentication.Api.Data;
 using Authentication.Api.Services;
 using Authentication.Domain.Entities;
@@ -77,7 +77,8 @@ using (var scope = app.Services.CreateScope())
 
     var userManager  = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
     var roleManager  = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-    await DbSeeder.SeedAsync(userManager, roleManager);
+    var configuration = scope.ServiceProvider.GetRequiredService<IConfiguration>();
+    await DbSeeder.SeedAsync(userManager, roleManager, configuration);
 }
 
 app.Run();

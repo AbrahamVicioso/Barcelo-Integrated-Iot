@@ -186,7 +186,7 @@ services:
     deploy:
       resources:
         limits:
-          memory: 64M
+          memory: 300M
           cpus: '0.25'
     volumes:
       - ./docker/certs:/https:ro
@@ -226,7 +226,7 @@ services:
     deploy:
       resources:
         limits:
-          memory: 64M
+          memory: 300M
           cpus: '0.25'
     volumes:
       - ./docker/certs:/https:ro
@@ -265,7 +265,7 @@ services:
     deploy:
       resources:
         limits:
-          memory: 64M
+          memory: 300M
           cpus: '0.25'
     volumes:
       - ./docker/certs:/https:ro
@@ -306,7 +306,7 @@ services:
     deploy:
       resources:
         limits:
-          memory: 64M
+          memory: 300M
           cpus: '0.25'
     volumes:
       - ./docker/certs:/https:ro

@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Authentication.Domain.Entities;
 using Microsoft.AspNetCore.Identity;
 using Barcelo.Authorization.Shared;
@@ -6,10 +7,12 @@ namespace Authentication.Api.Data;
 
 public static class DbSeeder
 {
-    public static async Task SeedAsync(UserManager<User> userManager, RoleManager<IdentityRole> roleManager)
+    private const string NtfyTokenClaim = "ntfy_token";
+
+    public static async Task SeedAsync(UserManager<User> userManager, RoleManager<IdentityRole> roleManager, IConfiguration configuration)
     {
         await SeedRolesAsync(roleManager);
-        await SeedAdminUserAsync(userManager, roleManager);
+        await SeedAdminUserAsync(userManager, roleManager, configuration);
     }
 
     private static async Task SeedRolesAsync(RoleManager<IdentityRole> roleManager)
@@ -79,19 +82,20 @@ public static class DbSeeder
         }
     }
 
-    private static async Task SeedAdminUserAsync(UserManager<User> userManager, RoleManager<IdentityRole> roleManager)
+    private static async Task SeedAdminUserAsync(UserManager<User> userManager, RoleManager<IdentityRole> roleManager, IConfiguration configuration)
     {
         const string username = "admin";
         const string email = "admin@barcelo.com";
         const string password = "Admin1234.";
 
-        var existingUser = await userManager.FindByNameAsync(username);
-        if (existingUser is not null)
+        var admin = await userManager.FindByNameAsync(username);
+        if (admin is not null)
         {
+            await EnsureNtfyClaimAsync(userManager, admin, configuration);
             return;
         }
 
-        var admin = new User
+        admin = new User
         {
             UserName = username,
             Email = email,
@@ -101,6 +105,28 @@ public static class DbSeeder
         var result = await userManager.CreateAsync(admin, password);
 
         if (result.Succeeded)
+        {
             await userManager.AddToRoleAsync(admin, "Admin");
+            await EnsureNtfyClaimAsync(userManager, admin, configuration);
+        }
+    }
+
+    private static async Task EnsureNtfyClaimAsync(UserManager<User> userManager, User user, IConfiguration configuration)
+    {
+        var ntfyToken = configuration["Ntfy:AccessToken"] ?? Environment.GetEnvironmentVariable("NTFY_SERVER_TOKEN");
+        if (string.IsNullOrEmpty(ntfyToken))
+        {
+            Console.WriteLine("[DbSeeder] NTFY_SERVER_TOKEN no encontrado en configuración");
+            return;
+        }
+
+        Console.WriteLine($"[DbSeeder] NTFY_TOKEN encontrado: {ntfyToken.Substring(0, Math.Min(10, ntfyToken.Length))}...");
+
+        var existingClaim = (await userManager.GetClaimsAsync(user)).FirstOrDefault(c => c.Type == NtfyTokenClaim);
+        if (existingClaim is null)
+        {
+            await userManager.AddClaimAsync(user, new Claim(NtfyTokenClaim, ntfyToken));
+            Console.WriteLine($"[DbSeeder] Claim ntfy_token agregado al usuario admin");
+        }
     }
 }
