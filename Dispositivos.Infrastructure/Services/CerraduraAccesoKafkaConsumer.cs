@@ -326,6 +326,8 @@ public class CerraduraAccesoKafkaConsumer : BackgroundService
 
             var personalId = credencial.Value.PersonalId.Value;
 
+            var datosPersonal = await ObtenerDatosPersonalAsync(personalId, cancellationToken);
+
             var huespedes = new List<HuespedCheckInInfo>();
 
             var reservaResponse = await ObtenerReservaActivaAsync(cerradura.HabitacionId, cancellationToken);
@@ -342,16 +344,16 @@ public class CerraduraAccesoKafkaConsumer : BackgroundService
 
                 foreach (var huespedId in huespedIds)
                 {
-                    var email = await ObtenerEmailDeHuespedAsync(huespedId, cancellationToken);
-                    if (!string.IsNullOrEmpty(email))
+                    var datosHuesped = await ObtenerDatosHuespedAsync(huespedId, cancellationToken);
+                    if (datosHuesped != null && !string.IsNullOrEmpty(datosHuesped.Value.Email))
                     {
                         huespedes.Add(new HuespedCheckInInfo
                         {
                             HuespedId = huespedId,
-                            Email = email,
-                            NombreCompleto = $"Huésped {huespedId}"
+                            Email = datosHuesped.Value.Email,
+                            NombreCompleto = datosHuesped.Value.NombreCompleto
                         });
-                        _logger.LogInformation("Email obtienen para huesped {HuespedId}: {Email}", huespedId, email);
+                        _logger.LogInformation("Datos obtenidos para huesped {HuespedId}: {Nombre}", huespedId, datosHuesped.Value.NombreCompleto);
                     }
                 }
             }
@@ -365,9 +367,9 @@ public class CerraduraAccesoKafkaConsumer : BackgroundService
                 HabitacionId = cerradura.HabitacionId,
                 NumeroHabitacion = cerradura.HabitacionId.ToString(),
                 PersonalId = personalId,
-                NombrePersonal = $"Personal {personalId}",
-                Puesto = null,
-                Departamento = null,
+                NombrePersonal = datosPersonal?.NombreCompleto ?? $"Personal {personalId}",
+                Puesto = datosPersonal?.Cargo,
+                Departamento = datosPersonal?.Departamento,
                 EsAccesoFisico = true,
                 Huespedes = huespedes,
                 FechaAcceso = fechaAcceso
@@ -444,31 +446,26 @@ public class CerraduraAccesoKafkaConsumer : BackgroundService
         return null;
     }
 
-    private async Task<string?> ObtenerEmailDeHuespedAsync(int huespedId, CancellationToken cancellationToken)
+    private async Task<(string Email, string NombreCompleto)?> ObtenerDatosHuespedAsync(int huespedId, CancellationToken cancellationToken)
     {
-        var usuariosGrpcUrl = _config.UsuariosGrpcUrl;
-        var authGrpcUrl = _config.AuthenticateGrpcUrl;
-
         for (int attempt = 1; attempt <= 3; attempt++)
         {
             try
             {
                 var httpHandler = new System.Net.Http.HttpClientHandler();
                 if (_config.SkipCertValidation)
-                {
                     httpHandler.ServerCertificateCustomValidationCallback =
                         System.Net.Http.HttpClientHandler.DangerousAcceptAnyServerCertificateValidator;
-                }
 
-                using var channel = GrpcChannel.ForAddress(usuariosGrpcUrl, new GrpcChannelOptions
+                using var channel = GrpcChannel.ForAddress(_config.UsuariosGrpcUrl, new GrpcChannelOptions
                 {
                     HttpHandler = httpHandler,
                     DisposeHttpClient = true
                 });
-                var huespedClient = new Grpc.Contracts.Usuarios.Huesped.HuespedClient(channel);
-                var huespedResponse = await huespedClient.GetHuespedByIdAsync(
-                    new Grpc.Contracts.Usuarios.GetHuespedByIdRequest { HuespedId = huespedId },
-                    cancellationToken: cancellationToken);
+                var huespedResponse = await new Grpc.Contracts.Usuarios.Huesped.HuespedClient(channel)
+                    .GetHuespedByIdAsync(
+                        new Grpc.Contracts.Usuarios.GetHuespedByIdRequest { HuespedId = huespedId },
+                        cancellationToken: cancellationToken);
 
                 if (!huespedResponse.Found || string.IsNullOrEmpty(huespedResponse.UsuarioId))
                 {
@@ -476,41 +473,93 @@ public class CerraduraAccesoKafkaConsumer : BackgroundService
                     return null;
                 }
 
-                var usuarioId = huespedResponse.UsuarioId;
-
                 var httpHandler2 = new System.Net.Http.HttpClientHandler();
                 if (_config.SkipCertValidation)
-                {
                     httpHandler2.ServerCertificateCustomValidationCallback =
                         System.Net.Http.HttpClientHandler.DangerousAcceptAnyServerCertificateValidator;
-                }
 
-                using var channel2 = GrpcChannel.ForAddress(authGrpcUrl, new GrpcChannelOptions
+                using var channel2 = GrpcChannel.ForAddress(_config.AuthenticateGrpcUrl, new GrpcChannelOptions
                 {
                     HttpHandler = httpHandler2,
                     DisposeHttpClient = true
                 });
-                var authClient = new Grpc.Contracts.Authentication.UserLookup.UserLookupClient(channel2);
-                var authResponse = await authClient.GetEmailByUserIdAsync(
-                    new Grpc.Contracts.Authentication.GetEmailByUserIdRequest { UserId = usuarioId },
-                    cancellationToken: cancellationToken);
+                var authResponse = await new Grpc.Contracts.Authentication.UserLookup.UserLookupClient(channel2)
+                    .GetEmailByUserIdAsync(
+                        new Grpc.Contracts.Authentication.GetEmailByUserIdRequest { UserId = huespedResponse.UsuarioId },
+                        cancellationToken: cancellationToken);
 
-                if (authResponse.Found)
+                if (!authResponse.Found)
                 {
-                    _logger.LogInformation("[Notificacion] Email obtenidos para huesped {HuespedId}: {Email}", huespedId, authResponse.Email);
-                    return authResponse.Email;
+                    _logger.LogWarning("[Notificacion] Usuario {UsuarioId} no encontrado en Auth API", huespedResponse.UsuarioId);
+                    return null;
                 }
-                _logger.LogWarning("[Notificacion] Usuario {UsuarioId} no encontrado en Auth API", usuarioId);
-                return null;
+
+                var nombre = !string.IsNullOrEmpty(huespedResponse.NombreCompleto)
+                    ? huespedResponse.NombreCompleto
+                    : $"Huésped {huespedId}";
+
+                _logger.LogInformation("[Notificacion] Datos obtenidos para huesped {HuespedId}: {Nombre}, {Email}", huespedId, nombre, authResponse.Email);
+                return (authResponse.Email, nombre);
             }
             catch (Exception ex) when (attempt < 3)
             {
-                _logger.LogWarning(ex, "[Notificacion] Error gRPC (attempt {Attempt}/3): {Message}", attempt, ex.Message);
+                _logger.LogWarning(ex, "[Notificacion] Error gRPC huesped (attempt {Attempt}/3): {Message}", attempt, ex.Message);
                 await Task.Delay(500 * attempt, cancellationToken);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "[Notificacion] Error gRPC final para huesped {HuespedId}: {Message}", huespedId, ex.Message);
+            }
+        }
+        return null;
+    }
+
+    private async Task<(string NombreCompleto, string? Cargo, string? Departamento)?> ObtenerDatosPersonalAsync(int personalId, CancellationToken cancellationToken)
+    {
+        for (int attempt = 1; attempt <= 3; attempt++)
+        {
+            try
+            {
+                var httpHandler = new System.Net.Http.HttpClientHandler();
+                if (_config.SkipCertValidation)
+                    httpHandler.ServerCertificateCustomValidationCallback =
+                        System.Net.Http.HttpClientHandler.DangerousAcceptAnyServerCertificateValidator;
+
+                using var channel = GrpcChannel.ForAddress(_config.UsuariosGrpcUrl, new GrpcChannelOptions
+                {
+                    HttpHandler = httpHandler,
+                    DisposeHttpClient = true
+                });
+                var response = await new Grpc.Contracts.Usuarios.Personal.PersonalClient(channel)
+                    .GetPersonalByIdAsync(
+                        new Grpc.Contracts.Usuarios.GetPersonalByIdRequest { PersonalId = personalId },
+                        cancellationToken: cancellationToken);
+
+                if (!response.Found)
+                {
+                    _logger.LogWarning("[Notificacion] Personal {PersonalId} no encontrado en Usuarios API", personalId);
+                    return null;
+                }
+
+                var nombre = !string.IsNullOrEmpty(response.NombreCompleto)
+                    ? response.NombreCompleto
+                    : $"Personal {personalId}";
+
+                _logger.LogInformation("[Notificacion] Datos personal {PersonalId}: {Nombre}, {Cargo}, {Departamento}",
+                    personalId, nombre, response.Cargo, response.Departamento);
+
+                return (nombre,
+                    string.IsNullOrEmpty(response.Cargo) ? null : response.Cargo,
+                    string.IsNullOrEmpty(response.Departamento) ? null : response.Departamento);
+            }
+            catch (Exception ex) when (attempt < 3)
+            {
+                _logger.LogWarning(ex, "[Notificacion] Error gRPC personal (attempt {Attempt}/3): {Message}", attempt, ex.Message);
+                await Task.Delay(500 * attempt, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "[Notificacion] Error gRPC final para personal {PersonalId}: {Message}", personalId, ex.Message);
             }
         }
         return null;
