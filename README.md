@@ -8,6 +8,7 @@ Plataforma IoT para gestión de habitaciones inteligentes del Hotel Barcelo. Arq
 
 | Servicio | Descripción | Puerto REST | Puerto gRPC |
 |---|---|---|---|
+| `nginx` | Reverse proxy | 80 | — |
 | `api-gateway` | Ocelot API Gateway | 5019 (HTTP) · 5020 (HTTPS) | — |
 | `auth-api` | Autenticación y JWT | 5117 | 5118 (HTTPS) |
 | `usuarios-api` | Huéspedes y personal | 5284 | 5285 (HTTPS) |
@@ -72,6 +73,76 @@ Genera `docker/certs/barcelo-dev.pfx` usado por los servicios gRPC para TLS.
 > **macOS:** el script usa un archivo de configuración temporal para definir los SANs, ya que LibreSSL (OpenSSL nativo de macOS) no soporta la flag `-addext`.
 > Si prefieres usar la versión de Homebrew (`brew install openssl`), puedes ejecutar directamente `bash docker/generate-dev-cert.sh`.
 
+### 2b. Certificado con Let's Encrypt (producción)
+
+Si tienes un dominio público (`smartstay.es`), puedes usar Let's Encrypt para certificados gratuitos y automáticos.
+
+**Requisitos previos:**
+1. **DNS configurado** en tu proveedor de dominio (Hostinger, GoDaddy, etc.):
+   - Registro A: `@` → tu IP pública
+2. **Puerto 80 abierto** en el firewall de Azure
+3. **nginx corriendo** (docker-compose.override.yml)
+
+**Configurar DNS en tu proveedor de dominio:**
+
+| Campo | Valor |
+|-------|-------|
+| Type | A |
+| Host | `@` o `smartstay.es` |
+| Value | Tu IP pública de Azure |
+| TTL | 3600 |
+
+**Verificar DNS:**
+```bash
+nslookup smartstay.es
+```
+
+**Generar certificado inicial:**
+
+```bash
+# Asegúrate que nginx esté corriendo
+docker compose up -d nginx
+
+# Generar certificado
+docker compose run --rm -p 80:80 certbot certonly --webroot \
+  -w /var/www/certbot \
+  --email admin@smartstay.es \
+  --agree-tos --no-eff-email \
+  -d smartstay.es
+```
+
+Esto genera los certificados en `docker/certs/live/smartstay.es/`:
+- `smartstay.pfx` - Para Kestrel (.NET)
+- `fullchain.pem` - Certificado + CA
+- `privkey.pem` - Clave privada
+
+**Convertir a PFX (si no se creó automáticamente):**
+
+```bash
+# Crear directorio si no existe
+mkdir -p docker/certs/live/smartstay.es
+
+# Convertir
+openssl pkcs12 -export \
+  -out docker/certs/live/smartstay.es/smartstay.pfx \
+  -inkey docker/certs/live/smartstay.es/privkey.pem \
+  -in docker/certs/live/smartstay.es/fullchain.pem \
+  -passout pass:smartstay
+```
+
+**Renovación automática:**
+
+```bash
+# Agregar al crontab (ej: cada mes el día 1 a las 3am):
+0 3 1 * * /ruta/al/proyecto/docker/certs/renew.sh
+```
+
+El script de renovación convierte el certificado a PFX automáticamente y reinicia los servicios.
+
+> **Nota:** El certificado Let's Encrypt dura 90 días. El script lo renueva cuando faltan 30 días.
+
+---
+
 ### 3. Inicializar ThingsBoard (solo la primera vez)
 
 ```bash
@@ -98,6 +169,57 @@ docker compose up -d
 ```
 
 > **Nota:** el comando de inicialización de ThingsBoard solo se corre una vez. Los datos quedan persistidos en el volumen `tb-postgres-data`.
+
+---
+
+## Dominio y URLs públicas
+
+El sistema está configurado para usar el dominio `smartstay.es`.
+
+### Configuración DNS
+
+| Host | Tipo | Valor |
+|------|------|-------|
+| @ | A | Tu IP pública de Azure |
+
+### URLs públicas (después de configurar DNS y certificado)
+
+| Servicio | URL |
+|---|---|
+| API Gateway | `https://smartstay.es` |
+| ThingsBoard | `https://smartstay.es/thingsboard` |
+| ntfy (push) | `https://smartstay.es/ntfy` |
+
+### Variables de entorno
+
+```env
+GATEWAY_PUBLIC_BASE_URL=https://smartstay.es
+NTFY_PUBLIC_BASE_URL=https://smartstay.es:8081
+```
+
+---
+
+## Nginx como Reverse Proxy
+
+El nginx está configurado en `docker-compose.override.yml` y usa la config en `docker/nginx/nginx-generated.conf`.
+
+### Configuración actual
+
+- **Puerto 80**: HTTP (redirige a HTTPS o sirve ACME challenge)
+- **Rutas proxadas**:
+  - `thingsboard.smartstay.es` → ThingsBoard CE
+  - `api.smartstay.es` → API Gateway
+  - `ntfy.smartstay.es` → ntfy
+
+### ACME Challenge para Let's Encrypt
+
+El nginx está configurado para redirigir las peticiones de verificación de Let's Encrypt al contenedor certbot:
+
+```nginx
+location ^~ /.well-known/acme-challenge/ {
+    proxy_pass http://certbot_backend;
+}
+```
 
 ---
 

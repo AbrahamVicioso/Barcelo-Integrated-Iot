@@ -191,7 +191,6 @@ services:
       --email admin@smartstay.es
       --agree-tos --no-eff-email
       -d smartstay.es
-      -d "*.smartstay.es"
       --keep-until-expiring
     restart: unless-stopped
     networks:
