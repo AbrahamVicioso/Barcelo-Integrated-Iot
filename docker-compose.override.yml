@@ -1,0 +1,14 @@
+services:
+  nginx:
+    image: nginx:latest
+    container_name: barcelo-nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./docker/nginx/nginx-generated.conf:/etc/nginx/nginx.conf:ro
+    networks:
+      - barcelo-net
+    depends_on:
+      - thingsboard-ce
+      - api-gateway
+      - ntfy
