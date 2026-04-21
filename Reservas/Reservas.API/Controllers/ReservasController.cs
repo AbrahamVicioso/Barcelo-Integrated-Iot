@@ -10,7 +10,6 @@ using Barcelo.Authorization.Shared;
 namespace Reservas.API.Controllers;
 
 [ApiController]
-[HasPermission(Permissions.Reservas.View)]
 [Route("")]
 public class ReservasController : ControllerBase
 {
@@ -40,6 +39,7 @@ public class ReservasController : ControllerBase
     }
 
     [HttpGet("me")]
+    [HasPermission(Permissions.Reservas.View)]
     [Authorize]
     public async Task<IActionResult> GetMyReservations()
     {
@@ -131,8 +131,8 @@ public class ReservasController : ControllerBase
     }
 
     [HttpPost("{id}/unlock-door")]
-    [HasPermission(Permissions.Reservas.View)]
-    public async Task<IActionResult> UnlockDoor(int id, [FromQuery] string pin)
+    [Authorize]
+    public async Task<IActionResult> UnlockDoor(int id, [FromQuery] string? pin = null)
     {
         var result = await _mediator.Send(new UnlockDoorCommand { ReservaId = id, Pin = pin });
         return result.IsSuccess ? Ok(result.Data) : BadRequest(result.ErrorMessage);
