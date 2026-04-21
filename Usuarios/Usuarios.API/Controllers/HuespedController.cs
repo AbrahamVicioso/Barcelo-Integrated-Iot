@@ -17,6 +17,7 @@ namespace Usuarios.API.Controllers;
 
 [ApiController]
 [Route("[controller]")]
+[HasPermission(Permissions.Huespedes.View)]
 public class HuespedController : ControllerBase
 {
     private readonly IMediator _mediator;
@@ -27,7 +28,6 @@ public class HuespedController : ControllerBase
     }
 
     [HttpGet]
-    [HasPermission(Permissions.Usuarios.View)]
     public async Task<IActionResult> GetAll()
     {
         var result = await _mediator.Send(new GetAllHuespedesQuery());
@@ -35,7 +35,6 @@ public class HuespedController : ControllerBase
     }
 
     [HttpGet("{id}")]
-    [HasPermission(Permissions.Usuarios.View)]
     public async Task<IActionResult> GetById(int id)
     {
         var result = await _mediator.Send(new GetHuespedeByIdQuery(id));
@@ -43,7 +42,6 @@ public class HuespedController : ControllerBase
     }
 
     [HttpGet("vip")]
-    [HasPermission(Permissions.Usuarios.View)]
     public async Task<IActionResult> GetVip()
     {
         var result = await _mediator.Send(new GetHuespedesVipQuery());
@@ -51,7 +49,6 @@ public class HuespedController : ControllerBase
     }
 
     [HttpGet("user/{usuarioId}")]
-    [HasPermission(Permissions.Usuarios.View)]
     public async Task<IActionResult> GetByUserId(string usuarioId)
     {
         var result = await _mediator.Send(new GetHuespedeByUserIdQuery(usuarioId));
@@ -83,7 +80,7 @@ public class HuespedController : ControllerBase
     }
 
     [HttpPost]
-    [HasPermission(Permissions.Usuarios.Create)]
+    [HasPermission(Permissions.Huespedes.Create)]
     public async Task<IActionResult> Create([FromBody] CreateHuespedeDto dto)
     {
         var result = await _mediator.Send(new CreateHuespedeCommand(dto));
@@ -91,7 +88,7 @@ public class HuespedController : ControllerBase
     }
 
     [HttpPut("{id}")]
-    [HasPermission(Permissions.Usuarios.Edit)]
+    [HasPermission(Permissions.Huespedes.Edit)]
     public async Task<IActionResult> Update(int id, [FromBody] UpdateHuespedeDto dto)
     {
         if (id != dto.HuespedId)
@@ -102,7 +99,7 @@ public class HuespedController : ControllerBase
     }
 
     [HttpDelete("{id}")]
-    [HasPermission(Permissions.Usuarios.Delete)]
+    [HasPermission(Permissions.Huespedes.Delete)]
     public async Task<IActionResult> Delete(int id)
     {
         var result = await _mediator.Send(new DeleteHuespedeCommand(id));

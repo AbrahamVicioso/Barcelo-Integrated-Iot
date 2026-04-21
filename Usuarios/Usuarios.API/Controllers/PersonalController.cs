@@ -14,7 +14,7 @@ using Barcelo.Authorization.Shared;
 namespace Usuarios.API.Controllers;
 
 [ApiController]
-[HasPermission(Permissions.Usuarios.View)]
+[HasPermission(Permissions.Personal.View)]
 [Route("[controller]")]
 public class PersonalController : ControllerBase
 {
@@ -61,7 +61,7 @@ public class PersonalController : ControllerBase
     }
 
     [HttpPost]
-    [HasPermission(Permissions.Usuarios.Create)]
+    [HasPermission(Permissions.Personal.Create)]
     public async Task<IActionResult> Create([FromBody] CreatePersonalDto dto)
     {
         var result = await _mediator.Send(new CreatePersonalCommand(dto));
@@ -69,7 +69,7 @@ public class PersonalController : ControllerBase
     }
 
     [HttpPut("{id}")]
-    [HasPermission(Permissions.Usuarios.Edit)]
+    [HasPermission(Permissions.Personal.Edit)]
     public async Task<IActionResult> Update(int id, [FromBody] UpdatePersonalDto dto)
     {
         if (id != dto.PersonalId)
@@ -80,7 +80,7 @@ public class PersonalController : ControllerBase
     }
 
     [HttpDelete("{id}")]
-    [HasPermission(Permissions.Usuarios.Delete)]
+    [HasPermission(Permissions.Personal.Delete)]
     public async Task<IActionResult> Delete(int id)
     {
         var result = await _mediator.Send(new DeletePersonalCommand(id));

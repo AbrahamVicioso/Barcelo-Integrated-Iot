@@ -33,6 +33,9 @@ public static class DbSeeder
             var managerPermissions = new[]
             {
                 Permissions.Usuarios.View, Permissions.Usuarios.Create, Permissions.Usuarios.Edit,
+                Permissions.Huespedes.View, Permissions.Huespedes.Create, Permissions.Huespedes.Edit, Permissions.Huespedes.Delete,
+                Permissions.Personal.View, Permissions.Personal.Create, Permissions.Personal.Edit, Permissions.Personal.Delete,
+                Permissions.Auth.View, Permissions.Auth.Create,
                 Permissions.Dispositivos.View, Permissions.Dispositivos.Create, Permissions.Dispositivos.Edit,
                 Permissions.Reservas.View, Permissions.Reservas.Create, Permissions.Reservas.Edit,
                 Permissions.Habitaciones.View, Permissions.Habitaciones.Create, Permissions.Habitaciones.Edit,
@@ -60,6 +63,8 @@ public static class DbSeeder
                 Permissions.Habitaciones.View,
                 Permissions.Credenciales.View, Permissions.Credenciales.Create,
                 Permissions.Hoteles.View,
+                Permissions.Huespedes.View, Permissions.Huespedes.Create, Permissions.Huespedes.Edit,
+                Permissions.Personal.View,
             };
             foreach (var permission in recepcionistPermissions)
             {

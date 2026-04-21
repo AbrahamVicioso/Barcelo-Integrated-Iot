@@ -10,6 +10,28 @@ public static class Permissions
         public const string Delete = "Permissions.Usuarios.Delete";
     }
 
+    public static class Huespedes
+    {
+        public const string View = "Permissions.Huespedes.View";
+        public const string Create = "Permissions.Huespedes.Create";
+        public const string Edit = "Permissions.Huespedes.Edit";
+        public const string Delete = "Permissions.Huespedes.Delete";
+    }
+
+    public static class Personal
+    {
+        public const string View = "Permissions.Personal.View";
+        public const string Create = "Permissions.Personal.Create";
+        public const string Edit = "Permissions.Personal.Edit";
+        public const string Delete = "Permissions.Personal.Delete";
+    }
+
+    public static class Auth
+    {
+        public const string View = "Permissions.Auth.View";
+        public const string Create = "Permissions.Auth.Create";
+    }
+
     public static class Dispositivos
     {
         public const string View = "Permissions.Dispositivos.View";
@@ -96,6 +118,9 @@ public static class Permissions
         [
             Admin.All,
             Usuarios.View, Usuarios.Create, Usuarios.Edit, Usuarios.Delete,
+            Huespedes.View, Huespedes.Create, Huespedes.Edit, Huespedes.Delete,
+            Personal.View, Personal.Create, Personal.Edit, Personal.Delete,
+            Auth.View, Auth.Create,
             Dispositivos.View, Dispositivos.Create, Dispositivos.Edit, Dispositivos.Delete,
             Reservas.View, Reservas.Create, Reservas.Edit, Reservas.Delete,
             Hoteles.View, Hoteles.Create, Hoteles.Edit, Hoteles.Delete,
@@ -129,6 +154,16 @@ public static class PermissionDescriptions
             new() { Permission = Permissions.Usuarios.Create, Description = "Crear nuevos usuarios y perfiles de	huésped/personal", Category = "Usuarios", Action = "Crear" },
             new() { Permission = Permissions.Usuarios.Edit, Description = "Editar información de usuarios y perfiles", Category = "Usuarios", Action = "Editar" },
             new() { Permission = Permissions.Usuarios.Delete, Description = "Eliminar usuarios y perfiles", Category = "Usuarios", Action = "Eliminar" },
+            new() { Permission = Permissions.Huespedes.View, Description = "Ver lista de huéspedes", Category = "Huéspedes", Action = "Ver" },
+            new() { Permission = Permissions.Huespedes.Create, Description = "Crear nuevos perfiles de huésped", Category = "Huéspedes", Action = "Crear" },
+            new() { Permission = Permissions.Huespedes.Edit, Description = "Editar información de huéspedes", Category = "Huéspedes", Action = "Editar" },
+            new() { Permission = Permissions.Huespedes.Delete, Description = "Eliminar perfiles de huésped", Category = "Huéspedes", Action = "Eliminar" },
+            new() { Permission = Permissions.Personal.View, Description = "Ver lista de personal", Category = "Personal", Action = "Ver" },
+            new() { Permission = Permissions.Personal.Create, Description = "Crear nuevos perfiles de personal", Category = "Personal", Action = "Crear" },
+            new() { Permission = Permissions.Personal.Edit, Description = "Editar información de personal", Category = "Personal", Action = "Editar" },
+            new() { Permission = Permissions.Personal.Delete, Description = "Eliminar perfiles de personal", Category = "Personal", Action = "Eliminar" },
+            new() { Permission = Permissions.Auth.View, Description = "Buscar usuarios del sistema por email", Category = "Autenticación", Action = "Ver" },
+            new() { Permission = Permissions.Auth.Create, Description = "Crear usuarios del sistema", Category = "Autenticación", Action = "Crear" },
             new() { Permission = Permissions.Dispositivos.View, Description = "Ver lista de dispositivos", Category = "Dispositivos", Action = "Ver" },
             new() { Permission = Permissions.Dispositivos.Create, Description = "Registrar nuevos dispositivos", Category = "Dispositivos", Action = "Crear" },
             new() { Permission = Permissions.Dispositivos.Edit, Description = "Editar información de dispositivos", Category = "Dispositivos", Action = "Editar" },

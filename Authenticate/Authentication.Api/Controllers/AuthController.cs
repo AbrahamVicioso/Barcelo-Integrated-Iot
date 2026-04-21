@@ -96,7 +96,7 @@ namespace Authentication.Api.Controllers
         }
 
         [HttpPost]
-        [HasPermission(Permissions.Usuarios.Create)]
+        [HasPermission(Permissions.Auth.Create)]
         public async Task<Results<Ok<CreateUserWithRandomPasswordResponse>, ValidationProblem>> Create([FromBody] EmailRequest request)
         {
             var confirmEmailBaseUrl = BuildConfirmEmailBaseUrl();
@@ -116,7 +116,7 @@ namespace Authentication.Api.Controllers
         }
 
         [HttpGet]
-        [HasPermission(Permissions.Usuarios.View)]
+        [HasPermission(Permissions.Auth.View)]
         public async Task<Results<Ok<UserInfoResponse>, NotFound, ProblemHttpResult>> GetUserByEmail([FromQuery] string email)
         {
             if (string.IsNullOrWhiteSpace(email))
