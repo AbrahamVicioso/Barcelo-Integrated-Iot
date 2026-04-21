@@ -19,6 +19,7 @@
     <Protobuf Include="Protos/authentication.proto" GrpcServices="Both" />
     <Protobuf Include="Protos/usuarios.proto" GrpcServices="Both" />
     <Protobuf Include="Protos/dispositivos.proto" GrpcServices="Both" />
+    <Protobuf Include="Protos/reservas.proto" GrpcServices="Both" />
   </ItemGroup>
 
 </Project>

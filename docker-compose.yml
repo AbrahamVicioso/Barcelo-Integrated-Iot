@@ -231,6 +231,7 @@ services:
       - ./docker/certs:/https:ro
     ports:
       - "5141:5141"
+      - "5142:5142"
     environment:
       <<: [*dotnet-env, *db-conn, *jwt]
       ASPNETCORE_URLS: "http://+:5141"
@@ -297,6 +298,10 @@ services:
       KafkaConsumer__CerraduraAcceso__BootstrapServers: kafka:29092
       KafkaConsumer__CerraduraAcceso__GroupId: dispositivos-cerradura-acceso-group
       KafkaConsumer__CerraduraAcceso__Topic: cerradura.acceso
+      KafkaConsumer__CerraduraAcceso__UsuariosGrpcUrl: https://usuarios-api:5285
+      KafkaConsumer__CerraduraAcceso__AuthenticateGrpcUrl: https://auth-api:5118
+      KafkaConsumer__CerraduraAcceso__ReservasGrpcUrl: http://reservas-api:5142
+      KafkaConsumer__CerraduraAcceso__SkipCertValidation: "true"
     networks:
       - barcelo-net
     depends_on:

@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <PackageReference Include="Confluent.Kafka" Version="2.3.0" />
+    <PackageReference Include="Grpc.Net.Client" Version="2.66.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="9.0.3" />
     <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="9.0.3" />
     <PackageReference Include="Microsoft.Extensions.Http" Version="9.0.3" />
@@ -18,6 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Grpc.Contracts\Grpc.Contracts.csproj" />
     <ProjectReference Include="..\Dispositivos.Application\Dispositivos.Application.csproj" />
     <ProjectReference Include="..\Dispositivos.Domain\Dispositivos.Domain.csproj" />
     <ProjectReference Include="..\Dispositivos.Persistence\Dispositivos.Persistence.csproj" />

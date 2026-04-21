@@ -3,6 +3,7 @@ using Confluent.Kafka;
 using Confluent.Kafka.Admin;
 using Dispositivos.Application.Interfaces;
 using Dispositivos.Domain.Entities;
+using Grpc.Net.Client;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -21,6 +22,11 @@ public class CerraduraAccesoKafkaConsumerConfig
     public int AutoCommitIntervalMs { get; set; } = 5000;
     public int SessionTimeoutMs { get; set; } = 30000;
     public int MaxPollIntervalMs { get; set; } = 300000;
+    public string PersonalAccesoProducerTopic { get; set; } = "habitacion.personal-acceso";
+    public string UsuariosGrpcUrl { get; set; } = "https://localhost:5285";
+    public string AuthenticateGrpcUrl { get; set; } = "https://localhost:5118";
+    public string ReservasGrpcUrl { get; set; } = "http://localhost:5142";
+    public bool SkipCertValidation { get; set; }
 }
 
 public class CerraduraAccesoKafkaConsumer : BackgroundService
@@ -30,6 +36,7 @@ public class CerraduraAccesoKafkaConsumer : BackgroundService
     private readonly ILogger<CerraduraAccesoKafkaConsumer> _logger;
     private IConsumer<string, string>? _consumer;
     private IAdminClient? _adminClient;
+    private IProducer<string, string>? _producer;
 
     public CerraduraAccesoKafkaConsumer(
         CerraduraAccesoKafkaConsumerConfig config,
@@ -65,6 +72,12 @@ public class CerraduraAccesoKafkaConsumer : BackgroundService
 
         var adminConfig = new AdminClientConfig { BootstrapServers = _config.BootstrapServers };
         _adminClient = new AdminClientBuilder(adminConfig).Build();
+
+        _producer = new ProducerBuilder<string, string>(new ProducerConfig
+        {
+            BootstrapServers = _config.BootstrapServers,
+            Acks = Acks.Leader
+        }).Build();
 
         EnsureTopicExists();
 
@@ -134,14 +147,14 @@ public class CerraduraAccesoKafkaConsumer : BackgroundService
         try
         {
             var metadata = _adminClient!.GetMetadata(TimeSpan.FromSeconds(10));
-            if (!metadata.Topics.Any(t => t.Topic == _config.Topic))
+            if (!metadata.Topics.Any(t => t.Topic == _config.PersonalAccesoProducerTopic))
             {
                 _adminClient.CreateTopicsAsync(new[]
                 {
-                    new TopicSpecification { Name = _config.Topic, NumPartitions = 1, ReplicationFactor = 1 }
+                    new TopicSpecification { Name = _config.PersonalAccesoProducerTopic, NumPartitions = 1, ReplicationFactor = 1 }
                 }).GetAwaiter().GetResult();
 
-                _logger.LogInformation("Topic {Topic} created", _config.Topic);
+                _logger.LogInformation("Topic {Topic} created", _config.PersonalAccesoProducerTopic);
             }
         }
         catch (CreateTopicsException ex) when (ex.Results[0].Error.Code == ErrorCode.TopicAlreadyExists)
@@ -183,8 +196,8 @@ public class CerraduraAccesoKafkaConsumer : BackgroundService
     private async Task HandleAccesoAsync(CerraduraAccesoEvent evento, CancellationToken cancellationToken)
     {
         _logger.LogInformation(
-            "Processing CerraduraAccesoEvent for dispositivo {DeviceName}, accessGranted: {AccessGranted}",
-            evento.DeviceName, evento.Data?.AccessGranted);
+            "Processing CerraduraAccesoEvent for dispositivo {DeviceName}, accessGranted: {AccessGranted}, credTipo: {CredTipo}",
+            evento.DeviceName, evento.Data?.AccessGranted, evento.Data?.CredTipo);
 
         if (!Guid.TryParse(evento.DeviceName, out var dispositivoId))
         {
@@ -207,8 +220,10 @@ public class CerraduraAccesoKafkaConsumer : BackgroundService
         }
 
         var credencialId = evento.Data?.CredId;
+        int? credencialIdActual = null;
         var accessGranted = evento.Data?.AccessGranted ?? false;
         var accessMethod = evento.Data?.AccessMethod ?? "desconocido";
+        var credTipo = evento.Data?.CredTipo ?? string.Empty;
 
         if (accessGranted && evento.Data?.CredPin.HasValue == true 
             && evento.Data.CredAct.HasValue == true 
@@ -229,6 +244,8 @@ public class CerraduraAccesoKafkaConsumer : BackgroundService
             {
                 _logger.LogInformation("Credencial {CredencialId} encontrada por PIN y fechas", credencialPorPin.CredencialId);
                 credencialId = credencialPorPin.CredencialId;
+                credencialIdActual = credencialPorPin.CredencialId;
+                credTipo = credencialPorPin.TipoCredencial ?? credTipo;
                 await ActualizarCredencialConId(unitOfWork, cerradura, credencialPorPin.CredencialId, cancellationToken);
             }
             else
@@ -243,15 +260,15 @@ public class CerraduraAccesoKafkaConsumer : BackgroundService
             await ActualizarCredencialConId(unitOfWork, cerradura, credencialId.Value, cancellationToken);
         }
 
+        var timestamp = evento.Timestamp > 0
+            ? DateTimeOffset.FromUnixTimeMilliseconds(evento.Timestamp).UtcDateTime
+            : DateTime.UtcNow;
+
         var resultadoAcceso = accessGranted ? "Concedido" : "Denegado";
         var codigoError = accessGranted ? null : "ACCESS_DENIED";
         var motivoAcceso = accessGranted
             ? $"Acceso concedido via {accessMethod}"
-            : $"Acceso denegado via {accessMethod}";
-
-        var timestamp = evento.Timestamp > 0
-            ? DateTimeOffset.FromUnixTimeMilliseconds(evento.Timestamp).UtcDateTime
-            : DateTime.UtcNow;
+            : $"Accceso denegado via {accessMethod}";
 
         var registro = new RegistrosAcceso
         {
@@ -276,7 +293,240 @@ public class CerraduraAccesoKafkaConsumer : BackgroundService
         _logger.LogInformation(
             "RegistrosAcceso creado para cerradura {CerraduraId}, acceso {Resultado}, credencial {CredencialId}",
             cerradura.CerraduraId, resultadoAcceso, credencialId);
+
+        _logger.LogInformation(
+            "Evaluando notificacion: accessGranted={AccessGranted}, credTipo={CredTipo}, credencialId={CredencialId}",
+            accessGranted, credTipo, credencialIdActual.HasValue ? credencialIdActual.Value : credencialId);
+
+        if (accessGranted && string.Equals(credTipo, "personal", StringComparison.OrdinalIgnoreCase) && credencialIdActual.HasValue)
+        {
+            _logger.LogInformation("Ejecutando NotificarAccesoPersonalAsync para credencial {CredencialId}", credencialIdActual.Value);
+            await NotificarAccesoPersonalAsync(cerradura, credencialIdActual.Value, timestamp, cancellationToken);
+        }
     }
+
+    private async Task NotificarAccesoPersonalAsync(
+        CerradurasInteligente cerradura,
+        int credencialId,
+        DateTime fechaAcceso,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            _logger.LogInformation(
+                "Procesando notificación de acceso personal para credencial {CredencialId}, cerradura {CerraduraId}",
+                credencialId, cerradura.CerraduraId);
+
+            var credencial = await GetCredencialConDatosAsync(credencialId, cancellationToken);
+            if (credencial == null || !credencial.Value.PersonalId.HasValue)
+            {
+                _logger.LogWarning("Credencial {CredencialId} no tiene PersonalId asociado", credencialId);
+                return;
+            }
+
+            var personalId = credencial.Value.PersonalId.Value;
+
+            var huespedes = new List<HuespedCheckInInfo>();
+
+            var reservaResponse = await ObtenerReservaActivaAsync(cerradura.HabitacionId, cancellationToken);
+            if (reservaResponse != null)
+            {
+                _logger.LogInformation(
+                    "Reserva activa {ReservaId} encontrada para habitacion {HabitacionId}",
+                    reservaResponse.ReservaId, cerradura.HabitacionId);
+
+                var huespedIds = new List<int>();
+                if (reservaResponse.HuespedId > 0)
+                    huespedIds.Add(reservaResponse.HuespedId);
+                huespedIds.AddRange(reservaResponse.HuespedesAdicionales);
+
+                foreach (var huespedId in huespedIds)
+                {
+                    var email = await ObtenerEmailDeHuespedAsync(huespedId, cancellationToken);
+                    if (!string.IsNullOrEmpty(email))
+                    {
+                        huespedes.Add(new HuespedCheckInInfo
+                        {
+                            HuespedId = huespedId,
+                            Email = email,
+                            NombreCompleto = $"Huésped {huespedId}"
+                        });
+                        _logger.LogInformation("Email obtienen para huesped {HuespedId}: {Email}", huespedId, email);
+                    }
+                }
+            }
+            else
+            {
+                _logger.LogWarning("No se encontró reserva activa para habitacion {HabitacionId}", cerradura.HabitacionId);
+            }
+
+            var accesoEvent = new PersonalAccesoHabitacionEvent
+            {
+                HabitacionId = cerradura.HabitacionId,
+                NumeroHabitacion = cerradura.HabitacionId.ToString(),
+                PersonalId = personalId,
+                NombrePersonal = $"Personal {personalId}",
+                Puesto = null,
+                Departamento = null,
+                EsAccesoFisico = true,
+                Huespedes = huespedes,
+                FechaAcceso = fechaAcceso
+            };
+
+            var message = new Message<string, string>
+            {
+                Key = cerradura.HabitacionId.ToString(),
+                Value = JsonSerializer.Serialize(accesoEvent, new JsonSerializerOptions
+                {
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                })
+            };
+
+            await _producer!.ProduceAsync(_config.PersonalAccesoProducerTopic, message, cancellationToken);
+
+            _logger.LogInformation(
+                "PersonalAccesoHabitacionEvent publicado para habitacion {HabitacionId}, {Count} huespedes, acceso físico",
+                cerradura.HabitacionId, huespedes.Count);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al notificar acceso personal para credencial {CredencialId}", credencialId);
+        }
+    }
+
+    private async Task<Grpc.Contracts.Reservas.ReservaResponse?> ObtenerReservaActivaAsync(
+        int habitacionId, CancellationToken cancellationToken)
+    {
+        var grpcUrl = _config.ReservasGrpcUrl;
+        _logger.LogInformation("[Notificacion] Obteniendo reserva activa para habitacion {HabitacionId} desde {GrpcUrl}", habitacionId, grpcUrl);
+
+        for (int attempt = 1; attempt <= 3; attempt++)
+        {
+            try
+            {
+                var httpHandler = new System.Net.Http.HttpClientHandler();
+                if (_config.SkipCertValidation)
+                {
+                    httpHandler.ServerCertificateCustomValidationCallback =
+                        System.Net.Http.HttpClientHandler.DangerousAcceptAnyServerCertificateValidator;
+                }
+
+                using var channel = GrpcChannel.ForAddress(grpcUrl, new GrpcChannelOptions
+                {
+                    HttpHandler = httpHandler,
+                    DisposeHttpClient = true
+                });
+                var client = new Grpc.Contracts.Reservas.Reserva.ReservaClient(channel);
+                var response = await client.GetReservaActivaByHabitacionIdAsync(
+                    new Grpc.Contracts.Reservas.GetReservaActivaByHabitacionIdRequest { HabitacionId = habitacionId },
+                    cancellationToken: cancellationToken);
+
+                if (response.Found)
+                {
+                    _logger.LogInformation(
+                        "[Notificacion] Reserva {ReservaId} encontrada para habitacion {HabitacionId}",
+                        response.ReservaId, habitacionId);
+                    return response;
+                }
+                _logger.LogWarning("[Notificacion] No se encontró reserva activa para habitacion {HabitacionId}", habitacionId);
+                return null;
+            }
+            catch (Exception ex) when (attempt < 3)
+            {
+                _logger.LogWarning(ex, "[Notificacion] Error gRPC Reserva (attempt {Attempt}/3): {Message}", attempt, ex.Message);
+                await Task.Delay(500 * attempt, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "[Notificacion] Error gRPC Reserva final: {Message}", ex.Message);
+            }
+        }
+        return null;
+    }
+
+    private async Task<string?> ObtenerEmailDeHuespedAsync(int huespedId, CancellationToken cancellationToken)
+    {
+        var usuariosGrpcUrl = _config.UsuariosGrpcUrl;
+        var authGrpcUrl = _config.AuthenticateGrpcUrl;
+
+        for (int attempt = 1; attempt <= 3; attempt++)
+        {
+            try
+            {
+                var httpHandler = new System.Net.Http.HttpClientHandler();
+                if (_config.SkipCertValidation)
+                {
+                    httpHandler.ServerCertificateCustomValidationCallback =
+                        System.Net.Http.HttpClientHandler.DangerousAcceptAnyServerCertificateValidator;
+                }
+
+                using var channel = GrpcChannel.ForAddress(usuariosGrpcUrl, new GrpcChannelOptions
+                {
+                    HttpHandler = httpHandler,
+                    DisposeHttpClient = true
+                });
+                var huespedClient = new Grpc.Contracts.Usuarios.Huesped.HuespedClient(channel);
+                var huespedResponse = await huespedClient.GetHuespedByIdAsync(
+                    new Grpc.Contracts.Usuarios.GetHuespedByIdRequest { HuespedId = huespedId },
+                    cancellationToken: cancellationToken);
+
+                if (!huespedResponse.Found || string.IsNullOrEmpty(huespedResponse.UsuarioId))
+                {
+                    _logger.LogWarning("[Notificacion] Huesped {HuespedId} no encontrado en Usuarios API", huespedId);
+                    return null;
+                }
+
+                var usuarioId = huespedResponse.UsuarioId;
+
+                var httpHandler2 = new System.Net.Http.HttpClientHandler();
+                if (_config.SkipCertValidation)
+                {
+                    httpHandler2.ServerCertificateCustomValidationCallback =
+                        System.Net.Http.HttpClientHandler.DangerousAcceptAnyServerCertificateValidator;
+                }
+
+                using var channel2 = GrpcChannel.ForAddress(authGrpcUrl, new GrpcChannelOptions
+                {
+                    HttpHandler = httpHandler2,
+                    DisposeHttpClient = true
+                });
+                var authClient = new Grpc.Contracts.Authentication.UserLookup.UserLookupClient(channel2);
+                var authResponse = await authClient.GetEmailByUserIdAsync(
+                    new Grpc.Contracts.Authentication.GetEmailByUserIdRequest { UserId = usuarioId },
+                    cancellationToken: cancellationToken);
+
+                if (authResponse.Found)
+                {
+                    _logger.LogInformation("[Notificacion] Email obtenidos para huesped {HuespedId}: {Email}", huespedId, authResponse.Email);
+                    return authResponse.Email;
+                }
+                _logger.LogWarning("[Notificacion] Usuario {UsuarioId} no encontrado en Auth API", usuarioId);
+                return null;
+            }
+            catch (Exception ex) when (attempt < 3)
+            {
+                _logger.LogWarning(ex, "[Notificacion] Error gRPC (attempt {Attempt}/3): {Message}", attempt, ex.Message);
+                await Task.Delay(500 * attempt, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "[Notificacion] Error gRPC final para huesped {HuespedId}: {Message}", huespedId, ex.Message);
+            }
+        }
+        return null;
+    }
+
+    private async Task<(int? PersonalId, int? HuespedId, int? ReservaId)?> GetCredencialConDatosAsync(
+        int credencialId, CancellationToken cancellationToken)
+    {
+        using var scope = _scopeFactory.CreateScope();
+        var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
+        var credencial = await unitOfWork.CredencialesAcceso.GetById(credencialId);
+
+        if (credencial == null) return null;
+
+        return (credencial.PersonalId, credencial.HuespedId, credencial.ReservaId);
+}
 
     private async Task ActualizarCredencialConId(IUnitOfWork unitOfWork, CerradurasInteligente cerradura, int credId, CancellationToken cancellationToken)
     {
@@ -306,6 +556,8 @@ public class CerraduraAccesoKafkaConsumer : BackgroundService
     {
         _consumer?.Dispose();
         _adminClient?.Dispose();
+        _producer?.Flush(TimeSpan.FromSeconds(5));
+        _producer?.Dispose();
         base.Dispose();
     }
 }

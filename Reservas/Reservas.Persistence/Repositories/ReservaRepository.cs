@@ -1,8 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Reservas.Application.Interfaces;
 using Reservas.Domain.Entites;
-using static Reservas.Domain.Entites.EstadoReserva;
-
 
 using Reservas.Persistence.Data;
 
@@ -64,14 +62,27 @@ public class ReservaRepository : GenericRepository<Reserva>, IReservaRepository
             .ToListAsync(cancellationToken);
     }
 
-    public async Task<bool> IsHabitacionOcupadaAsync(int habitacionId, DateTime fechaCheckIn, DateTime fechaCheckOut, CancellationToken cancellationToken = default, int? excludeReservaId = null)
-    {
-        return await _dbSet.AnyAsync(r =>
+public async Task<bool> IsHabitacionOcupadaAsync(int habitacionId, DateTime fechaCheckIn, DateTime fechaCheckOut, CancellationToken cancellationToken = default, int? excludeReservaId = null)
+{
+    return await _dbSet.AnyAsync(r =>
+        r.HabitacionId == habitacionId &&
+        r.EstadoReservaId != EstadoReserva.Cancelada &&
+        r.FechaCheckIn < fechaCheckOut &&
+        r.FechaCheckOut > fechaCheckIn &&
+        (excludeReservaId == null || r.ReservaId != excludeReservaId),
+        cancellationToken);
+}
+
+public async Task<Reserva?> GetReservaActivaByHabitacionIdAsync(int habitacionId, CancellationToken cancellationToken = default)
+{
+    var now = DateTime.UtcNow;
+    return await _dbSet
+        .Include(r => r.ReservaHuespedes)
+        .FirstOrDefaultAsync(r =>
             r.HabitacionId == habitacionId &&
-            r.EstadoReservaId != EstadoReserva.Cancelada &&
-            r.FechaCheckIn < fechaCheckOut &&
-            r.FechaCheckOut > fechaCheckIn &&
-            (excludeReservaId == null || r.ReservaId != excludeReservaId),
+            r.EstadoReservaId == 2 &&
+            r.FechaCheckIn <= now &&
+            r.FechaCheckOut >= now,
             cancellationToken);
-    }
+}
 }

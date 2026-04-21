@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+option csharp_namespace = "Grpc.Contracts.Reservas";
+
+package reservas;
+
+service Reserva {
+  rpc GetReservaActivaByHabitacionId (GetReservaActivaByHabitacionIdRequest) returns (ReservaResponse);
+}
+
+message GetReservaActivaByHabitacionIdRequest {
+  int32 habitacion_id = 1;
+}
+
+message ReservaResponse {
+  bool found = 1;
+  int32 reserva_id = 2;
+  int32 huesped_id = 3;
+  repeated int32 huespedes_adicionales = 4;
+  string fecha_check_in = 5;
+  string fecha_check_out = 6;
+}

@@ -17,6 +17,9 @@ namespace Dispositivos.API
     {
         public static async Task Main(string[] args)
         {
+            // Habilitar HTTP/2 sin cifrado (h2c) para llamadas gRPC a Reservas.API
+            AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
+
             var builder = WebApplication.CreateBuilder(args);
 
             // Enable HTTP/2 cleartext (h2c) for gRPC on the same port as REST

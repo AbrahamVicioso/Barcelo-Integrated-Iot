@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using Reservas.API;
+using Reservas.API.GrpcServices;
 using Reservas.Application;
 using Reservas.Email;
 using Reservas.Infrastructure;
@@ -9,6 +10,7 @@ using Reservas.Persistence;
 using Reservas.Persistence.Data;
 using Scalar.AspNetCore;
 using System.Security.Claims;
+using Grpc.AspNetCore;
 
 // Habilitar HTTP/2 sin cifrado (h2c) para clientes gRPC internos
 AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
@@ -20,6 +22,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddOpenApi();
+builder.Services.AddGrpc();
 
 builder.Services.AddAuthorizationServices();
 
@@ -60,5 +63,7 @@ using (var scope = app.Services.CreateScope())
 }
 
 app.MapControllers();
+
+app.MapGrpcService<ReservaGrpcService>();
 
 app.Run();

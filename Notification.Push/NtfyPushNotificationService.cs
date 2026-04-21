@@ -22,6 +22,12 @@ public class NtfyPushNotificationService : IPushNotificationService
         _logger = logger;
     }
 
+    private static string EncodeHeaderValue(string value)
+    {
+        if (value.All(c => c < 128)) return value;
+        return $"=?utf-8?b?{Convert.ToBase64String(Encoding.UTF8.GetBytes(value))}?=";
+    }
+
     public async Task<bool> SendAsync(PushNotification notification, CancellationToken cancellationToken = default)
     {
         try
@@ -33,7 +39,7 @@ public class NtfyPushNotificationService : IPushNotificationService
                 Content = new StringContent(notification.Message, Encoding.UTF8, "text/plain")
             };
 
-            request.Headers.Add("Title", notification.Title);
+            request.Headers.TryAddWithoutValidation("Title", EncodeHeaderValue(notification.Title));
             request.Headers.Add("Priority", ((int)notification.Priority).ToString());
 
             if (notification.Tags?.Length > 0)

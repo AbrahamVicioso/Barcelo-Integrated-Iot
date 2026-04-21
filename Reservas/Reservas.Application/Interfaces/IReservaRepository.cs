@@ -9,4 +9,5 @@ public interface IReservaRepository : IGenericRepository<Reserva>
     Task<IEnumerable<Reserva>> GetReservasByEstadoAsync(int estadoReservaId, CancellationToken cancellationToken = default);
     Task<IEnumerable<Reserva>> GetReservasByFechaRangoAsync(DateTime fechaInicio, DateTime fechaFin, CancellationToken cancellationToken = default);
     Task<bool> IsHabitacionOcupadaAsync(int habitacionId, DateTime fechaCheckIn, DateTime fechaCheckOut, CancellationToken cancellationToken = default, int? excludeReservaId = null);
+    Task<Reserva?> GetReservaActivaByHabitacionIdAsync(int habitacionId, CancellationToken cancellationToken = default);
 }
