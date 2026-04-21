@@ -45,21 +45,20 @@ services:
       - "8081:443"
       - "8082:80"
     environment:
-      NTFY_BASE_URL: ${NTFY_PUBLIC_BASE_URL:-https://localhost:8081}
+      NTFY_BASE_URL: ${NTFY_PUBLIC_BASE_URL:-https://smartstay.es:8081}
       NTFY_LISTEN_HTTP: ":80"
       NTFY_LISTEN_HTTPS: ":443"
-      NTFY_KEY_FILE: /certs/barcelo-dev.key
-      NTFY_CERT_FILE: /certs/barcelo-dev.crt
+      NTFY_KEY_FILE: /certs/privkey.pem
+      NTFY_CERT_FILE: /certs/fullchain.pem
       NTFY_CACHE_FILE: /var/lib/ntfy/cache.db
       NTFY_AUTH_FILE: /var/lib/ntfy/auth.db
-      # Siempre deny-all. Sin credenciales configuradas nadie puede suscribirse.
       NTFY_AUTH_DEFAULT_ACCESS: ${NTFY_AUTH_DEFAULT_ACCESS:-deny-all}
       NTFY_ATTACHMENT_CACHE_DIR: /var/lib/ntfy/attachments
       NTFY_BEHIND_PROXY: "false"
       NTFY_ENABLE_CORS: "true"
     volumes:
       - ntfy-data:/var/lib/ntfy
-      - ./docker/certs:/certs:ro
+      - ./docker/certs/live/smartstay.es:/certs:ro
     networks:
       - barcelo-net
     healthcheck:
@@ -176,6 +175,28 @@ services:
       - postgres
       - kafka
 
+  # ── Certbot (Let's Encrypt) ─────────────────────────────────────────────────
+  certbot:
+    image: certbot/certbot:latest
+    container_name: smartstay-certbot
+    volumes:
+      - ./docker/certs/live/smartstay.es:/etc/letsencrypt/live:ro
+      - ./docker/certs/archive:/etc/letsencrypt/archive:rw
+      - ./docker/certs/www:/var/www/certbot:rw
+    ports:
+      - "80:80"
+      - "443:443"
+    command: >
+      certonly --webroot -w /var/www/certbot
+      --email admin@smartstay.es
+      --agree-tos --no-eff-email
+      -d smartstay.es
+      -d "*.smartstay.es"
+      --keep-until-expiring
+    restart: unless-stopped
+    networks:
+      - barcelo-net
+
   # ── APIs ──────────────────────────────────────────────────────────────────────
   auth-api:
     build:
@@ -189,7 +210,7 @@ services:
           memory: 300M
           cpus: '0.25'
     volumes:
-      - ./docker/certs:/https:ro
+      - ./docker/certs/live/smartstay.es:/https:ro
     ports:
       - "5117:5117"
       - "5118:5118"
@@ -203,10 +224,10 @@ services:
       AuditProducer__BootstrapServers: kafka:29092
       AuditProducer__Topic: audit.events
       AuditProducer__ClientId: authenticate-audit
-      ConfirmEmail__BaseUrl: ${GATEWAY_PUBLIC_BASE_URL:-http://localhost:5019}
+      ConfirmEmail__BaseUrl: ${GATEWAY_PUBLIC_BASE_URL:-https://smartstay.es:5020}
       ConfirmEmail__PathPrefix: /api/auth
       Ntfy__BaseUrl: https://ntfy:443
-      Ntfy__PublicBaseUrl: http://localhost:5019/ntfy
+      Ntfy__PublicBaseUrl: https://smartstay.es:8081/ntfy
       Ntfy__IgnoreCertificateErrors: "true"
       Ntfy__AccessToken: ${NTFY_SERVER_TOKEN:-}
     networks:
@@ -229,7 +250,7 @@ services:
           memory: 300M
           cpus: '0.25'
     volumes:
-      - ./docker/certs:/https:ro
+      - ./docker/certs/live/smartstay.es:/https:ro
     ports:
       - "5284:5284"
       - "5285:5285"
@@ -241,9 +262,9 @@ services:
       KafkaProducer__PermisoHabitacion__BootstrapServers: kafka:29092
       KafkaProducer__PermisoHabitacion__Topic: habitacion.permiso-personal
       ExternalServices__Authentication__GrpcUrl: "https://auth-api:5118"
-      ExternalServices__Authentication__SkipCertValidation: "true"
+      ExternalServices__Authentication__SkipCertValidation: "false"
       ExternalServices__Dispositivos__GrpcUrl: "https://dispositivos-api:7288"
-      ExternalServices__Dispositivos__SkipCertValidation: "true"
+      ExternalServices__Dispositivos__SkipCertValidation: "false"
     networks:
       - barcelo-net
     depends_on:
@@ -268,7 +289,7 @@ services:
           memory: 300M
           cpus: '0.25'
     volumes:
-      - ./docker/certs:/https:ro
+      - ./docker/certs/live/smartstay.es:/https:ro
     ports:
       - "5141:5141"
       - "5142:5142"
@@ -276,7 +297,7 @@ services:
       <<: [*dotnet-env, *db-conn, *jwt]
       ASPNETCORE_URLS: "http://+:5141"
       GrpcClients__Usuarios__GrpcUrl: "https://usuarios-api:5285"
-      GrpcClients__Usuarios__SkipCertValidation: "true"
+      GrpcClients__Usuarios__SkipCertValidation: "false"
       KafkaProducer__BootstrapServers: kafka:29092
       KafkaProducer__Topic: reservas
       KafkaProducer__UnlockDoorTopic: dispositivos.unlock-door
@@ -309,7 +330,7 @@ services:
           memory: 300M
           cpus: '0.25'
     volumes:
-      - ./docker/certs:/https:ro
+      - ./docker/certs/live/smartstay.es:/https:ro
     ports:
       - "5185:5185"
       - "7288:7288"
@@ -323,9 +344,9 @@ services:
       KafkaProducer__Topic: credenciales.creada
       KafkaProducer__ClientId: dispositivos-credenciales
       ExternalServices__Usuarios__GrpcUrl: https://usuarios-api:5285
-      ExternalServices__Usuarios__SkipCertValidation: "true"
+      ExternalServices__Usuarios__SkipCertValidation: "false"
       ExternalServices__Authenticate__GrpcUrl: https://auth-api:5118
-      ExternalServices__Authenticate__SkipCertValidation: "true"
+      ExternalServices__Authenticate__SkipCertValidation: "false"
       KafkaConsumer__UnlockDoor__BootstrapServers: kafka:29092
       KafkaConsumer__UnlockDoor__GroupId: dispositivos-unlock-door-group
       KafkaConsumer__UnlockDoor__Topic: dispositivos.unlock-door
@@ -346,7 +367,7 @@ services:
       KafkaConsumer__CerraduraAcceso__UsuariosGrpcUrl: https://usuarios-api:5285
       KafkaConsumer__CerraduraAcceso__AuthenticateGrpcUrl: https://auth-api:5118
       KafkaConsumer__CerraduraAcceso__ReservasGrpcUrl: http://reservas-api:5142
-      KafkaConsumer__CerraduraAcceso__SkipCertValidation: "true"
+      KafkaConsumer__CerraduraAcceso__SkipCertValidation: "false"
     networks:
       - barcelo-net
     depends_on:
@@ -367,16 +388,16 @@ services:
           memory: 300M
           cpus: '0.25'
     volumes:
-      - ./docker/certs:/https:ro
+      - ./docker/certs/live/smartstay.es:/https:ro
     ports:
       - "5019:5019"
       - "5020:5020"
     environment:
       <<: *dotnet-env
       ASPNETCORE_URLS: "http://+:5019;https://+:5020"
-      ASPNETCORE_Kestrel__Certificates__Default__Path: /https/barcelo-dev.pfx
-      ASPNETCORE_Kestrel__Certificates__Default__Password: barcelo-dev
-      GlobalConfiguration__BaseUrl: ${GATEWAY_PUBLIC_BASE_URL:-https://localhost:5020}
+      ASPNETCORE_Kestrel__Certificates__Default__Path: /https/smartstay.pfx
+      ASPNETCORE_Kestrel__Certificates__Default__Password: smartstay
+      GlobalConfiguration__BaseUrl: ${GATEWAY_PUBLIC_BASE_URL:-https://smartstay.es:5020}
     networks:
       - barcelo-net
     depends_on:
@@ -399,7 +420,7 @@ services:
           memory: 64M
           cpus: '0.25'
     volumes:
-      - ./docker/certs:/https:ro
+      - ./docker/certs/live/smartstay.es:/https:ro
     environment:
       <<: *dotnet-env
       KafkaConsumer__UserCreated__BootstrapServers: kafka:29092
@@ -429,7 +450,7 @@ services:
       Ntfy__TopicPrefix: barcelo
       Ntfy__AccessToken: ${NTFY_SERVER_TOKEN:-}
       Ntfy__AdminPassword: ${NTFY_ADMIN_PASSWORD:-}
-      Ntfy__IgnoreCertificateErrors: "true"
+      Ntfy__IgnoreCertificateErrors: "false"
       AuthApi__BaseUrl: http://auth-api:5117
       ConnectionStrings__BarceloIoTDatabase: "Data source=sqlserver;Database=BarceloIoTDatabase;User Id=sa;Password=Testing1234;TrustServerCertificate=True"
     networks:
@@ -452,13 +473,15 @@ services:
           memory: 300M
           cpus: '0.25'
     volumes:
-      - ./docker/certs:/https:ro
+      - ./docker/certs/live/smartstay.es:/https:ro
     ports:
       - "5250:5250"
       - "5251:5251"
     environment:
       <<: [*dotnet-env, *db-conn]
       ASPNETCORE_URLS: "http://+:5250;https://+:5251"
+      ASPNETCORE_Kestrel__Certificates__Default__Path: /https/smartstay.pfx
+      ASPNETCORE_Kestrel__Certificates__Default__Password: smartstay
       AuditConsumer__BootstrapServers: kafka:29092
       AuditConsumer__GroupId: audit-worker-group
       AuditConsumer__Topic: audit.events
