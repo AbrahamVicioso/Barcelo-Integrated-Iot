@@ -101,11 +101,14 @@ Esto agrega entradas al archivo `hosts` de Windows:
 
 El script `bootstrap-local.ps1` genera certificados autofirmados automáticamente:
 
+> **Importante:** ejecutar los scripts desde la **raíz del proyecto**, no desde dentro de `scripts/`.
+
 ```powershell
-.\scripts\generate-dev-certs.ps1
+# Desde la raíz del proyecto
+.\scripts\generate-dev-certs.ps1 -Domain smartstay.int
 ```
 
-Ubicación: `docker/certs/live/smartstay.es/smartstay.pfx`
+Ubicación: `docker/certs/live/smartstay.int/` (`cert.pem`, `privkey.pem`, `smartstay.pfx`)
 
 ### Producción (Let's Encrypt)
 
