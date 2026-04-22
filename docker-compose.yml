@@ -270,9 +270,9 @@ services:
       KafkaProducer__PermisoHabitacion__BootstrapServers: kafka:29092
       KafkaProducer__PermisoHabitacion__Topic: habitacion.permiso-personal
       ExternalServices__Authentication__GrpcUrl: "https://auth-api:5118"
-      ExternalServices__Authentication__SkipCertValidation: "false"
+      ExternalServices__Authentication__SkipCertValidation: "true"
       ExternalServices__Dispositivos__GrpcUrl: "https://dispositivos-api:7288"
-      ExternalServices__Dispositivos__SkipCertValidation: "false"
+      ExternalServices__Dispositivos__SkipCertValidation: "true"
     networks:
       - barcelo-net
     depends_on:
@@ -305,7 +305,7 @@ services:
       <<: [*dotnet-env, *db-conn, *jwt]
       ASPNETCORE_URLS: "http://+:5141"
       GrpcClients__Usuarios__GrpcUrl: "https://usuarios-api:5285"
-      GrpcClients__Usuarios__SkipCertValidation: "false"
+      GrpcClients__Usuarios__SkipCertValidation: "true"
       KafkaProducer__BootstrapServers: kafka:29092
       KafkaProducer__Topic: reservas
       KafkaProducer__UnlockDoorTopic: dispositivos.unlock-door
@@ -352,9 +352,9 @@ services:
       KafkaProducer__Topic: credenciales.creada
       KafkaProducer__ClientId: dispositivos-credenciales
       ExternalServices__Usuarios__GrpcUrl: https://usuarios-api:5285
-      ExternalServices__Usuarios__SkipCertValidation: "false"
+      ExternalServices__Usuarios__SkipCertValidation: "true"
       ExternalServices__Authenticate__GrpcUrl: https://auth-api:5118
-      ExternalServices__Authenticate__SkipCertValidation: "false"
+      ExternalServices__Authenticate__SkipCertValidation: "true"
       KafkaConsumer__UnlockDoor__BootstrapServers: kafka:29092
       KafkaConsumer__UnlockDoor__GroupId: dispositivos-unlock-door-group
       KafkaConsumer__UnlockDoor__Topic: dispositivos.unlock-door
@@ -375,7 +375,7 @@ services:
       KafkaConsumer__CerraduraAcceso__UsuariosGrpcUrl: https://usuarios-api:5285
       KafkaConsumer__CerraduraAcceso__AuthenticateGrpcUrl: https://auth-api:5118
       KafkaConsumer__CerraduraAcceso__ReservasGrpcUrl: http://reservas-api:5142
-      KafkaConsumer__CerraduraAcceso__SkipCertValidation: "false"
+      KafkaConsumer__CerraduraAcceso__SkipCertValidation: "true"
     networks:
       - barcelo-net
     depends_on:
