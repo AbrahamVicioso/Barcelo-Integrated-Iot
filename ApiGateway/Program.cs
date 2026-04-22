@@ -128,6 +128,32 @@ public class Program
         //      (Scalar, OpenAPI proxy, /docs) and short-circuits the pipeline.
         //   3. Requests with no matched endpoint fall through to Ocelot.
         //
+        // Explicit preflight handler — must run before Ocelot and UseRouting.
+        // Ocelot has a known issue where it intercepts OPTIONS before ASP.NET Core
+        // CORS middleware can short-circuit it.
+        app.Use(async (ctx, next) =>
+        {
+            if (HttpMethods.IsOptions(ctx.Request.Method) &&
+                ctx.Request.Headers.ContainsKey("Origin"))
+            {
+                var origin = ctx.Request.Headers.Origin.ToString();
+                if (allowedOrigins.Contains(origin, StringComparer.OrdinalIgnoreCase))
+                {
+                    ctx.Response.Headers.Append("Access-Control-Allow-Origin", origin);
+                    ctx.Response.Headers.Append("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, PATCH");
+                    ctx.Response.Headers.Append("Access-Control-Allow-Headers",
+                        ctx.Request.Headers.TryGetValue("Access-Control-Request-Headers", out var reqHeaders)
+                            ? reqHeaders.ToString()
+                            : "Content-Type, Authorization");
+                    ctx.Response.Headers.Append("Access-Control-Allow-Credentials", "true");
+                    ctx.Response.Headers.Append("Access-Control-Max-Age", "86400");
+                    ctx.Response.StatusCode = StatusCodes.Status204NoContent;
+                    return;
+                }
+            }
+            await next();
+        });
+
         app.UseCors();
 
         app.UseRouting();

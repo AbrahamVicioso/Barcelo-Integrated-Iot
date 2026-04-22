@@ -14,7 +14,8 @@
         "GET",
         "POST",
         "PUT",
-        "DELETE"
+        "DELETE",
+        "OPTIONS"
       ]
     },
     {
@@ -31,7 +32,8 @@
         "GET",
         "POST",
         "PUT",
-        "DELETE"
+        "DELETE",
+        "OPTIONS"
       ]
     },
     {
@@ -48,7 +50,8 @@
         "GET",
         "POST",
         "PUT",
-        "DELETE"
+        "DELETE",
+        "OPTIONS"
       ]
     },
     {
@@ -65,7 +68,8 @@
         "GET",
         "POST",
         "PUT",
-        "DELETE"
+        "DELETE",
+        "OPTIONS"
       ]
     },
     {

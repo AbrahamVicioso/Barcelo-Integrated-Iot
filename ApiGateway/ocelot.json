@@ -15,7 +15,8 @@
         "GET",
         "POST",
         "PUT",
-        "DELETE"
+        "DELETE",
+        "OPTIONS"
       ]
     },
     // Route for Users Service
@@ -33,7 +34,8 @@
         "GET",
         "POST",
         "PUT",
-        "DELETE"
+        "DELETE",
+        "OPTIONS"
       ]
     },
     // Route for Reservas Service
@@ -51,7 +53,8 @@
         "GET",
         "POST",
         "PUT",
-        "DELETE"
+        "DELETE",
+        "OPTIONS"
       ]
     },
     // Route for Devices Service
@@ -69,7 +72,8 @@
         "GET",
         "POST",
         "PUT",
-        "DELETE"
+        "DELETE",
+        "OPTIONS"
       ]
     },
     // Route for push notifications config (JWT protected, served by Auth Service)

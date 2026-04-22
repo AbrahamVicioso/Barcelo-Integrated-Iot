@@ -17,7 +17,6 @@ namespace Usuarios.API.Controllers;
 
 [ApiController]
 [Route("[controller]")]
-[HasPermission(Permissions.Huespedes.View)]
 public class HuespedController : ControllerBase
 {
     private readonly IMediator _mediator;
@@ -28,6 +27,7 @@ public class HuespedController : ControllerBase
     }
 
     [HttpGet]
+    [HasPermission(Permissions.Huespedes.View)]
     public async Task<IActionResult> GetAll()
     {
         var result = await _mediator.Send(new GetAllHuespedesQuery());
@@ -35,6 +35,7 @@ public class HuespedController : ControllerBase
     }
 
     [HttpGet("{id}")]
+    [HasPermission(Permissions.Huespedes.View)]
     public async Task<IActionResult> GetById(int id)
     {
         var result = await _mediator.Send(new GetHuespedeByIdQuery(id));
@@ -42,6 +43,7 @@ public class HuespedController : ControllerBase
     }
 
     [HttpGet("vip")]
+    [HasPermission(Permissions.Huespedes.View)]
     public async Task<IActionResult> GetVip()
     {
         var result = await _mediator.Send(new GetHuespedesVipQuery());
@@ -49,6 +51,7 @@ public class HuespedController : ControllerBase
     }
 
     [HttpGet("user/{usuarioId}")]
+    [HasPermission(Permissions.Huespedes.View)]
     public async Task<IActionResult> GetByUserId(string usuarioId)
     {
         var result = await _mediator.Send(new GetHuespedeByUserIdQuery(usuarioId));
