@@ -3,7 +3,7 @@
 	[UsuarioId] [nvarchar](450) NOT NULL,
 	[TipoNotificacion] [nvarchar](50) NOT NULL,
 	[Titulo] [nvarchar](200) NOT NULL,
-	[Mensaje] [nvarchar](1000) NOT NULL,
+	[Mensaje] [nvarchar](max) NOT NULL,
 	[Prioridad] [nvarchar](20) NOT NULL,
 	[FueLeida] [bit] NOT NULL,
 	[FechaEnvio] [datetime2](7) NOT NULL,

@@ -11,6 +11,7 @@ COPY ["EmailService.Infrastructure/Notification.Email.csproj", "EmailService.Inf
 COPY ["Notification.Kafka/Notification.Kafka.csproj", "Notification.Kafka/"]
 COPY ["Notification.Push/Notification.Push.csproj", "Notification.Push/"]
 COPY ["Notification.Domain/Notification.Domain.csproj", "Notification.Domain/"]
+COPY ["Grpc.Contracts/Grpc.Contracts.csproj", "Grpc.Contracts/"]
 COPY NuGet.config .
 
 # Restaurar dependencias (retry por conexión inestable)
@@ -25,6 +26,7 @@ COPY EmailService.Infrastructure/ EmailService.Infrastructure/
 COPY Notification.Kafka/ Notification.Kafka/
 COPY Notification.Push/ Notification.Push/
 COPY Notification.Domain/ Notification.Domain/
+COPY Grpc.Contracts/ Grpc.Contracts/
 
 # Build
 WORKDIR "/src/Notification.Worker"

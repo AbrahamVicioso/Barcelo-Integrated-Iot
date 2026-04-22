@@ -128,6 +128,8 @@ public class Program
         //      (Scalar, OpenAPI proxy, /docs) and short-circuits the pipeline.
         //   3. Requests with no matched endpoint fall through to Ocelot.
         //
+        app.UseCors();
+
         app.UseRouting();
 
         app.Use(async (ctx, next) =>
@@ -142,7 +144,6 @@ public class Program
 
         app.UseWebSockets();
         app.UseAuthorization();
-        app.UseCors();
 
         // Propagate the gateway's public address to downstream services so they
         // can build correct public-facing URLs (e.g. email confirmation links).

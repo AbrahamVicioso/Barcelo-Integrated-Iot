@@ -1,20 +1,21 @@
 using System.Net.Http.Json;
+using Grpc.Contracts.Authentication;
+using Grpc.Net.Client;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
 namespace Notification.Kafka.Services;
 
-/// <summary>
-/// Internal HTTP client to call Authenticate.API for storing the ntfy access token
-/// associated with a user. The token is then exposed only via a JWT-protected endpoint.
-/// </summary>
 public class AuthApiClient
 {
     private readonly HttpClient _httpClient;
+    private readonly IConfiguration _configuration;
     private readonly ILogger<AuthApiClient> _logger;
 
-    public AuthApiClient(HttpClient httpClient, ILogger<AuthApiClient> logger)
+    public AuthApiClient(HttpClient httpClient, IConfiguration configuration, ILogger<AuthApiClient> logger)
     {
         _httpClient = httpClient;
+        _configuration = configuration;
         _logger = logger;
     }
 
@@ -48,44 +49,53 @@ public class AuthApiClient
     {
         if (string.IsNullOrWhiteSpace(email))
         {
-            _logger.LogWarning("GetUserIdByEmailAsync called with empty email");
+            _logger.LogWarning("[AuthGrpc] GetUserIdByEmailAsync called with empty email");
             return null;
         }
 
-        try
+        var grpcUrl = _configuration["ExternalServices:Authenticate:GrpcUrl"] ?? "https://auth-api:5118";
+        var skipCert = _configuration.GetValue<bool>("ExternalServices:Authenticate:SkipCertValidation");
+
+        var httpHandler = new System.Net.Http.HttpClientHandler();
+        if (skipCert)
+            httpHandler.ServerCertificateCustomValidationCallback =
+                System.Net.Http.HttpClientHandler.DangerousAcceptAnyServerCertificateValidator;
+
+        for (int attempt = 1; attempt <= 3; attempt++)
         {
-            var response = await _httpClient.GetAsync($"/getuserbyemail?email={Uri.EscapeDataString(email)}", cancellationToken);
-
-            if (!response.IsSuccessStatusCode)
+            try
             {
-                _logger.LogWarning("Failed to get user ID for email {Email}. Status: {Status}", email, response.StatusCode);
-                return null;
+                using var channel = GrpcChannel.ForAddress(grpcUrl, new GrpcChannelOptions
+                {
+                    HttpHandler = httpHandler,
+                    DisposeHttpClient = attempt == 3
+                });
+                var client = new UserLookup.UserLookupClient(channel);
+
+                var response = await client.GetUserIdByEmailAsync(
+                    new GetUserIdByEmailRequest { Email = email },
+                    cancellationToken: cancellationToken);
+
+                if (!response.Found)
+                {
+                    _logger.LogWarning("[AuthGrpc] Usuario no encontrado para email {Email}", email);
+                    return null;
+                }
+
+                _logger.LogDebug("[AuthGrpc] UserId {UserId} obtenido para email {Email}", response.UserId, email);
+                return response.UserId;
             }
-
-            var userInfo = await response.Content.ReadFromJsonAsync<UserInfoResponse>(cancellationToken: cancellationToken);
-
-            if (userInfo == null)
+            catch (Exception ex) when (attempt < 3)
             {
-                _logger.LogWarning("UserInfo response is null for email {Email}", email);
-                return null;
+                _logger.LogWarning(ex, "[AuthGrpc] Error gRPC (attempt {Attempt}/3): {Message}", attempt, ex.Message);
+                await Task.Delay(500 * attempt, cancellationToken);
             }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "[AuthGrpc] Error gRPC final para email {Email}: {Message}", email, ex.Message);
+            }
+        }
 
-            _logger.LogDebug("User ID {UserId} obtained for email {Email}", userInfo.Id, email);
-            return userInfo.Id;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting user ID for email {Email}", email);
-            return null;
-        }
+        return null;
     }
-}
-
-public class UserInfoResponse
-{
-    public string Id { get; set; } = string.Empty;
-    public string Email { get; set; } = string.Empty;
-    public string UserName { get; set; } = string.Empty;
-    public string? PhoneNumber { get; set; }
-    public bool IsEmailConfirmed { get; set; }
 }

@@ -155,8 +155,8 @@ public abstract class NotificacionHandlerBase
             var notificacion = new NotificacionEntity
             {
                 UsuarioId = usuarioId,
-                TipoNotificacion = tipoNotificacion,
-                Titulo = titulo,
+                TipoNotificacion = tipoNotificacion.Length > 50 ? tipoNotificacion[..50] : tipoNotificacion,
+                Titulo = titulo.Length > 200 ? titulo[..200] : titulo,
                 Mensaje = mensaje,
                 Prioridad = prioridad,
                 FueLeida = false,
