@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using System.Security.Cryptography;
 using System.Text;
 using Barcelo.Authorization.Shared;
 
@@ -21,9 +20,10 @@ public class JwtGenerator : IJwtGenerator
         this.roleManager = roleManager;
     }
 
-    public async Task<string> GenerateJwtToken(IList<string> roles, User user)
+    public async Task<(string accessToken, string refreshToken)> GenerateTokensAsync(IList<string> roles, User user)
     {
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["Jwt:Key"]!));
+        var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
         var claims = new List<Claim>
         {
@@ -42,39 +42,61 @@ public class JwtGenerator : IJwtGenerator
             {
                 var roleClaims = await roleManager.GetClaimsAsync(identityRole);
                 foreach (var claim in roleClaims)
-                {
                     claims.Add(new Claim(PermissionConstants.PermissionType, claim.Value));
-                }
             }
         }
 
-        var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-
-        var token = new JwtSecurityToken(
+        var accessToken = new JwtSecurityTokenHandler().WriteToken(new JwtSecurityToken(
             issuer: configuration["Jwt:Issuer"],
             audience: configuration["Jwt:Audience"],
             claims: claims,
-            expires: DateTime.Now.AddMinutes(30),
+            expires: DateTime.UtcNow.AddMinutes(30),
             signingCredentials: creds
-        );
+        ));
 
-        var response = new JwtSecurityTokenHandler().WriteToken(token);
-
-        if (response == null)
+        var refreshExpiryDays = configuration.GetValue<int>("Jwt:RefreshTokenExpiryDays", 7);
+        var refreshClaims = new List<Claim>
         {
-            throw new Exception("Failed to generate JWT token.");
-        }
+            new Claim(JwtRegisteredClaimNames.Sub, user.UserName!),
+            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+            new Claim(JwtRegisteredClaimNames.Email, user.Email!),
+            new Claim(ClaimTypes.NameIdentifier, user.Id!),
+        };
 
-        return response;
+        var refreshToken = new JwtSecurityTokenHandler().WriteToken(new JwtSecurityToken(
+            issuer: configuration["Jwt:Issuer"],
+            audience: configuration["Jwt:Audience"],
+            claims: refreshClaims,
+            expires: DateTime.UtcNow.AddDays(refreshExpiryDays),
+            signingCredentials: creds
+        ));
+
+        return (accessToken, refreshToken);
     }
 
-    public string GenerateRefreshToken()
+    public string? ValidateRefreshToken(string refreshToken)
     {
-        var randomNumber = new byte[32];
-        using (var rng = RandomNumberGenerator.Create())
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["Jwt:Key"]!));
+
+        try
         {
-            rng.GetBytes(randomNumber);
-            return Convert.ToBase64String(randomNumber);
+            var principal = new JwtSecurityTokenHandler().ValidateToken(refreshToken, new TokenValidationParameters
+            {
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey = key,
+                ValidateIssuer = true,
+                ValidIssuer = configuration["Jwt:Issuer"],
+                ValidateAudience = true,
+                ValidAudience = configuration["Jwt:Audience"],
+                ValidateLifetime = true,
+                ClockSkew = TimeSpan.Zero
+            }, out _);
+
+            return principal.FindFirstValue(ClaimTypes.NameIdentifier);
+        }
+        catch
+        {
+            return null;
         }
     }
 }

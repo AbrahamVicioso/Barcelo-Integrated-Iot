@@ -4,6 +4,7 @@ using Authentication.Api.Services;
 using Authentication.Api.UseCases.Commands.CreateUserWithRandomPassword;
 using Authentication.Api.UseCases.Commands.ForgotPassword;
 using Authentication.Api.UseCases.Commands.LoginUser;
+using Authentication.Api.UseCases.Commands.RefreshToken;
 using Authentication.Api.UseCases.Commands.RegisterUser;
 using Authentication.Domain.Entities;
 using Microsoft.AspNetCore.Authentication.BearerToken;
@@ -70,6 +71,12 @@ namespace Authentication.Api.Controllers
             });
 
             return result;
+        }
+
+        [HttpPost]
+        public async Task<Results<Ok<AccessTokenResponse>, ProblemHttpResult>> RefreshToken([FromBody] RefreshTokenRequest request)
+        {
+            return await RefreshTokenHandler.Handle(request, userManager, jwtGenerator);
         }
 
         [HttpPost]

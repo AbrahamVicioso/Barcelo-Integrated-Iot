@@ -31,18 +31,13 @@ namespace Authentication.Api.UseCases.Commands.LoginUser
 
             var roles = await _userManager.GetRolesAsync(user);
 
-            var token = await jwtGenerator.GenerateJwtToken(
-                roles,
-                user
-            );
-
-            var refreshToken = jwtGenerator.GenerateRefreshToken();
+            var (accessToken, refreshToken) = await jwtGenerator.GenerateTokensAsync(roles, user);
 
             return TypedResults.Ok(new AccessTokenResponse
             {
-                AccessToken = token,
+                AccessToken = accessToken,
                 RefreshToken = refreshToken,
-                ExpiresIn = 3600
+                ExpiresIn = 1800
             });
         }
     }
