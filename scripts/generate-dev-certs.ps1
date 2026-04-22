@@ -1,6 +1,6 @@
 param(
     [string]$Domain = "smartstay.es",
-    [string]$OutputPath = "docker/certs"
+    [string]$OutputPath = "$PSScriptRoot/../docker/certs"
 )
 
 $ErrorActionPreference = "Stop"
@@ -42,7 +42,12 @@ Write-Host "[+] cert.pem" -ForegroundColor Green
 
 # Exportar clave privada del certificado generado
 $rsa = [System.Security.Cryptography.X509Certificates.RSACertificateExtensions]::GetRSAPrivateKey($cert)
-$keyBytes = $rsa.ExportPkcs8PrivateKey()
+# ExportPkcs8PrivateKey() requiere .NET 5+; usar CngKey.Export para compatibilidad con Windows PowerShell 5.1
+if ($rsa -is [System.Security.Cryptography.RSACng]) {
+    $keyBytes = $rsa.Key.Export([System.Security.Cryptography.CngKeyBlobFormat]::Pkcs8PrivateBlob)
+} else {
+    $keyBytes = $rsa.ExportPkcs8PrivateKey()
+}
 $keyBase64 = [Convert]::ToBase64String($keyBytes, [Base64FormattingOptions]::InsertLineBreaks)
 $keyPem = "-----BEGIN PRIVATE KEY-----`n$keyBase64`n-----END PRIVATE KEY-----"
 [System.IO.File]::WriteAllText("$livePath/privkey.pem", $keyPem)
