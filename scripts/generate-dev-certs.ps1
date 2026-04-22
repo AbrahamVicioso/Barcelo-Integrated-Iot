@@ -26,7 +26,7 @@ $pfxPassword = "smartstay"
 # Generar certificado autofirmado
 Write-Host "[+] Generando certificado para: $Domain" -ForegroundColor Cyan
 
-$cert = New-SelfSignedCertificate -DnsName $Domain,"localhost","127.0.0.1" -CertStoreLocation Cert:\CurrentUser\My -NotAfter (Get-Date).AddDays(365) -KeyExportPolicy Exportable -KeySpec Signature -KeyLength 2048
+$cert = New-SelfSignedCertificate -DnsName $Domain,"*.$Domain","localhost","127.0.0.1" -CertStoreLocation Cert:\CurrentUser\My -NotAfter (Get-Date).AddDays(365) -KeyExportPolicy Exportable -KeySpec Signature -KeyLength 2048
 
 # Exportar PFX
 $pwd = ConvertTo-SecureString -String $pfxPassword -Force -AsPlainText
@@ -40,9 +40,8 @@ $certPem = "-----BEGIN CERTIFICATE-----`n$certBase64`n-----END CERTIFICATE-----"
 [System.IO.File]::WriteAllText("$livePath/cert.pem", $certPem)
 Write-Host "[+] cert.pem" -ForegroundColor Green
 
-# Generar clave privada usando RSA.Create y exportar a formato PKCS#8
-Add-Type -AssemblyName System.Security
-$rsa = [System.Security.Cryptography.RSA]::Create(2048)
+# Exportar clave privada del certificado generado
+$rsa = [System.Security.Cryptography.X509Certificates.RSACertificateExtensions]::GetRSAPrivateKey($cert)
 $keyBytes = $rsa.ExportPkcs8PrivateKey()
 $keyBase64 = [Convert]::ToBase64String($keyBytes, [Base64FormattingOptions]::InsertLineBreaks)
 $keyPem = "-----BEGIN PRIVATE KEY-----`n$keyBase64`n-----END PRIVATE KEY-----"
