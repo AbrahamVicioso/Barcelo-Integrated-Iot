@@ -20,6 +20,7 @@ public class UnitOfWork : IUnitOfWork
         EstadosHabitacion = new EstadoHabitacionRepository(_context);
         TiposHabitacion = new TipoHabitacionRepository(_context);
         EstadosReserva = new EstadoReservaRepository(_context);
+        EstadosReservaActividad = new EstadoReservaActividadRepository(_context);
     }
 
     public IReservaRepository Reservas { get; private set; }
@@ -30,6 +31,7 @@ public class UnitOfWork : IUnitOfWork
     public IEstadoHabitacionRepository EstadosHabitacion { get; private set; }
     public ITipoHabitacionRepository TiposHabitacion { get; private set; }
     public IEstadoReservaRepository EstadosReserva { get; private set; }
+    public IEstadoReservaActividadRepository EstadosReservaActividad { get; private set; }
 
     public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {

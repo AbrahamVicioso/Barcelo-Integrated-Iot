@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Reservas.API;
 using Reservas.API.GrpcServices;
 using Reservas.Application;
@@ -58,7 +59,6 @@ using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
     var context = services.GetRequiredService<BarceloReservasContext>();
-    await context.Database.EnsureCreatedAsync();
     await Reservas.Persistence.DbSeeder.SeedAsync(context);
 }
 

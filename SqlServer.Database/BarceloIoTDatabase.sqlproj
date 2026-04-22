@@ -73,6 +73,7 @@
     <Build Include="dbo\Tables\Habitaciones.sql" />
     <Build Include="dbo\Tables\Dispositivos.sql" />
     <Build Include="dbo\Tables\ActividadesRecreativas.sql" />
+    <Build Include="dbo\Tables\EstadosReservaActividad.sql" />
     <Build Include="dbo\Tables\ReservasActividades.sql" />
     <Build Include="dbo\Tables\Huespedes.sql" />
     <Build Include="dbo\Tables\Reservas.sql" />
@@ -130,6 +131,7 @@
     <Build Include="dbo\Tables\EstadosReserva.sql" />
     <Build Include="dbo\Tables\ReservaHuespedes.sql" />
     <None Include="Scripts\Seed_EstadosReserva.sql" />
+    <None Include="Scripts\Seed_EstadosReservaActividad.sql" />
     <Build Include="dbo\Tables\Puestos.sql" />
     <Build Include="dbo\Tables\Departamentos.sql" />
     <None Include="Scripts\Seed_Puestos.sql" />

@@ -12,6 +12,7 @@ public static class DbSeeder
         await SeedTiposHabitacionAsync(context);
         await SeedEstadosHabitacionAsync(context);
         await SeedEstadosReservaAsync(context);
+        await SeedEstadosReservaActividadAsync(context);
     }
 
     private static async Task SeedTiposHabitacionAsync(BarceloReservasContext context)
@@ -66,6 +67,22 @@ public static class DbSeeder
         };
 
         await context.EstadosReserva.AddRangeAsync(estados);
+        await context.SaveChangesAsync();
+    }
+
+    private static async Task SeedEstadosReservaActividadAsync(BarceloReservasContext context)
+    {
+        if (await context.EstadosReservaActividad.AnyAsync())
+            return;
+
+        var estados = new List<EstadoReservaActividad>
+        {
+            new() { EstadoReservaActividadId = EstadoReservaActividad.Pendiente,   Nombre = "Pendiente",   Descripcion = "Reserva de actividad awaiting confirmación" },
+            new() { EstadoReservaActividadId = EstadoReservaActividad.Confirmada, Nombre = "Confirmada", Descripcion = "Reserva de actividad confirmada" },
+            new() { EstadoReservaActividadId = EstadoReservaActividad.Cancelada,  Nombre = "Cancelada",  Descripcion = "Reserva de actividad cancelada" },
+        };
+
+        await context.EstadosReservaActividad.AddRangeAsync(estados);
         await context.SaveChangesAsync();
     }
 }

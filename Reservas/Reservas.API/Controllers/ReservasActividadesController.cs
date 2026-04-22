@@ -58,4 +58,12 @@ public class ReservasActividadesController : ControllerBase
         var result = await _mediator.Send(new DeleteReservaActividadCommand { ReservaActividadId = id });
         return result.IsSuccess ? NoContent() : BadRequest(result.ErrorMessage);
     }
+
+    [HttpPut("{id}/estado")]
+    [HasPermission(Permissions.Reservas.Edit)]
+    public async Task<IActionResult> UpdateEstado(int id, [FromQuery] int estadoId)
+    {
+        var result = await _mediator.Send(new UpdateReservaActividadEstadoCommand { ReservaActividadId = id, EstadoReservaActividadId = estadoId });
+        return result.IsSuccess ? Ok(result.Data) : BadRequest(result.ErrorMessage);
+    }
 }

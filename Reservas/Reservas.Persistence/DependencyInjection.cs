@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Reservas.Application.Interfaces;
 using Reservas.Persistence.Data;
@@ -24,6 +24,7 @@ namespace Reservas.Persistence
             services.AddScoped<IReservaRepository, ReservaRepository>();
             services.AddScoped<IActividadRecreativaRepository, ActividadRecreativaRepository>();
             services.AddScoped<IReservaActividadRepository, ReservaActividadRepository>();
+            services.AddScoped<IEstadoReservaActividadRepository, EstadoReservaActividadRepository>();
             services.AddScoped<IHotelRepository, HotelRepository>();
             services.AddScoped<IHuespedRepository, HuespedRepository>();
 

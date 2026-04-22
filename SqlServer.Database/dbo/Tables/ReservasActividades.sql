@@ -5,6 +5,7 @@
 	[FechaReserva] [date] NOT NULL,
 	[HoraReserva] [time](7) NOT NULL,
 	[NumeroPersonas] [int] NOT NULL,
+	[EstadoReservaActividadId] [int] NOT NULL,
 	[Estado] [nvarchar](30) NOT NULL,
 	[FechaCreacion] [datetime2](7) NOT NULL,
 	[MontoTotal] [decimal](10, 2) NOT NULL,
@@ -29,7 +30,16 @@ GO
 
 ALTER TABLE [dbo].[ReservasActividades] CHECK CONSTRAINT [FK_ReservasActividades_Huespedes]
 GO
+ALTER TABLE [dbo].[ReservasActividades]  WITH CHECK ADD  CONSTRAINT [FK_ReservasActividades_EstadosReservaActividad] FOREIGN KEY([EstadoReservaActividadId])
+REFERENCES [dbo].[EstadosReservaActividad] ([EstadoReservaActividadId])
+ON DELETE NO ACTION
+GO
+
+ALTER TABLE [dbo].[ReservasActividades] CHECK CONSTRAINT [FK_ReservasActividades_EstadosReservaActividad]
+GO
 ALTER TABLE [dbo].[ReservasActividades] ADD  DEFAULT ((1)) FOR [NumeroPersonas]
+GO
+ALTER TABLE [dbo].[ReservasActividades] ADD  DEFAULT ((2)) FOR [EstadoReservaActividadId]
 GO
 ALTER TABLE [dbo].[ReservasActividades] ADD  DEFAULT ('Confirmada') FOR [Estado]
 GO

@@ -7,6 +7,7 @@ using Reservas.Application.Features.Habitaciones.Commands;
 using Reservas.Application.Features.Hoteles.Commands;
 using Reservas.Application.Features.Reservas.Commands;
 using Reservas.Application.Features.ReservasActividades.Commands;
+using Reservas.Application.Features.EstadosReservaActividad.Commands;
 using Reservas.Domain.Entites;
 using Reservas.Domain.Entities;
 
@@ -142,5 +143,13 @@ public class MappingProfile : Profile
             .ForMember(dest => dest.HuespedId, opt => opt.Ignore())
             .ForMember(dest => dest.FechaCreacion, opt => opt.Ignore())
             .ForMember(dest => dest.Actividad, opt => opt.Ignore());
+
+        // EstadoReservaActividad mappings
+        CreateMap<EstadoReservaActividad, EstadoReservaActividadDto>();
+        CreateMap<CreateEstadoReservaActividadDto, EstadoReservaActividad>()
+            .ForMember(dest => dest.EstadoReservaActividadId, opt => opt.Ignore())
+            .ForMember(dest => dest.ReservasActividades, opt => opt.Ignore());
+        CreateMap<UpdateEstadoReservaActividadCommand, EstadoReservaActividad>()
+            .ForMember(dest => dest.ReservasActividades, opt => opt.Ignore());
     }
 }

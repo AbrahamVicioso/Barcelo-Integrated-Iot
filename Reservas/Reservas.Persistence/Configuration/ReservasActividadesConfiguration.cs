@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Reservas.Domain.Entites;
 
@@ -30,6 +30,11 @@ namespace Reservas.Persistence.Configuration
                 .HasForeignKey(d => d.ActividadId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_ReservasActividades_Actividades");
+
+            builder.HasOne(d => d.EstadoReservaActividad).WithMany(p => p.ReservasActividades)
+                .HasForeignKey(d => d.EstadoReservaActividadId)
+                .OnDelete(DeleteBehavior.Restrict)
+                .HasConstraintName("FK_ReservasActividades_EstadosReservaActividad");
         }
     }
 }

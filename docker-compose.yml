@@ -85,8 +85,8 @@ services:
       MSSQL_PID: Developer
     ports:
       - "1433:1433"
-    # volumes:
-    #   - sqlserver-data:/var/opt/mssql
+    volumes:
+      - sqlserver-data:/var/opt/mssql
     networks:
       - barcelo-net
     healthcheck:
