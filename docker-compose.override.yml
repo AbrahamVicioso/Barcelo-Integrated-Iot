@@ -2,6 +2,8 @@ services:
   nginx:
     image: nginx:latest
     container_name: barcelo-nginx
+    profiles:
+      - production
     ports:
       - "80:80"
       - "443:443"
@@ -14,6 +16,6 @@ services:
     networks:
       - barcelo-net
     depends_on:
-      - thingsboard-ce
-      - api-gateway
       - ntfy
+      - api-gateway
+      - thingsboard-ce

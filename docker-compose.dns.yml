@@ -1,0 +1,23 @@
+# Nginx como reverse proxy para desarrollo local con subdominios .smartstay.int
+# Uso: docker compose -f docker-compose.yml -f docker-compose.dns.yml up -d nginx
+# Ejecutar DESPUÉS de iniciar los servicios principales
+
+name: barcelo-iot
+
+services:
+  nginx:
+    image: nginx:latest
+    container_name: barcelo-nginx-dns
+    profiles:
+      - dns
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./docker/nginx/nginx-local.conf:/etc/nginx/nginx.conf:ro
+    networks:
+      - barcelo-net
+
+networks:
+  barcelo-iot_barcelo-net:
+    external: true

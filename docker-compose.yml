@@ -40,29 +40,32 @@ services:
         limits:
           memory: 300M
           cpus: '0.25'
-    command: serve
+    # Desarrollo: solo HTTP
+    # Producción: HTTPS con certificados
+    command: >
+      serve
+      --listen-http :80
+      --listen-https :443
     ports:
       - "8081:443"
       - "8082:80"
     environment:
-      NTFY_BASE_URL: ${NTFY_PUBLIC_BASE_URL:-https://smartstay.es:8081}
-      NTFY_LISTEN_HTTP: ":80"
-      NTFY_LISTEN_HTTPS: ":443"
-      NTFY_KEY_FILE: /certs/privkey.pem
-      NTFY_CERT_FILE: /certs/fullchain.pem
+      NTFY_BASE_URL: ${NTFY_PUBLIC_BASE_URL:-https://localhost:8081}
       NTFY_CACHE_FILE: /var/lib/ntfy/cache.db
       NTFY_AUTH_FILE: /var/lib/ntfy/auth.db
-      NTFY_AUTH_DEFAULT_ACCESS: ${NTFY_AUTH_DEFAULT_ACCESS:-deny-all}
+      NTFY_AUTH_DEFAULT_ACCESS: ${NTFY_AUTH_DEFAULT_ACCESS:-read-write}
       NTFY_ATTACHMENT_CACHE_DIR: /var/lib/ntfy/attachments
       NTFY_BEHIND_PROXY: "false"
       NTFY_ENABLE_CORS: "true"
+      NTFY_KEY_FILE: /certs/privkey.pem
+      NTFY_CERT_FILE: /certs/cert.pem
     volumes:
       - ntfy-data:/var/lib/ntfy
       - ./docker/certs/live/smartstay.es:/certs:ro
     networks:
       - barcelo-net
     healthcheck:
-      test: ["CMD-SHELL", "wget -q --tries=1 --no-check-certificate https://localhost:443/v1/health -O - | grep -c healthy || exit 1"]
+      test: ["CMD-SHELL", "wget -q --tries=1 http://localhost:80/v1/health -O - | grep -c healthy || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -175,25 +178,28 @@ services:
       - postgres
       - kafka
 
-  # ── Certbot (Let's Encrypt) ─────────────────────────────────────────────────
-  certbot:
-    image: certbot/certbot:latest
-    container_name: smartstay-certbot
-    volumes:
-      - ./docker/certs/live/${DOMINIO_PRINCIPAL:-smartstay.es}:/etc/letsencrypt/live:rw
-      - ./docker/certs/archive:/etc/letsencrypt/archive:rw
+# ═══════════════════════════════════════════════════════════════
+  # DNS interno (dnsmasq) para dominio .smartstay.int
+  # Resolución: *.smartstay.int -> localhost
+  # ═══════════════════════════════════════════════════════════════
+  dns-internal:
+    build:
+      context: docker/dns
+    container_name: barcelo-dns
+    profiles:
+      - infrastructure
     ports:
-      - "80:80"
-      - "443:443"
-    command: >
-      certonly --standalone
-      --email admin@smartstay.es
-      --agree-tos --non-interactive
-      -d ${CERT_DOMAIN:-smartstay.es}
-      --keep-until-expiring
-    restart: unless-stopped
+      - "53:53/udp"
     networks:
       - barcelo-net
+    restart: unless-stopped
+
+# ═══════════════════════════════════════════════════════════════
+  # Certbot (Let's Encrypt) - Solo producción
+  # NO se inicia con docker compose up
+  # Ejecutar manualmente cuando necesite certificados reales:
+  #   docker compose -f docker-compose.certbot.yml up -d
+  # ═══════════════════════════════════════════════════════════════
 
   # ── APIs ──────────────────────────────────────────────────────────────────────
   auth-api:

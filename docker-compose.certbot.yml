@@ -1,0 +1,29 @@
+# Certbot para generar certificados Let's Encrypt
+# Uso: docker compose -f docker-compose.certbot.yml up -d
+# Luego copia los certificados a docker/certs/live/smartstay.es/
+
+name: barcelo-iot
+
+services:
+  certbot:
+    image: certbot/certbot:latest
+    container_name: smartstay-certbot
+    volumes:
+      - ./docker/certs/live/${DOMINIO_PRINCIPAL:-smartstay.es}:/etc/letsencrypt/live:rw
+      - ./docker/certs/archive:/etc/letsencrypt/archive:rw
+    ports:
+      - "80:80"
+      - "443:443"
+    command: >
+      certonly --standalone
+      --email admin@smartstay.es
+      --agree-tos --non-interactive
+      -d ${CERT_DOMAIN:-smartstay.es}
+      --keep-until-expiring
+    restart: "no"
+    networks:
+      - barcelo-net
+
+networks:
+  barcelo-net:
+    external: true

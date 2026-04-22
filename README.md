@@ -8,7 +8,6 @@ Plataforma IoT para gestión de habitaciones inteligentes del Hotel Barcelo. Arq
 
 | Servicio | Descripción | Puerto REST | Puerto gRPC |
 |---|---|---|---|
-| `nginx` | Reverse proxy | 80 | — |
 | `api-gateway` | Ocelot API Gateway | 5019 (HTTP) · 5020 (HTTPS) | — |
 | `auth-api` | Autenticación y JWT | 5117 | 5118 (HTTPS) |
 | `usuarios-api` | Huéspedes y personal | 5284 | 5285 (HTTPS) |
@@ -25,242 +24,200 @@ Plataforma IoT para gestión de habitaciones inteligentes del Hotel Barcelo. Arq
 | Kafka | 9092 | Mensajería entre servicios (KRaft, sin Zookeeper) |
 | PostgreSQL | 5432 | Base de datos de ThingsBoard |
 | ThingsBoard CE | 8080 | Gestión de dispositivos IoT |
-| ntfy | 8081 | Servidor de notificaciones push |
+| ntfy | 8082 (HTTP) | Servidor de notificaciones push |
 
 ---
 
 ## Requisitos
 
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/) con WSL2
-- [OpenSSL](https://slproweb.com/products/Win32OpenSSL.html) (incluido en Git for Windows)
 - .NET 9 SDK instalado en el host (para tener el caché de NuGet local)
 
 ---
 
-## Levantar el entorno
+## Desarrollo Local (Inicio rápido)
 
-### 1. Configurar el caché de NuGet (solo la primera vez)
+### 1. Generar certificados de desarrollo
 
-Copia `.env.example` como `.env` y ajusta la ruta a tu usuario:
-
-```bash
-cp .env.example .env
+```powershell
+.\scripts\bootstrap-local.ps1
 ```
 
-El `.env` apunta al caché de NuGet de tu máquina. Así los contenedores **nunca necesitan descargar paquetes de internet**.
+Esto genera:
+- `docker/certs/live/smartstay.es/smartstay.pfx` - Certificado autofirmado para APIs .NET
+- Configura automáticamente el `.env`
 
-Si es la primera vez que clonas el proyecto, asegúrate de haber restaurado los paquetes al menos una vez localmente:
+### 2. Levantar servicios de infraestructura
 
-```bash
-dotnet restore
+```powershell
+docker compose up -d sqlserver kafka ntfy
 ```
 
-### 2. Generar certificado de desarrollo (solo la primera vez)
+### 3. Levantar las APIs (modo desarrollo con hot reload)
 
 ```bash
-# Linux / WSL
-bash docker/generate-dev-cert.sh
-
-# macOS (usa LibreSSL nativo, no requiere Homebrew)
-bash docker/generate-dev-cert-macos.sh
-
-# Windows PowerShell
-.\docker\generate-dev-cert.ps1
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up
 ```
 
-Genera `docker/certs/barcelo-dev.pfx` usado por los servicios gRPC para TLS.
-
-> **macOS:** el script usa un archivo de configuración temporal para definir los SANs, ya que LibreSSL (OpenSSL nativo de macOS) no soporta la flag `-addext`.
-> Si prefieres usar la versión de Homebrew (`brew install openssl`), puedes ejecutar directamente `bash docker/generate-dev-cert.sh`.
-
-### 2b. Certificado con Let's Encrypt (producción)
-
-Si tienes un dominio público (`smartstay.es`), puedes usar Let's Encrypt para certificados gratuitos y automáticos.
-
-**Requisitos previos:**
-1. **DNS configurado** en tu proveedor de dominio (Hostinger, GoDaddy, etc.):
-   - Registro A: `@` → tu IP pública
-2. **Puerto 80 abierto** en el firewall de Azure
-3. **nginx corriendo** (docker-compose.override.yml)
-
-**Configurar DNS en tu proveedor de dominio:**
-
-| Campo | Valor |
-|-------|-------|
-| Type | A |
-| Host | `@` o `smartstay.es` |
-| Value | Tu IP pública de Azure |
-| TTL | 3600 |
-
-**Verificar DNS:**
-```bash
-nslookup smartstay.es
-```
-
-**Generar certificado inicial:**
-
-```bash
-# Asegúrate que nginx esté corriendo
-docker compose up -d nginx
-
-# Generar certificado
-docker compose run --rm -p 80:80 certbot certonly --webroot \
-  -w /var/www/certbot \
-  --email admin@smartstay.es \
-  --agree-tos --no-eff-email \
-  -d smartstay.es
-```
-
-Esto genera los certificados en `docker/certs/live/smartstay.es/`:
-- `smartstay.pfx` - Para Kestrel (.NET)
-- `fullchain.pem` - Certificado + CA
-- `privkey.pem` - Clave privada
-
-**Convertir a PFX (si no se creó automáticamente):**
-
-```bash
-# Crear directorio si no existe
-mkdir -p docker/certs/live/smartstay.es
-
-# Convertir
-openssl pkcs12 -export \
-  -out docker/certs/live/smartstay.es/smartstay.pfx \
-  -inkey docker/certs/live/smartstay.es/privkey.pem \
-  -in docker/certs/live/smartstay.es/fullchain.pem \
-  -passout pass:smartstay
-```
-
-**Renovación automática:**
-
-```bash
-# Agregar al crontab (ej: cada mes el día 1 a las 3am):
-0 3 1 * * /ruta/al/proyecto/docker/certs/renew.sh
-```
-
-El script de renovación convierte el certificado a PFX automáticamente y reinicia los servicios.
-
-> **Nota:** El certificado Let's Encrypt dura 90 días. El script lo renueva cuando faltan 30 días.
+> **Listo:** Las APIs están disponibles en:
+> - auth-api: http://localhost:5117
+> - usuarios-api: http://localhost:5284
+> - reservas-api: http://localhost:5141
+> - dispositivos-api: http://localhost:5185
 
 ---
 
-### 3. Inicializar ThingsBoard (solo la primera vez)
+## DNS Local (smartstay.int)
 
-```bash
-docker compose run --rm -e INSTALL_TB=true -e LOAD_DEMO=true thingsboard-ce
+### Agregar entradas DNS para desarrollo
+
+```powershell
+#Ejecutar como Administrador
+.\scripts\set-dns-local.ps1
 ```
 
-Espera a que termine (1-2 minutos) y luego continúa.
+Esto agrega entradas al archivo `hosts` de Windows:
+- `smartstay.int` → localhost
+- `api.smartstay.int` → localhost
+- `ntfy.smartstay.int` → localhost
 
-### 4. Levantar todos los servicios
+### Ver entradas DNS actuales
 
-```bash
-docker compose up
+```powershell
+.\scripts\set-dns-local.ps1 -Show
 ```
 
-> **Notificaciones push:** ntfy arranca automáticamente en modo abierto (`read-write`). Para producción consulta la sección [Notificaciones Push](#notificaciones-push-ntfy).
+### Remover entradas DNS
 
-> No hay `docker compose build` — se usa directamente la imagen `mcr.microsoft.com/dotnet/sdk:9.0`.
-> SQL Server necesita ~60 segundos para arrancar; los servicios esperan automáticamente.
-
-### Levantar en background
-
-```bash
-docker compose up -d
+```powershell
+.\scripts\set-dns-local.ps1 -Remove
 ```
-
-> **Nota:** el comando de inicialización de ThingsBoard solo se corre una vez. Los datos quedan persistidos en el volumen `tb-postgres-data`.
 
 ---
 
-## Dominio y URLs públicas
+## Certificados SSL
 
-El sistema está configurado para usar el dominio `smartstay.es`.
+### Desarrollo Local (automático)
 
-### Configuración DNS
+El script `bootstrap-local.ps1` genera certificados autofirmados automáticamente:
 
-| Host | Tipo | Valor |
-|------|------|-------|
-| @ | A | Tu IP pública de Azure |
+```powershell
+.\scripts\generate-dev-certs.ps1
+```
 
-### URLs públicas (después de configurar DNS y certificado)
+Ubicación: `docker/certs/live/smartstay.es/smartstay.pfx`
 
-| Servicio | URL |
+### Producción (Let's Encrypt)
+
+Certbot está en un archivo separado. NO se inicia automáticamente.
+
+**Para generar certificados reales:**
+
+1. Configura DNS en tu proveedor de dominio
+2. Ensure puerto 80 está abierto
+
+```bash
+#Ejecutar Certbot
+docker compose -f docker-compose.certbot.yml up -d
+```
+
+Certificados se generan en: `docker/certs/live/smartstay.es/`
+
+---
+
+## Notificaciones Push (ntfy)
+
+### Desarrollo (funciona sin configuración extra)
+
+ntfy funciona en modo HTTP (puerto 8082):
+
+```bash
+docker compose up -d ntfy
+```
+
+- Puerto 8082: HTTP
+- Acceso abierto (`read-write`)
+- No requiere certificados SSL
+
+### Producción
+
+```bash
+#1. Levantar ntfy
+docker compose up -d ntfy
+
+#2. Crear usuario admin
+docker exec -it barcelo-ntfy ntfy user add --role=admin admin
+
+#3. Generar token de servidor
+docker exec barcelo-ntfy ntfy token add admin
+
+#4. Actualizar .env
+NTFY_LISTEN_HTTPS=--listen-https :443
+NTFY_KEY_FILE=/certs/privkey.pem
+NTFY_CERT_FILE=/certs/fullchain.pem
+NTFY_ADMIN_PASSWORD=tu_password
+NTFY_SERVER_TOKEN=tk_...
+NTFY_AUTH_DEFAULT_ACCESS=deny-all
+
+#5. Recargar
+docker compose up -d ntfy
+```
+
+---
+
+## Scripts Disponibles
+
+| Script | Descripción |
 |---|---|
-| API Gateway | `https://smartstay.es` |
-| ThingsBoard | `https://smartstay.es/thingsboard` |
-| ntfy (push) | `https://smartstay.es/ntfy` |
-
-### Variables de entorno
-
-```env
-GATEWAY_PUBLIC_BASE_URL=https://smartstay.es
-NTFY_PUBLIC_BASE_URL=https://smartstay.es:8081
-```
-
----
-
-## Nginx como Reverse Proxy
-
-El nginx está configurado en `docker-compose.override.yml` y usa la config en `docker/nginx/nginx-generated.conf`.
-
-### Configuración actual
-
-- **Puerto 80**: HTTP (redirige a HTTPS o sirve ACME challenge)
-- **Rutas proxadas**:
-  - `thingsboard.smartstay.es` → ThingsBoard CE
-  - `api.smartstay.es` → API Gateway
-  - `ntfy.smartstay.es` → ntfy
-
-### ACME Challenge para Let's Encrypt
-
-El nginx está configurado para redirigir las peticiones de verificación de Let's Encrypt al contenedor certbot:
-
-```nginx
-location ^~ /.well-known/acme-challenge/ {
-    proxy_pass http://certbot_backend;
-}
-```
+| `scripts/bootstrap-local.ps1` | Bootstrap: certificados + verificación entorno |
+| `scripts/generate-dev-certs.ps1` | Generar certificados autofirmados |
+| `scripts/set-dns-local.ps1` | Agregar entradas DNS al hosts de Windows |
+| `scripts/set-dns-local.ps1 -Show` | Ver entradas DNS actuales |
+| `scripts/set-dns-local.ps1 -Remove` | Remover entradas DNS |
 
 ---
 
 ## Comandos del día a día
 
 ```bash
-# Ver logs en tiempo real de todos los servicios
+# Ver logs de todos los servicios
 docker compose logs -f
 
-# Ver logs de un servicio específico
-docker compose logs -f reservas-api
+# Ver logs de un servicio
+docker compose logs -f auth-api
 
-# Estado de todos los contenedores
+# Estado de contenedores
 docker compose ps
 
-# Reiniciar un servicio (útil si cambias appsettings)
+# Reiniciar un servicio
 docker compose restart auth-api
 
 # Parar todo
 docker compose down
 
-# Parar y borrar volúmenes (reset completo de DB y Kafka)
+# Parar y borrar volúmenes (reset DB)
 docker compose down -v
-
-# Entrar a un contenedor
-docker compose exec auth-api bash
 ```
 
 ---
 
 ## Hot Reload
 
-Los servicios usan `dotnet watch run` con el código fuente montado como volumen. Cualquier cambio en `.cs`, `.json` o `.proto` reinicia automáticamente el servicio afectado sin reconstruir la imagen.
+El archivo `docker-compose.dev.yml` activa el modo desarrollo:
 
-El caché de NuGet persiste en un volumen Docker (`nuget-cache`), por lo que solo se descargan paquetes nuevos.
+```bash
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up
+```
+
+Los servicios usan `dotnet watch run` con hot reload automático.
+
+El caché de NuGet persiste en volumen Docker (`nuget-cache`).
 
 ---
 
 ## API Gateway
 
-Todas las rutas externas pasan por el gateway en `http://localhost:5019`:
+Rutas disponibles en `http://localhost:5019`:
 
 | Ruta | Servicio |
 |---|---|
@@ -273,8 +230,6 @@ Todas las rutas externas pasan por el gateway en `http://localhost:5019`:
 
 ## Documentación interactiva (Scalar)
 
-Disponible en cada servicio mientras el entorno esté levantado:
-
 | Servicio | URL |
 |---|---|
 | auth-api | http://localhost:5117/scalar |
@@ -284,135 +239,47 @@ Disponible en cada servicio mientras el entorno esté levantado:
 
 ---
 
-## Topics de Kafka
-
-| Topic | Productor | Consumidor |
-|---|---|---|
-| `users` | auth-api | notification-worker |
-| `reservas` | reservas-api | notification-worker |
-| `dispositivos.unlock-door` | reservas-api | dispositivos-api |
-| `audit.events` | Todos los APIs | audit-worker |
-
----
-
 ## Arquitectura gRPC
 
-La comunicación interna entre servicios usa gRPC sobre HTTPS con certificado de desarrollo:
+Comunicación interna entre servicios sobre HTTPS con certificados de desarrollo:
 
 ```
-reservas-api  ──gRPC HTTPS──▶  usuarios-api:5285  (HuespedeGrpcService)
-usuarios-api  ──gRPC HTTPS──▶  auth-api:5118      (UserLookupService)
+reservas-api  ──gRPC HTTPS──▶  usuarios-api:5285
+usuarios-api  ──gRPC HTTPS──▶  auth-api:5118
 ```
-
-En desarrollo local (sin Docker) se usa HTTP/2 cleartext (h2c) automáticamente.
 
 ---
 
 ## Base de datos
 
-SQL Server corre en `localhost:1433`. Las migraciones y seed data se aplican automáticamente al arrancar cada servicio.
+SQL Server en `localhost:1433`. Las migraciones se aplican automáticamente.
 
-**Cadena de conexión local:**
+**Cadena de conexión:**
 ```
 Data source=localhost;Database=BarceloIoTDatabase;User Id=barcelo;Password=Testing1234;TrustServerCertificate=True
 ```
 
-**En Docker** los servicios se conectan via `sqlserver:1433` con el usuario `sa`.
-
 ---
 
-## Notificaciones Push (ntfy)
+## Variables de Entorno (.env)
 
-El sistema usa [ntfy](https://ntfy.sh) como servidor de push notifications open-source y self-hosted.
-Dentro de Docker es accesible como `http://ntfy:80` (DNS interno). Desde el host como `http://localhost:8081`.
-
-### Cómo funcionan
-
-Cuando se crea una reserva o un usuario, el `notification-worker` publica automáticamente:
-- Un **email** (Azure Communication Services)
-- Una **notificación push** al topic personal del usuario en ntfy
-
-Cada usuario tiene un topic derivado de su email:
-```
-usuario@hotel.com  →  barcelo-usuario-at-hotel-com
-```
-
-### Configuración para desarrollo (ya funciona sin nada extra)
-
-ntfy arranca en modo `read-write` — abierto para que el worker pueda publicar sin token.
-La app móvil puede suscribirse directamente sin credenciales.
-
-**Suscribirse desde la app ntfy:**
-1. Descarga ntfy ([Android](https://play.google.com/store/apps/details?id=io.heckel.ntfy) / [iOS](https://apps.apple.com/app/ntfy/id1625396347))
-2. Agrega servidor: `http://<ip-de-tu-máquina>:8081`
-3. Suscríbete al topic: `barcelo-tuemail-at-dominio-com`
-
-**Probar desde dentro de Docker (DNS interno `ntfy`):**
-```bash
-# Enviar una push de prueba desde el contenedor del worker
-docker exec barcelo-notification \
-  curl -s -d "Prueba de notificación" \
-  -H "Title: Test Barcelo" \
-  -H "Priority: 3" \
-  http://ntfy:80/barcelo-test
-
-# Suscribirse por SSE desde dentro de la red Docker
-docker exec barcelo-notification \
-  curl -s http://ntfy:80/barcelo-test/sse
-```
-
----
-
-### Hardening para producción
-
-En producción nadie debe poder publicar notificaciones falsas. Sigue estos pasos:
-
-**1. Levantar solo ntfy:**
-```bash
-docker compose up -d ntfy
-```
-
-**2. Crear el usuario administrador:**
-```bash
-docker exec -it barcelo-ntfy ntfy user add --role=admin admin
-# Introduce la contraseña cuando se pida
-```
-
-**3. Generar un token para el servidor:**
-```bash
-docker exec barcelo-ntfy ntfy token add admin
-# Devuelve algo como: tk_AgQdq7mVBoFD37zQVeaKCNYH...
-```
-
-**4. Añadir al `.env`:**
-```env
-NTFY_ADMIN_PASSWORD=tu-password-admin
-NTFY_SERVER_TOKEN=tk_AgQdq7mVBoFD37zQVeaKCNYH...
-NTFY_AUTH_DEFAULT_ACCESS=deny-all
-```
-
-**5. Levantar el resto del stack:**
-```bash
-docker compose up -d
-```
-
-Con `deny-all` activado:
-- Solo el `notification-worker` puede publicar (usa el token del servidor)
-- Cada usuario recibe sus credenciales ntfy por email al crear su cuenta (solo lectura de su topic personal)
-- Cualquier intento externo de publicar o leer es rechazado
+| Variable | Desarrollo | Producción |
+|---|---|---|
+| `ENVIRONMENT` | development | production |
+| `NTFY_LISTEN_HTTPS` | (vacío) | `--listen-https :443` |
+| `NTFY_AUTH_DEFAULT_ACCESS` | read-write | deny-all |
+| `NTFY_SERVER_TOKEN` | (opcional) | requerido |
+| `GATEWAY_PUBLIC_BASE_URL` | https://localhost:5020 | https://tu-dominio.com |
 
 ---
 
 ## Desarrollo local (sin Docker)
 
-Para correr los servicios directamente con Visual Studio o la CLI:
+Para correr servicios directamente:
 
 ```bash
-# Desde el directorio de cada servicio
-dotnet run
-
-# O con hot reload
+cd Authenticate/Authentication.Api
 dotnet watch run
 ```
 
-Asegúrate de tener SQL Server, Kafka y ThingsBoard corriendo localmente en los puertos por defecto.
+Asegúrate de tener SQL Server, Kafka y ThingsBoard corriendo.

@@ -111,6 +111,96 @@
 
 ---
 
+## Certificado SSL y Entornos
+
+### Desarrollo (local)
+
+El script `scripts/bootstrap-local.ps1` genera certificados autofirmados automáticamente:
+
+```powershell
+.\scripts\bootstrap-local.ps1
+```
+
+Esto crea:
+- `docker/certs/live/smartstay.es/smartstay.pfx` - Certificado para Kestrel (.NET)
+- Configura automáticamente `.env`
+
+**ntfy en desarrollo:**
+- `NTFY_COMMAND=serve-http` - Solo HTTP (puerto 8082), sin SSL
+- No requiere certificados
+- Access tokens opcionales
+
+**APIs en desarrollo:**
+- Puerto REST: HTTP (sin cert)
+- Puerto gRPC: HTTPS con certificado autofirmado
+
+### Producción
+
+**Certbot (Let's Encrypt):**
+```bash
+docker compose up -d certbot
+```
+Certificados en: `docker/certs/live/smartstay.es/`
+
+**ntfy en producción:**
+- `NTFY_LISTEN_HTTPS=--listen-https :443` - activa HTTPS
+- Requiere `NTFY_KEY_FILE` y `NTFY_CERT_FILE` configurados
+- `NTFY_AUTH_DEFAULT_ACCESS=deny-all`
+
+**Variables de entorno (.env):**
+
+| Variable | Desarrollo | Producción |
+|---|---|---|
+| `ENVIRONMENT` | development | production |
+| `NTFY_LISTEN_HTTPS` | (vacío) | `--listen-https :443` |
+| `NTFY_AUTH_DEFAULT_ACCESS` | read-write | deny-all |
+| `NTFY_SERVER_TOKEN` | (opcional) | requerido |
+| `DOMINIO_PRINCIPAL` | smartstay.es | tu-dominio.com |
+
+---
+
+## Inicio rápido (desarrollo local)
+
+### 1. Generar certificados y preparar entorno
+
+```powershell
+.\scripts\bootstrap-local.ps1
+```
+
+Esto genera certificados autofirmados en `docker/certs/live/smartstay.es/` automáticamente.
+
+### 2. Levantar servicios de infraestructura
+
+```bash
+docker compose up -d sqlserver kafka ntfy
+```
+
+### 3. Levantar APIs (modo desarrollo)
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up
+```
+
+### Scripts disponibles
+
+| Script | Descripción |
+|---|---|
+| `scripts/bootstrap-local.ps1` | Bootstrap: certificados + verificación entorno |
+| `scripts/generate-dev-certs.ps1` | Generar certificados autofirmados |
+| `scripts/set-dns-local.ps1` | Agregar entradas DNS al hosts de Windows |
+| `scripts/set-dns-local.ps1 -Show` | Ver entradas DNS actuales |
+| `scripts/set-dns-local.ps1 -Remove` | Remover entradas DNS |
+
+### Certbot (Let's Encrypt)
+
+Certbot está en `docker-compose.certbot.yml`. NO se inicia automáticamente.
+
+```bash
+docker compose -f docker-compose.certbot.yml up -d
+```
+
+---
+
 ## Servicios y puertos
 
 | Servicio | HTTP/1.1 (REST) | HTTP/2 (gRPC) | Protocolo |
@@ -122,9 +212,11 @@
 | ApiGateway | 5019/5020 | — | HTTP/HTTPS |
 | Audit.Worker | 5250/5251 | — | HTTP |
 | Notification.Worker | — | — | — |
-| ntfy (push) | 8082 | 8081 | HTTP/HTTPS |
+| ntfy (push) | 8082 (HTTP) | 8081 (HTTPS) | HTTP/HTTPS |
 
-**Regla:** APIs con gRPC usan **puertos separados** y **protocolos separados** (Http1 para REST, Http2 para gRPC). En Docker, gRPC endpoints usan **HTTPS con certificado** (`/https/barcelo-dev.pfx`).
+**Regla:** APIs con gRPC usan **puertos separados** y **protocolos separados** (Http1 para REST, Http2 para gRPC). En Docker, gRPC endpoints usan **HTTPS con certificado** (`/https/smartstay.pfx`).
+
+**Desarrollo local:** No requiere certificados para ntfy (usa puerto HTTP 8082).
 
 ---
 
@@ -1165,8 +1257,9 @@ An HTTP/2 connection could not be established because the server did not complet
    - Verificar: Puerto está separado del endpoint HTTP/1.1
 
 3. **Falta certificado o está mal configurado**:
-   - Verificar: `Certificate.Path` apunta a `/https/barcelo-dev.pfx` en Docker
-   - Verificar: Volumen `./docker/certs:/https:ro` está montado en docker-compose
+   - Verificar: `Certificate.Path` apunta a `/https/smartstay.pfx` en Docker
+   - Verificar: Volumen `./docker/certs/live/smartstay.es:/https:ro` está montado
+   - Si falta certificado: ejecutar `.\scripts\bootstrap-local.ps1`
 
 4. **Cliente no tiene bypass de certificado**:
    - Verificar: `HttpClientHandler` con `ServerCertificateCustomValidationCallback` configurado
@@ -1183,7 +1276,7 @@ docker compose logs usuarios-api | grep "Now listening"
 docker compose exec dispositivos-api cat /app/appsettings.Docker.json | grep -A 5 ExternalServices
 
 # 3. Verificar certificado existe
-docker compose exec usuarios-api ls -la /https/barcelo-dev.pfx
+docker compose exec usuarios-api ls -la /https/smartstay.pfx
 
 # 4. Rebuild sin cache
 docker compose build --no-cache usuarios-api dispositivos-api
@@ -1240,11 +1333,22 @@ HuespedId (1)
 
 **Causa:** ntfy requiere autenticación pero no se está enviando token
 
-**Solución:**
-1. Verificar `Ntfy:AccessToken` en `appsettings.Docker.json` o docker-compose
-2. Token debe ser generado desde ntfy server (no desde cliente)
-3. En desarrollo, usar `NTFY_AUTH_DEFAULT_ACCESS: deny-all` en docker-compose
-4. Si no se usa ntfy, el error es esperado y no bloquea el flujo (try/catch en consumer)
+**Desarrollo:**
+- ntfy funciona sin SSL en puerto 8082 (HTTP)
+- Modo `read-write` por defecto
+- No requiere token
+
+**Producción:**
+1. Configurar `.env`:
+   ```
+   NTFY_LISTEN_HTTPS=--listen-https :443
+   NTFY_KEY_FILE=/certs/privkey.pem
+   NTFY_CERT_FILE=/certs/fullchain.pem
+   NTFY_SERVER_TOKEN=tk_...
+   NTFY_AUTH_DEFAULT_ACCESS=deny-all
+   ```
+2. Generar token: `docker exec barcelo-ntfy ntfy token add admin`
+3. Recargar: `docker compose up -d ntfy`
 
 ### Rebuild sin cache (después de cambios importantes)
 
