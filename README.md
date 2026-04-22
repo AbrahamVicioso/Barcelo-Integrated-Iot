@@ -105,10 +105,10 @@ El script `bootstrap-local.ps1` genera certificados autofirmados automáticament
 
 ```powershell
 # Desde la raíz del proyecto
-.\scripts\generate-dev-certs.ps1 -Domain smartstay.int
+.\scripts\generate-dev-certs.ps1
 ```
 
-Ubicación: `docker/certs/live/smartstay.int/` (`cert.pem`, `privkey.pem`, `smartstay.pfx`)
+Ubicación: `docker/certs/live/smartstay.es/` (`cert.pem`, `privkey.pem`, `smartstay.pfx`)
 
 ### Producción (Let's Encrypt)
 

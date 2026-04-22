@@ -61,7 +61,7 @@ services:
       NTFY_CERT_FILE: /certs/cert.pem
     volumes:
       - ntfy-data:/var/lib/ntfy
-      - ./docker/certs/live/smartstay.es:/certs:ro
+      - ./docker/certs/live/${DOMINIO_PRINCIPAL:-smartstay.es}:/certs:ro
     networks:
       - barcelo-net
     healthcheck:
@@ -214,7 +214,7 @@ services:
           memory: 300M
           cpus: '0.25'
     volumes:
-      - ./docker/certs/live/smartstay.es:/https:ro
+      - ./docker/certs/live/${DOMINIO_PRINCIPAL:-smartstay.es}:/https:ro
     ports:
       - "5117:5117"
       - "5118:5118"
@@ -258,7 +258,7 @@ services:
           memory: 300M
           cpus: '0.25'
     volumes:
-      - ./docker/certs/live/smartstay.es:/https:ro
+      - ./docker/certs/live/${DOMINIO_PRINCIPAL:-smartstay.es}:/https:ro
     ports:
       - "5284:5284"
       - "5285:5285"
@@ -297,7 +297,7 @@ services:
           memory: 300M
           cpus: '0.25'
     volumes:
-      - ./docker/certs/live/smartstay.es:/https:ro
+      - ./docker/certs/live/${DOMINIO_PRINCIPAL:-smartstay.es}:/https:ro
     ports:
       - "5141:5141"
       - "5142:5142"
@@ -338,7 +338,7 @@ services:
           memory: 300M
           cpus: '0.25'
     volumes:
-      - ./docker/certs/live/smartstay.es:/https:ro
+      - ./docker/certs/live/${DOMINIO_PRINCIPAL:-smartstay.es}:/https:ro
     ports:
       - "5185:5185"
       - "7288:7288"
@@ -396,7 +396,7 @@ services:
           memory: 300M
           cpus: '0.25'
     volumes:
-      - ./docker/certs/live/smartstay.es:/https:ro
+      - ./docker/certs/live/${DOMINIO_PRINCIPAL:-smartstay.es}:/https:ro
     ports:
       - "5019:5019"
       - "5020:5020"
@@ -428,7 +428,7 @@ services:
           memory: 64M
           cpus: '0.25'
     volumes:
-      - ./docker/certs/live/smartstay.es:/https:ro
+      - ./docker/certs/live/${DOMINIO_PRINCIPAL:-smartstay.es}:/https:ro
     environment:
       <<: *dotnet-env
       KafkaConsumer__UserCreated__BootstrapServers: kafka:29092
@@ -481,7 +481,7 @@ services:
           memory: 300M
           cpus: '0.25'
     volumes:
-      - ./docker/certs/live/smartstay.es:/https:ro
+      - ./docker/certs/live/${DOMINIO_PRINCIPAL:-smartstay.es}:/https:ro
     ports:
       - "5250:5250"
       - "5251:5251"
