@@ -182,16 +182,18 @@ services:
     volumes:
       - ./docker/certs/live/${DOMINIO_PRINCIPAL:-smartstay.es}:/etc/letsencrypt/live:ro
       - ./docker/certs/archive:/etc/letsencrypt/archive:rw
-      - ./docker/certs/www:/var/www/certbot:rw
     ports:
       - "80:80"
       - "443:443"
+    # --standalone: certbot inicia su propio servidor web en puerto 80 (sin nginx)
+    entrypoint: "/bin/sh -c"
     command: >
-      certonly --webroot -w /var/www/certbot
+      certbot certonly --standalone
       --email admin@${DOMINIO_PRINCIPAL:-smartstay.es}
       --agree-tos --no-eff-email
       -d ${CERT_DOMAIN:-smartstay.es}
       --keep-until-expiring
+      --non-interactive
     restart: unless-stopped
     networks:
       - barcelo-net
