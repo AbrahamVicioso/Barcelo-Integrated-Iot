@@ -185,15 +185,12 @@ services:
     ports:
       - "80:80"
       - "443:443"
-    # --standalone: certbot inicia su propio servidor web en puerto 80 (sin nginx)
-    entrypoint: "/bin/sh -c"
     command: >
-      certbot certonly --standalone
-      --email admin@${DOMINIO_PRINCIPAL:-smartstay.es}
-      --agree-tos --no-eff-email
+      certonly --standalone
+      --email admin@smartstay.es
+      --agree-tos --non-interactive
       -d ${CERT_DOMAIN:-smartstay.es}
       --keep-until-expiring
-      --non-interactive
     restart: unless-stopped
     networks:
       - barcelo-net
