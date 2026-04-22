@@ -8,11 +8,13 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      - ./docker/nginx/nginx-generated.conf:/etc/nginx/nginx.conf:ro
+      - ./docker/nginx/nginx-generated.conf:/etc/nginx/nginx.conf.template:ro
       - ./docker/certs/live/${DOMINIO_PRINCIPAL:-smartstay.es}:/etc/letsencrypt:ro
       - ./docker/certs/www:/var/www/certbot:rw
     environment:
       NGINX_HOST: ${DOMINIO_PRINCIPAL:-smartstay.es}
+    command: >
+      /bin/bash -c "envsubst '$$NGINX_HOST' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf && nginx -g 'daemon off;'"
     networks:
       - barcelo-net
     depends_on:
