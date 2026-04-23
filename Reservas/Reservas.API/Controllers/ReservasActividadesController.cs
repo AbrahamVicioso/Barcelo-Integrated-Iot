@@ -1,7 +1,9 @@
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Reservas.Application.Features.ReservasActividades.Commands;
 using Reservas.Application.Features.ReservasActividades.Queries;
+using System.Security.Claims;
 using Barcelo.Authorization.Shared;
 
 namespace Reservas.API.Controllers;
@@ -16,6 +18,69 @@ public class ReservasActividadesController : ControllerBase
     public ReservasActividadesController(IMediator mediator)
     {
         _mediator = mediator;
+    }
+
+    [Authorize]
+    [HttpGet("me")]
+    public async Task<IActionResult> GetMyReservas()
+    {
+        var usuarioId = User.FindFirstValue("nameid") ?? User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (usuarioId == null)
+            return Unauthorized();
+
+        var result = await _mediator.Send(new GetReservasActividadByUsuarioIdQuery(usuarioId));
+        return result.IsSuccess ? Ok(result.Data) : BadRequest(result.ErrorMessage);
+    }
+
+    [Authorize]
+    [HttpPost("me")]
+    public async Task<IActionResult> CreateMe([FromBody] CreateReservaActividadMeCommand command)
+    {
+        var usuarioId = User.FindFirstValue("nameid") ?? User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (usuarioId == null)
+            return Unauthorized();
+
+        command.UsuarioId = usuarioId;
+        var result = await _mediator.Send(command);
+        if (!result.IsSuccess)
+            return result.IsNotFound ? NotFound(result.ErrorMessage) : BadRequest(result.ErrorMessage);
+        return CreatedAtAction(nameof(GetById), new { id = result.Data?.ReservaActividadId }, result.Data);
+    }
+
+    [Authorize]
+    [HttpPut("me/{id}")]
+    public async Task<IActionResult> UpdateMe(int id, [FromBody] UpdateReservaActividadMeCommand command)
+    {
+        var usuarioId = User.FindFirstValue("nameid") ?? User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (usuarioId == null)
+            return Unauthorized();
+
+        if (id != command.ReservaActividadId)
+            return BadRequest("El ID de la ruta no coincide con el ID del comando");
+
+        command.UsuarioId = usuarioId;
+        var result = await _mediator.Send(command);
+        if (!result.IsSuccess)
+            return result.IsNotFound ? NotFound(result.ErrorMessage) : BadRequest(result.ErrorMessage);
+        return Ok(result.Data);
+    }
+
+    [Authorize]
+    [HttpDelete("me/{id}")]
+    public async Task<IActionResult> DeleteMe(int id)
+    {
+        var usuarioId = User.FindFirstValue("nameid") ?? User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (usuarioId == null)
+            return Unauthorized();
+
+        var result = await _mediator.Send(new DeleteReservaActividadMeCommand
+        {
+            UsuarioId = usuarioId,
+            ReservaActividadId = id
+        });
+        if (!result.IsSuccess)
+            return result.IsNotFound ? NotFound(result.ErrorMessage) : BadRequest(result.ErrorMessage);
+        return NoContent();
     }
 
     [HttpGet]
