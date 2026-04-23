@@ -1,39 +1,100 @@
-﻿using Authentication.Api.Contracts;
+using Authentication.Api.Contracts;
 using Authentication.Api.Services;
 using Authentication.Domain.Entities;
-using Microsoft.AspNetCore.Authentication.BearerToken;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.Data;
+using Microsoft.Extensions.Configuration;
+using Notification.Domain.Events;
+using System.Text.Json;
 
 namespace Authentication.Api.UseCases.Commands.LoginUser
 {
+    public class LoginResponse
+    {
+        public string AccessToken { get; set; } = string.Empty;
+        public string RefreshToken { get; set; } = string.Empty;
+        public int ExpiresIn { get; set; }
+    }
+
+    public class TwoFactorRequiredResponse : IResult
+    {
+        public bool RequiresTwoFactor { get; set; } = true;
+        public string TwoFactorProvider { get; set; } = "Email";
+        public string Message { get; set; } = string.Empty;
+
+        public static Type ResultType => typeof(TwoFactorRequiredResponse);
+
+        public async Task ExecuteAsync(HttpContext httpContext)
+        {
+            httpContext.Response.StatusCode = StatusCodes.Status200OK;
+            httpContext.Response.ContentType = "application/json";
+            await httpContext.Response.WriteAsync(JsonSerializer.Serialize(this, new JsonSerializerOptions
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+            }));
+        }
+    }
+
     public class LoginUserHandler
     {
-        public static async Task<Results<Ok<AccessTokenResponse>, EmptyHttpResult, ProblemHttpResult>> Handle(LoginRequest login, SignInManager<User> _signInManager, UserManager<User> _userManager, IJwtGenerator jwtGenerator)
+        public static async Task<IResult> Handle(
+            LoginRequest login,
+            SignInManager<User> signInManager,
+            UserManager<User> userManager,
+            IJwtGenerator jwtGenerator,
+            IKafkaProducerService kafkaProducer,
+            IConfiguration configuration)
         {
-            var user = await _userManager.FindByEmailAsync(login.Email);
+            var user = await userManager.FindByEmailAsync(login.Email);
             if (user == null)
             {
                 return TypedResults.Problem("Credenciales inválidas.", statusCode: StatusCodes.Status401Unauthorized);
             }
 
-            var result = await _signInManager.CheckPasswordSignInAsync(
+            if (!await userManager.IsEmailConfirmedAsync(user))
+            {
+                return TypedResults.Problem("Debes confirmar tu correo electrónico antes de iniciar sesión.", statusCode: StatusCodes.Status401Unauthorized);
+            }
+
+            var result = await signInManager.CheckPasswordSignInAsync(
                 user,
                 login.Password,
-                lockoutOnFailure: true
-            );
+                lockoutOnFailure: true);
 
             if (!result.Succeeded)
             {
                 return TypedResults.Problem("Credenciales inválidas.", statusCode: StatusCodes.Status401Unauthorized);
             }
 
-            var roles = await _userManager.GetRolesAsync(user);
+            if (user.TwoFactorEnabled)
+            {
+                var token = await userManager.GenerateTwoFactorTokenAsync(user, "Email");
+                var expirationMinutes = configuration.GetValue<int>("TwoFactorAuth:TokenExpirationMinutes", 5);
 
+                await kafkaProducer.PublishTwoFactorCodeAsync(new TwoFactorCodeEvent
+                {
+                    UserId = user.Id,
+                    Email = user.Email ?? login.Email,
+                    Code = token,
+                    Provider = "Email",
+                    ExpirationMinutes = expirationMinutes,
+                    CreatedAt = DateTime.UtcNow
+                });
+
+                return new TwoFactorRequiredResponse
+                {
+                    RequiresTwoFactor = true,
+                    TwoFactorProvider = "Email",
+                    Message = "Se ha enviado un código de verificación a tu correo electrónico."
+                };
+            }
+
+            var roles = await userManager.GetRolesAsync(user);
             var (accessToken, refreshToken) = await jwtGenerator.GenerateTokensAsync(roles, user);
 
-            return TypedResults.Ok(new AccessTokenResponse
+            return TypedResults.Ok(new LoginResponse
             {
                 AccessToken = accessToken,
                 RefreshToken = refreshToken,

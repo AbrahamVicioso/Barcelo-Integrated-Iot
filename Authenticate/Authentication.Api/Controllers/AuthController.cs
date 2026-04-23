@@ -6,6 +6,10 @@ using Authentication.Api.UseCases.Commands.ForgotPassword;
 using Authentication.Api.UseCases.Commands.LoginUser;
 using Authentication.Api.UseCases.Commands.RefreshToken;
 using Authentication.Api.UseCases.Commands.RegisterUser;
+using Authentication.Api.UseCases.Commands.SendTwoFactorCode;
+using Authentication.Api.UseCases.Commands.TwoFactorEnable;
+using Authentication.Api.UseCases.Commands.TwoFactorDisable;
+using Authentication.Api.UseCases.Commands.TwoFactorLogin;
 using Authentication.Domain.Entities;
 using Microsoft.AspNetCore.Authentication.BearerToken;
 using Microsoft.AspNetCore.Authorization;
@@ -14,6 +18,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.WebUtilities;
+using Microsoft.Extensions.Logging;
 using Notification.Domain.Events;
 using Notification.Domain.Interfaces;
 using System.Text;
@@ -32,6 +37,9 @@ namespace Authentication.Api.Controllers
         private readonly SignInManager<User> signInManager;
         private readonly IJwtGenerator jwtGenerator;
         private readonly IConfiguration configuration;
+        private readonly ILogger<AuthController> logger;
+        private readonly ILogger<TwoFactorLoginHandler> twoFactorLoginLogger;
+        private readonly ILogger<TwoFactorEnableHandler> twoFactorEnableLogger;
 
         public AuthController(
             UserManager<User> userManager,
@@ -40,7 +48,9 @@ namespace Authentication.Api.Controllers
             IAuditProducer auditProducer,
             SignInManager<User> signInManager,
             IJwtGenerator jwtGenerator,
-            IConfiguration configuration)
+            IConfiguration configuration,
+            ILogger<AuthController> logger,
+            ILoggerFactory loggerFactory)
         {
             this.userManager = userManager;
             this.userStore = userStore;
@@ -49,26 +59,32 @@ namespace Authentication.Api.Controllers
             this.signInManager = signInManager;
             this.jwtGenerator = jwtGenerator;
             this.configuration = configuration;
+            this.logger = logger;
+            this.twoFactorLoginLogger = loggerFactory.CreateLogger<TwoFactorLoginHandler>();
+            this.twoFactorEnableLogger = loggerFactory.CreateLogger<TwoFactorEnableHandler>();
         }
 
         [HttpPost]
-        public async Task<Results<Ok<AccessTokenResponse>, EmptyHttpResult, ProblemHttpResult>> Login(LoginRequest loginRequest)
+        public async Task<IResult> Login(LoginRequest loginRequest)
         {
-            var result = await LoginUserHandler.Handle(loginRequest, signInManager, userManager, jwtGenerator);
+            var result = await LoginUserHandler.Handle(loginRequest, signInManager, userManager, jwtGenerator, kafkaProducerService, configuration);
 
-            var isSuccess = result.Result is Ok<AccessTokenResponse>;
-            var user = isSuccess ? await userManager.FindByEmailAsync(loginRequest.Email) : null;
-            await auditProducer.PublishAsync(new AuditEvent
+            var user = await userManager.FindByEmailAsync(loginRequest.Email);
+            if (user != null)
             {
-                Servicio = "Authenticate.API",
-                UsuarioId = user?.Id,
-                Accion = "LOGIN",
-                TipoEntidad = "Usuario",
-                DireccionIp = HttpContext.Connection.RemoteIpAddress?.ToString() ?? string.Empty,
-                AgenteUsuario = Request.Headers["User-Agent"].ToString(),
-                Resultado = isSuccess ? "Exitoso" : "Fallido",
-                ValorNuevo = loginRequest.Email
-            });
+                var requiresTwoFactor = result is TwoFactorRequiredResponse;
+                await auditProducer.PublishAsync(new AuditEvent
+                {
+                    Servicio = "Authenticate.API",
+                    UsuarioId = user.Id,
+                    Accion = requiresTwoFactor ? "LOGIN_2FA_PENDING" : "LOGIN",
+                    TipoEntidad = "Usuario",
+                    DireccionIp = HttpContext.Connection.RemoteIpAddress?.ToString() ?? string.Empty,
+                    AgenteUsuario = Request.Headers["User-Agent"].ToString(),
+                    Resultado = (result is Ok<LoginResponse>) ? "Exitoso" : "Fallido",
+                    ValorNuevo = loginRequest.Email
+                });
+            }
 
             return result;
         }
@@ -201,6 +217,58 @@ namespace Authentication.Api.Controllers
                 return TypedResults.BadRequest("El token de confirmación es inválido o ha expirado.");
 
             return TypedResults.Ok("Correo electrónico confirmado exitosamente.");
+        }
+
+        [HttpPost]
+        public async Task<IResult> LoginVerifyTwoFactor([FromBody] TwoFactorLoginRequest request)
+        {
+            return await TwoFactorLoginHandler.Handle(request, userManager, signInManager, jwtGenerator, twoFactorLoginLogger);
+        }
+
+        [HttpPost]
+        public async Task<Results<Ok<string>, ProblemHttpResult>> LoginSendTwoFactorCode([FromBody] EmailRequest request)
+        {
+            return await SendTwoFactorCodeHandler.Handle(request.Email, userManager, kafkaProducerService, configuration);
+        }
+
+        [Authorize]
+        [HttpGet]
+        public async Task<Results<Ok<TwoFactorStatusResponse>, NotFound>> TwoFactorStatus()
+        {
+            if (await userManager.GetUserAsync(HttpContext?.User) is not { } user)
+            {
+                return TypedResults.NotFound();
+            }
+
+            return TypedResults.Ok(new TwoFactorStatusResponse
+            {
+                IsTwoFactorEnabled = user.TwoFactorEnabled,
+                TwoFactorProvider = user.TwoFactorEnabled ? "Email" : string.Empty
+            });
+        }
+
+        [Authorize]
+        [HttpPost]
+        public async Task<Results<Ok<TwoFactorStatusResponse>, ProblemHttpResult>> TwoFactorEnable()
+        {
+            if (await userManager.GetUserAsync(HttpContext?.User) is not { } user)
+            {
+                return TypedResults.Problem("Usuario no encontrado.", statusCode: StatusCodes.Status404NotFound);
+            }
+
+            return await TwoFactorEnableHandler.Handle(user, userManager, kafkaProducerService, configuration, twoFactorEnableLogger);
+        }
+
+        [Authorize]
+        [HttpPost]
+        public async Task<Results<Ok<TwoFactorStatusResponse>, ProblemHttpResult>> TwoFactorDisable([FromBody] TwoFactorDisableRequest request)
+        {
+            if (await userManager.GetUserAsync(HttpContext?.User) is not { } user)
+            {
+                return TypedResults.Problem("Usuario no encontrado.", statusCode: StatusCodes.Status404NotFound);
+            }
+
+            return await TwoFactorDisableHandler.Handle(user, userManager, request.Password);
         }
 
         private static async Task<InfoResponse> CreateInfoResponseAsync<TUser>(TUser user, UserManager<TUser> userManager)

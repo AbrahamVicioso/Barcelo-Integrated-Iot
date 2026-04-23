@@ -93,6 +93,11 @@ namespace Notification.Worker
                 context.Configuration.GetSection("KafkaConsumer:CredencialCreada").Bind(credencialCreadaConsumerConfig);
                 services.AddSingleton(credencialCreadaConsumerConfig);
 
+                // Configure TwoFactorCodeConsumerConfig
+                var twoFactorCodeConsumerConfig = new TwoFactorCodeConsumerConfig();
+                context.Configuration.GetSection("KafkaConsumer:TwoFactorCode").Bind(twoFactorCodeConsumerConfig);
+                services.AddSingleton(twoFactorCodeConsumerConfig);
+
                 // Add Kafka Consumers as separate instances
                 services.AddSingleton<UserCreatedEventConsumer>();
                 services.AddSingleton<ReservaCreadaEventConsumer>();
@@ -101,6 +106,7 @@ namespace Notification.Worker
                 services.AddSingleton<PersonalAccesoHabitacionEventConsumer>();
                 services.AddSingleton<PasswordResetEventConsumer>();
                 services.AddSingleton<CredencialCreadaEventConsumer>();
+                services.AddSingleton<TwoFactorCodeEventConsumer>();
 
                 // Add Background Services for Kafka Consumers
                 services.AddHostedService<UserCreatedNotificationWorker>();
@@ -110,6 +116,7 @@ namespace Notification.Worker
                 services.AddHostedService<PersonalAccesoHabitacionNotificationWorker>();
                 services.AddHostedService<PasswordResetNotificationWorker>();
                 services.AddHostedService<CredencialCreadaNotificationWorker>();
+                services.AddHostedService<TwoFactorCodeNotificationWorker>();
             });
 
             IHost host = builder.Build();
@@ -330,6 +337,35 @@ namespace Notification.Worker
         public override async Task StopAsync(CancellationToken cancellationToken)
         {
             _logger.LogInformation("Stopping Credencial Creada Notification Worker...");
+            await _kafkaConsumer.StopAsync(cancellationToken);
+            await base.StopAsync(cancellationToken);
+        }
+    }
+
+    public class TwoFactorCodeNotificationWorker : BackgroundService
+    {
+        private readonly TwoFactorCodeEventConsumer _kafkaConsumer;
+        private readonly ILogger<TwoFactorCodeNotificationWorker> _logger;
+
+        public TwoFactorCodeNotificationWorker(
+            TwoFactorCodeEventConsumer kafkaConsumer,
+            ILogger<TwoFactorCodeNotificationWorker> logger)
+        {
+            _kafkaConsumer = kafkaConsumer;
+            _logger = logger;
+        }
+
+        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+        {
+            _logger.LogInformation("Starting Two Factor Code Notification Worker...");
+            await _kafkaConsumer.StartAsync(stoppingToken);
+            while (!stoppingToken.IsCancellationRequested)
+                await Task.Delay(Timeout.Infinite, stoppingToken);
+        }
+
+        public override async Task StopAsync(CancellationToken cancellationToken)
+        {
+            _logger.LogInformation("Stopping Two Factor Code Notification Worker...");
             await _kafkaConsumer.StopAsync(cancellationToken);
             await base.StopAsync(cancellationToken);
         }

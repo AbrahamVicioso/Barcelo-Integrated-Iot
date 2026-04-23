@@ -10,6 +10,7 @@ namespace Authentication.Api.Services
         Task PublishUserCreatedAsync(UserCreatedEvent userEvent, CancellationToken cancellationToken = default);
         Task PublishEmailConfirmationAsync(EmailConfirmationEvent confirmationEvent, CancellationToken cancellationToken = default);
         Task PublishPasswordResetAsync(PasswordResetEvent resetEvent, CancellationToken cancellationToken = default);
+        Task PublishTwoFactorCodeAsync(TwoFactorCodeEvent twoFactorEvent, CancellationToken cancellationToken = default);
     }
 
     public class KafkaProducerService : IKafkaProducerService, IDisposable
@@ -18,6 +19,7 @@ namespace Authentication.Api.Services
         private readonly string _topic;
         private readonly string _emailConfirmationTopic;
         private readonly string _passwordResetTopic;
+        private readonly string _twoFactorCodeTopic;
         private readonly ILogger<KafkaProducerService> _logger;
         private bool _disposed;
 
@@ -26,6 +28,7 @@ namespace Authentication.Api.Services
             _topic = config.Topic;
             _emailConfirmationTopic = config.EmailConfirmationTopic;
             _passwordResetTopic = config.PasswordResetTopic;
+            _twoFactorCodeTopic = config.TwoFactorCodeTopic;
             _logger = logger;
 
             var producerConfig = new ProducerConfig
@@ -116,6 +119,31 @@ namespace Authentication.Api.Services
             }
         }
 
+        public async Task PublishTwoFactorCodeAsync(TwoFactorCodeEvent twoFactorEvent, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var message = new Message<string, string>
+                {
+                    Key = twoFactorEvent.Email,
+                    Value = JsonSerializer.Serialize(twoFactorEvent, new JsonSerializerOptions
+                    {
+                        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                    })
+                };
+
+                var result = await _producer.ProduceAsync(_twoFactorCodeTopic, message, cancellationToken);
+
+                _logger.LogInformation("Published TwoFactorCodeEvent for {Email} to partition {Partition} at offset {Offset}",
+                    twoFactorEvent.Email, result.Partition.Value, result.Offset.Value);
+            }
+            catch (ProduceException<string, string> ex)
+            {
+                _logger.LogError(ex, "Failed to publish TwoFactorCodeEvent for {Email}", twoFactorEvent.Email);
+                throw;
+            }
+        }
+
         public void Dispose()
         {
             if (_disposed)
@@ -135,6 +163,7 @@ namespace Authentication.Api.Services
         public string Topic { get; set; } = "notifications";
         public string EmailConfirmationTopic { get; set; } = "email-confirmation";
         public string PasswordResetTopic { get; set; } = "password-reset";
+        public string TwoFactorCodeTopic { get; set; } = "two-factor-code";
         public string? ClientId { get; set; }
     }
 }

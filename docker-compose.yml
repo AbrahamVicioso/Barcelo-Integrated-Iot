@@ -452,6 +452,9 @@ services:
       KafkaConsumer__CredencialCreada__BootstrapServers: kafka:29092
       KafkaConsumer__CredencialCreada__GroupId: notification-credencial-creada-group
       KafkaConsumer__CredencialCreada__Topic: credenciales.creada
+      KafkaConsumer__TwoFactorCode__BootstrapServers: kafka:29092
+      KafkaConsumer__TwoFactorCode__GroupId: notification-two-factor-group
+      KafkaConsumer__TwoFactorCode__Topic: two-factor-code
       EmailSettings__ConnectionString: ${AZURE_COMMUNICATION_CONNECTION_STRING:?EmailSettings__ConnectionString is required. Set AZURE_COMMUNICATION_CONNECTION_STRING in your .env file}
       EmailSettings__Username: ${AZURE_COMMUNICATION_SENDER_ADDRESS:?EmailSettings__Username is required. Set AZURE_COMMUNICATION_SENDER_ADDRESS in your .env file}
       Ntfy__BaseUrl: https://ntfy:443
@@ -516,8 +519,8 @@ services:
       - "3000:3000"
     restart: unless-stopped
     environment:
-      NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-http://localhost:5019}
-      NEXT_PUBLIC_NTFY_BASE_URL: ${NEXT_PUBLIC_NTFY_BASE_URL:-http://localhost:8082}
+      API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-http://localhost:5019}
+      NTFY_BASE_URL: ${NEXT_PUBLIC_NTFY_BASE_URL:-http://localhost:8082}
     networks:
       - barcelo-net
     depends_on:
