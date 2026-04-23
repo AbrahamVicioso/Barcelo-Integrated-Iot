@@ -15,6 +15,7 @@ namespace Authentication.Api.UseCases.Commands.TwoFactorEnable
             User user,
             UserManager<User> userManager,
             IKafkaProducerService kafkaProducer,
+            ITwoFactorCacheService cacheService,
             IConfiguration configuration,
             ILogger<TwoFactorEnableHandler> logger)
         {
@@ -36,6 +37,8 @@ namespace Authentication.Api.UseCases.Commands.TwoFactorEnable
             var expirationMinutes = configuration.GetValue<int>("TwoFactorAuth:TokenExpirationMinutes", 5);
 
             logger.LogInformation("Enviando código de verificación para activar 2FA usuario {UserId}", user.Id);
+
+            cacheService.SetPendingVerification(user.Id, token);
 
             await kafkaProducer.PublishTwoFactorCodeAsync(new TwoFactorCodeEvent
             {

@@ -10,6 +10,7 @@ using Authentication.Api.UseCases.Commands.SendTwoFactorCode;
 using Authentication.Api.UseCases.Commands.TwoFactorEnable;
 using Authentication.Api.UseCases.Commands.TwoFactorDisable;
 using Authentication.Api.UseCases.Commands.TwoFactorLogin;
+using Authentication.Api.UseCases.Commands.TwoFactorConfirm;
 using Authentication.Domain.Entities;
 using Microsoft.AspNetCore.Authentication.BearerToken;
 using Microsoft.AspNetCore.Authorization;
@@ -40,6 +41,8 @@ namespace Authentication.Api.Controllers
         private readonly ILogger<AuthController> logger;
         private readonly ILogger<TwoFactorLoginHandler> twoFactorLoginLogger;
         private readonly ILogger<TwoFactorEnableHandler> twoFactorEnableLogger;
+        private readonly ILogger<TwoFactorConfirmHandler> twoFactorConfirmLogger;
+        private readonly ITwoFactorCacheService twoFactorCacheService;
 
         public AuthController(
             UserManager<User> userManager,
@@ -50,7 +53,8 @@ namespace Authentication.Api.Controllers
             IJwtGenerator jwtGenerator,
             IConfiguration configuration,
             ILogger<AuthController> logger,
-            ILoggerFactory loggerFactory)
+            ILoggerFactory loggerFactory,
+            ITwoFactorCacheService twoFactorCacheService)
         {
             this.userManager = userManager;
             this.userStore = userStore;
@@ -62,6 +66,8 @@ namespace Authentication.Api.Controllers
             this.logger = logger;
             this.twoFactorLoginLogger = loggerFactory.CreateLogger<TwoFactorLoginHandler>();
             this.twoFactorEnableLogger = loggerFactory.CreateLogger<TwoFactorEnableHandler>();
+            this.twoFactorConfirmLogger = loggerFactory.CreateLogger<TwoFactorConfirmHandler>();
+            this.twoFactorCacheService = twoFactorCacheService;
         }
 
         [HttpPost]
@@ -256,7 +262,19 @@ namespace Authentication.Api.Controllers
                 return TypedResults.Problem("Usuario no encontrado.", statusCode: StatusCodes.Status404NotFound);
             }
 
-            return await TwoFactorEnableHandler.Handle(user, userManager, kafkaProducerService, configuration, twoFactorEnableLogger);
+            return await TwoFactorEnableHandler.Handle(user, userManager, kafkaProducerService, twoFactorCacheService, configuration, twoFactorEnableLogger);
+        }
+
+        [Authorize]
+        [HttpPost]
+        public async Task<Results<Ok<TwoFactorStatusResponse>, ProblemHttpResult>> TwoFactorConfirm([FromBody] TwoFactorConfirmRequest request)
+        {
+            if (await userManager.GetUserAsync(HttpContext?.User) is not { } user)
+            {
+                return TypedResults.Problem("Usuario no encontrado.", statusCode: StatusCodes.Status404NotFound);
+            }
+
+            return await TwoFactorConfirmHandler.Handle(user, userManager, twoFactorCacheService, twoFactorConfirmLogger);
         }
 
         [Authorize]

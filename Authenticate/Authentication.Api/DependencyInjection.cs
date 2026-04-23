@@ -1,4 +1,4 @@
-﻿using Authentication.Api.Contracts;
+using Authentication.Api.Contracts;
 using Authentication.Api.Data;
 using Authentication.Api.Services;
 using Authentication.Api.UseCases.Commands.LoginUser;
@@ -27,6 +27,9 @@ namespace Authentication.Api
             configuration.GetSection("KafkaProducer").Bind(kafkaConfig);
             services.AddSingleton(kafkaConfig);
             services.AddSingleton<IKafkaProducerService, KafkaProducerService>();
+
+            // TwoFactor cache
+            services.AddSingleton<ITwoFactorCacheService, TwoFactorCacheService>();
 
             // Register Audit Kafka Producer
             var auditConfig = new AuditKafkaProducerConfig();
