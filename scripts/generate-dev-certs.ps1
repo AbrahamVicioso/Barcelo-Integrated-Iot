@@ -1,5 +1,5 @@
 param(
-    [string]$Domain = "smartstay.es",
+    [string]$Domain = "smartstay.int",
     [string]$OutputPath = "$PSScriptRoot/../docker/certs"
 )
 
