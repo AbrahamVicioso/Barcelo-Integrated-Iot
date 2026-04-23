@@ -24,12 +24,25 @@ public class Program
             .GetSection("AllowedOrigins").Get<string[]>()
             ?? ["http://localhost:3000"];
 
+        var isWildcard = allowedOrigins.Contains("*");
+
         builder.Services.AddCors(options =>
             options.AddDefaultPolicy(policy =>
-                policy.WithOrigins(allowedOrigins)
-                      .AllowAnyMethod()
-                      .AllowAnyHeader()
-                      .AllowCredentials()));
+            {
+                if (isWildcard)
+                {
+                    policy.AllowAnyOrigin()
+                          .AllowAnyMethod()
+                          .AllowAnyHeader();
+                }
+                else
+                {
+                    policy.WithOrigins(allowedOrigins)
+                          .AllowAnyMethod()
+                          .AllowAnyHeader()
+                          .AllowCredentials();
+                }
+            }));
 
         var app = builder.Build();
 
