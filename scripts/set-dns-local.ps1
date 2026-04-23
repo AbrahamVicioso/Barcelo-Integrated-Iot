@@ -18,6 +18,8 @@ $ip auth.smartstay.int
 $ip usuarios.smartstay.int
 $ip reservas.smartstay.int
 $ip dispositivos.smartstay.int
+$ip services.smartstay.int
+$ip admin.smartstay.int
 "@
 
 if ($Show) {

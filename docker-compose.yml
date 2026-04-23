@@ -502,3 +502,24 @@ services:
         condition: service_healthy
       kafka:
         condition: service_started
+
+  # ── Admin UI ───────────────────────────────────────────────────────────────────
+  admin-barcelo:
+    image: abrahamvicioso/admin-barcelo:latest
+    container_name: barcelo-admin
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+    environment:
+      NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-http://localhost:5019}
+      NEXT_PUBLIC_NTFY_BASE_URL: ${NEXT_PUBLIC_NTFY_BASE_URL:-http://localhost:8082}
+    networks:
+      - barcelo-net
+    depends_on:
+      - api-gateway
+      - ntfy
