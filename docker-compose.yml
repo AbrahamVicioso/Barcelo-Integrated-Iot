@@ -57,11 +57,11 @@ services:
       NTFY_ATTACHMENT_CACHE_DIR: /var/lib/ntfy/attachments
       NTFY_BEHIND_PROXY: "false"
       NTFY_ENABLE_CORS: "true"
-      NTFY_KEY_FILE: ${NTFY_KEY_FILE:-/certs/privkey.pem} 
-      NTFY_CERT_FILE: ${NTFY_CERT_FILE:-/certs/privkey.pem}  
+      NTFY_KEY_FILE: ${NTFY_KEY_FILE:-/certs/privkey.pem}
+      NTFY_CERT_FILE: ${NTFY_CERT_FILE:-/certs/fullchain.pem}  
     volumes:
       - ntfy-data:/var/lib/ntfy
-      - ./docker/certs/live/${DOMINIO_PRINCIPAL:-smartstay.es}:/certs:ro
+      - ./docker/certs/live/${DOMINIO_PRINCIPAL:-smartstay.es}/smartstay.es:/certs:ro
     networks:
       - barcelo-net
     healthcheck:
