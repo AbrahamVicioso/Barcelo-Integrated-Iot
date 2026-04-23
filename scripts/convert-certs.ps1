@@ -6,14 +6,12 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-$CurrentDir = Get-Location
-$ProjectRoot = $CurrentDir.Path
+$ProjectRoot = (Get-Location).Path
 
-# Detectar si estamos en docker o en root
-if (Test-Path (Join-Path $ProjectRoot "docker")) {
-    $ProjectRoot = $CurrentDir.Path
-} elseif (Test-Path (Join-Path $ProjectRoot "..\docker")) {
-    $ProjectRoot = (Resolve-Path (Join-Path $ProjectRoot "..")).Path
+# Verificar si estamos en carpeta docker
+if (-not (Test-Path "$ProjectRoot\docker")) {
+    $ProjectRoot = "$PSScriptRoot\.."
+    $ProjectRoot = (Resolve-Path $ProjectRoot).Path
 }
 
 $CertsPath = Join-Path $ProjectRoot "docker\certs\live\$Domain\$Domain"
@@ -26,12 +24,12 @@ $ChainFile = Join-Path $CertsPath "chain.pem"
 Write-Host "=== Convertidor PEM -> PFX ==="
 Write-Host "Dominio: $Domain"
 Write-Host "Proyecto: $ProjectRoot"
-Write-Host "Origen: $CertsPath"
 
 if (-not (Test-Path $CertFile)) {
     Write-Host "ERROR: No encontrado $CertFile"
     exit 1
 }
+
 if (-not (Test-Path $KeyFile)) {
     Write-Host "ERROR: No encontrado $KeyFile"
     exit 1
