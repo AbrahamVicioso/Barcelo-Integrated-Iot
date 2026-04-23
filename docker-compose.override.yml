@@ -9,12 +9,22 @@ services:
       - "443:443"
     volumes:
       - ./docker/nginx/nginx-generated.conf:/etc/nginx/nginx.conf.template:ro
-      - ./docker/certs/live/${DOMINIO_PRINCIPAL:-smartstay.es}:/etc/letsencrypt:ro
+      - ./docker/certs/live/${DOMINIO_PRINCIPAL:-smartstay.es}:/etc/nginx/certs:ro
       - ./docker/certs/www:/var/www/certbot:rw
     environment:
       NGINX_HOST: ${DOMINIO_PRINCIPAL:-smartstay.es}
+      NGINX_CERT_PATH: /etc/nginx/certs
+      CERT_PASSWORD: ${CERT_PASSWORD:-smartstay}
     command: >
-      /bin/bash -c "envsubst '$$NGINX_HOST' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf && nginx -g 'daemon off;'"
+      /bin/bash -c "if [ -f $${NGINX_CERT_PATH}/smartstay.pfx ]; then
+        openssl pkcs12 -in $${NGINX_CERT_PATH}/smartstay.pfx -passin pass:$${CERT_PASSWORD} -nokeys -out /tmp/cert.pem 2>/dev/null || true;
+        openssl pkcs12 -in $${NGINX_CERT_PATH}/smartstay.pfx -passin pass:$${CERT_PASSWORD} -nocerts -nodes -out /tmp/key.pem 2>/dev/null || true;
+        chmod 644 /tmp/cert.pem /tmp/key.pem;
+      fi;
+      ls -la /tmp/*.pem 2>/dev/null || true;
+      envsubst '$$NGINX_HOST $$NGINX_CERT_PATH' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf;
+      sed -i 's|${NGINX_CERT_PATH:-/etc/nginx/certs}/smartstay.pfx|/tmp/cert.pem|g; s|${NGINX_CERT_PATH:-/etc/nginx/certs}/cert.pem|/tmp/cert.pem|g; s|${NGINX_CERT_PATH:-/etc/nginx/certs}/privkey.pem|/tmp/key.pem|g' /etc/nginx/nginx.conf;
+      nginx -g 'daemon off;'"
     networks:
       - barcelo-net
     depends_on:

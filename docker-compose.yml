@@ -229,9 +229,7 @@ services:
       AuditProducer__BootstrapServers: kafka:29092
       AuditProducer__Topic: audit.events
       AuditProducer__ClientId: authenticate-audit
-      ConfirmEmail__BaseUrl: ${GATEWAY_PUBLIC_BASE_URL}
-      ConfirmEmail__PathPrefix: ${CONFIRM_EMAIL_PATH:-/api/auth}
-      ConfirmEmail__Suffix: ${CONFIRM_EMAIL_SUFFIX:-/ConfirmEmail}
+      ConfirmEmail__Domain: ${DOMINIO_PRINCIPAL:-smartstay.int}
       ForgotPassword__BaseUrl: ${GATEWAY_PUBLIC_BASE_URL}
       ForgotPassword__PathPrefix: ${RESET_PASSWORD_PATH:-/api/auth}
       ForgotPassword__Suffix: ${RESET_PASSWORD_SUFFIX:-/ResetPassword}
