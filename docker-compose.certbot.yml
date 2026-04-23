@@ -18,7 +18,11 @@ services:
       certonly --standalone
       --email admin@smartstay.es
       --agree-tos --non-interactive
-      -d ${CERT_DOMAIN:-smartstay.es}
+      -d ${DOMINIO_PRINCIPAL:-smartstay.es}
+      -d ntfy.${DOMINIO_PRINCIPAL:-smartstay.es}
+      -d www.${DOMINIO_PRINCIPAL:-smartstay.es}
+      -d api.${DOMINIO_PRINCIPAL:-smartstay.es}
+      -d thingsboard.${DOMINIO_PRINCIPAL:-smartstay.es}
       --keep-until-expiring
     restart: "no"
     networks:
