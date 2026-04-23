@@ -57,8 +57,8 @@ services:
       NTFY_ATTACHMENT_CACHE_DIR: /var/lib/ntfy/attachments
       NTFY_BEHIND_PROXY: "false"
       NTFY_ENABLE_CORS: "true"
-      NTFY_KEY_FILE: /certs/privkey.pem
-      NTFY_CERT_FILE: /certs/cert.pem
+      NTFY_KEY_FILE: ${NTFY_KEY_FILE:-/certs/privkey.pem} 
+      NTFY_CERT_FILE: ${NTFY_CERT_FILE:-/certs/privkey.pem}  
     volumes:
       - ntfy-data:/var/lib/ntfy
       - ./docker/certs/live/${DOMINIO_PRINCIPAL:-smartstay.es}:/certs:ro
