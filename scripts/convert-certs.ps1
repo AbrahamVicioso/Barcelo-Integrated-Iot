@@ -17,9 +17,9 @@ if (-not (Test-Path "$ProjectRoot\docker")) {
 $CertsPath = Join-Path $ProjectRoot "docker\certs\live\$Domain\$Domain"
 $OutputPath = Join-Path $ProjectRoot "docker\certs\live\$Domain\smartstay.pfx"
 
-$CertFile = Join-Path $CertsPath "cert.pem"
-$KeyFile = Join-Path $CertsPath "privkey.pem"
-$ChainFile = Join-Path $CertsPath "chain.pem"
+$CertFile = Join-Path $CertsPath "cert1.pem"
+$KeyFile = Join-Path $CertsPath "privkey1.pem"
+$ChainFile = Join-Path $CertsPath "chain1.pem"
 
 Write-Host "=== Convertidor PEM -> PFX ==="
 Write-Host "Dominio: $Domain"
