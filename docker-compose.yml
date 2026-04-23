@@ -61,7 +61,7 @@ services:
       NTFY_CERT_FILE: ${NTFY_CERT_FILE:-/certs/fullchain.pem}  
     volumes:
       - ntfy-data:/var/lib/ntfy
-      - ./docker/certs/live/${DOMINIO_PRINCIPAL:-smartstay.es}/smartstay.es:/certs:ro
+      - ./docker/certs/archive/${DOMINIO_PRINCIPAL:-smartstay.es}:/certs:ro
     networks:
       - barcelo-net
     healthcheck:
