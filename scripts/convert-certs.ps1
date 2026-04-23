@@ -8,7 +8,7 @@ param(
 $CertsPath = "docker\certs\live\$Domain"
 $ErrorActionPreference = "Stop"
 
-$SourcePath = Join-Path $PSScriptRoot "..\$CertsPath"
+$SourcePath = Join-Path $PSScriptRoot "..\$CertsPath\$Domain"
 $OutputPath = Join-Path $PSScriptRoot "..\$CertsPath\$OutputFile"
 
 $CertFile = Join-Path $SourcePath "cert.pem"
@@ -21,8 +21,12 @@ Write-Host "Ruta origen: $SourcePath"
 
 if (-not (Test-Path $CertFile)) {
     Write-Host "ERROR: No encontrado: $CertFile"
+    Write-Host ""
+    Write-Host "Archivos en esa ruta:"
+    Get-ChildItem $SourcePath -ErrorAction SilentlyContinue | ForEach-Object { Write-Host "  - $($_.Name)" }
     exit 1
 }
+
 if (-not (Test-Path $KeyFile)) {
     Write-Host "ERROR: No encontrado: $KeyFile"
     exit 1
@@ -32,8 +36,7 @@ if (-not (Test-Path $KeyFile)) {
 $OpenSsl = $null
 $OpenSslPaths = @(
     "C:\Program Files\Git\usr\bin\openssl.exe",
-    "C:\Program Files (x86)\Git\usr\bin\openssl.exe",
-    "C:\Program Files\OpenSSL-Win64\bin\openssl.exe"
+    "C:\Program Files (x86)\Git\usr\bin\openssl.exe"
 )
 
 foreach ($path in $OpenSslPaths) {
@@ -46,7 +49,6 @@ foreach ($path in $OpenSslPaths) {
 if (-not $OpenSsl) {
     Write-Host "Openssl no encontrado, usando contenedor Docker..."
 
-    # Verificar si la red existe
     $networkExists = docker network ls --format "{{.Name}}" | Where-Object { $_ -eq "barcelo-iot" }
     if (-not $networkExists) {
         docker network create barcelo-iot 2>$null
@@ -54,17 +56,7 @@ if (-not $OpenSsl) {
 
     $absolutePath = (Resolve-Path $SourcePath).Path
 
-    docker run --rm -it `
-        --network barcelo-iot `
-        -v "$absolutePath`:/certs:ro" `
-        alpine/openssl:latest pkcs12 `
-        -export `
-        -in /certs/cert.pem `
-        -inkey /certs/privkey.pem `
-        -certfile /certs/chain.pem `
-        -out /certs/smartstay.pfx `
-        -password "pass:$Password" `
-        -name "barcelo-cert"
+    docker run --rm -it --network barcelo-iot -v "$absolutePath`:/certs:ro" alpine/openssl:latest pkcs12 -export -in /certs/cert.pem -inkey /certs/privkey.pem -certfile /certs/chain.pem -out /certs/smartstay.pfx -password "pass:$Password" -name "barcelo-cert"
 
     if ($LASTEXITCODE -ne 0) {
         Write-Host "ERROR: Error al convertir certificados con Docker"
