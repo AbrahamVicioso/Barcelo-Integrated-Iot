@@ -224,6 +224,7 @@ services:
       KafkaProducer__Topic: users
       KafkaProducer__EmailConfirmationTopic: email-confirmation
       KafkaProducer__PasswordResetTopic: password-reset
+      KafkaProducer__TwoFactorCodeTopic: two-factor-code
       KafkaProducer__ClientId: authentication-api
       AuditProducer__BootstrapServers: kafka:29092
       AuditProducer__Topic: audit.events
