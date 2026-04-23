@@ -18,6 +18,7 @@ services:
       certonly --standalone
       --email admin@smartstay.es
       --agree-tos --non-interactive
+      --expand
       -d ${DOMINIO_PRINCIPAL:-smartstay.es}
       -d ntfy.${DOMINIO_PRINCIPAL:-smartstay.es}
       -d www.${DOMINIO_PRINCIPAL:-smartstay.es}
@@ -25,9 +26,9 @@ services:
       -d thingsboard.${DOMINIO_PRINCIPAL:-smartstay.es}
       --keep-until-expiring
     restart: "no"
-    networks:
-      - barcelo-net
+    # networks:
+    #   - barcelo-net
 
-networks:
-  barcelo-net:
-    external: true
+# networks:
+#   barcelo-net:
+#     external: true
