@@ -12,6 +12,7 @@ services:
       - ./docker/certs/live/${DOMINIO_PRINCIPAL:-smartstay.es}:/etc/nginx/certs:ro
       - ./docker/certs/www:/var/www/certbot:rw
     environment:
+      TZ: America/Santo_Domingo
       NGINX_HOST: ${DOMINIO_PRINCIPAL:-smartstay.es}
       NGINX_CERT_PATH: /etc/nginx/certs
       CERT_PASSWORD: ${CERT_PASSWORD:-smartstay}

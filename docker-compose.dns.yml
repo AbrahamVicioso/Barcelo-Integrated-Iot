@@ -16,6 +16,7 @@ services:
     volumes:
       - ./docker/nginx/nginx.template.conf:/etc/nginx/nginx.template.conf:ro
     environment:
+      - TZ=America/Santo_Domingo
       - DOMAIN=${DOMINIO_PRINCIPAL:-smartstay.int}
     networks:
       - barcelo-net
