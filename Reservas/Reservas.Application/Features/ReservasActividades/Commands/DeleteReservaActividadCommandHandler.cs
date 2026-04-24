@@ -1,6 +1,7 @@
 using MediatR;
 using Reservas.Application.Common;
 using Reservas.Application.Interfaces;
+using Reservas.Domain.Entites;
 
 namespace Reservas.Application.Features.ReservasActividades.Commands;
 
@@ -24,7 +25,10 @@ public class DeleteReservaActividadCommandHandler : IRequestHandler<DeleteReserv
                 return Result<bool>.Failure($"Reserva de actividad con ID {request.ReservaActividadId} no encontrada.");
             }
 
-            await _unitOfWork.ReservasActividades.DeleteAsync(reserva, cancellationToken);
+            reserva.EstadoReservaActividadId = EstadoReservaActividad.Cancelada;
+            reserva.Estado = "Cancelada";
+
+            await _unitOfWork.ReservasActividades.UpdateAsync(reserva, cancellationToken);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
             return Result<bool>.Success(true);

@@ -1,6 +1,7 @@
 using MediatR;
 using Reservas.Application.Common;
 using Reservas.Application.Interfaces;
+using Reservas.Domain.Entites;
 
 namespace Reservas.Application.Features.ReservasActividades.Commands;
 
@@ -35,10 +36,13 @@ public class DeleteReservaActividadMeCommandHandler : IRequestHandler<DeleteRese
 
             if (reserva.HuespedId != huespedId.Value)
             {
-                return Result<bool>.Failure("No tienes permiso para eliminar esta reserva.");
+                return Result<bool>.Failure("No tienes permiso para cancelar esta reserva.");
             }
 
-            await _unitOfWork.ReservasActividades.DeleteAsync(reserva, cancellationToken);
+            reserva.EstadoReservaActividadId = EstadoReservaActividad.Cancelada;
+            reserva.Estado = "Cancelada";
+
+            await _unitOfWork.ReservasActividades.UpdateAsync(reserva, cancellationToken);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
             return Result<bool>.Success(true);
