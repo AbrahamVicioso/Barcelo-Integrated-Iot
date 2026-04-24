@@ -2,8 +2,8 @@ using AutoMapper;
 using MediatR;
 using Reservas.Application.Common;
 using Reservas.Application.DTOs;
-using Reservas.Domain.Entites;
 using Reservas.Application.Interfaces;
+using Reservas.Domain.Entites;
 
 namespace Reservas.Application.Features.ReservasActividades.Commands;
 
@@ -23,6 +23,7 @@ public class CreateReservaActividadCommandHandler : IRequestHandler<CreateReserv
         try
         {
             var reserva = _mapper.Map<Domain.Entites.ReservasActividades>(request);
+            reserva.EstadoReservaActividadId = EstadoReservaActividad.Confirmada;
             reserva.Estado = "Confirmada";
             reserva.FechaCreacion = DateTime.UtcNow;
             reserva.RecordatorioEnviado = false;

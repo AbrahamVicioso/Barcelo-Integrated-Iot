@@ -3,6 +3,7 @@ using MediatR;
 using Reservas.Application.Common;
 using Reservas.Application.DTOs;
 using Reservas.Application.Interfaces;
+using Reservas.Domain.Entites;
 
 namespace Reservas.Application.Features.ReservasActividades.Commands;
 
@@ -41,6 +42,7 @@ public class CreateReservaActividadMeCommandHandler : IRequestHandler<CreateRese
                 NumeroPersonas = request.NumeroPersonas,
                 MontoTotal = request.MontoTotal,
                 NotasEspeciales = request.NotasEspeciales,
+                EstadoReservaActividadId = EstadoReservaActividad.Confirmada,
                 Estado = "Confirmada",
                 FechaCreacion = DateTime.UtcNow,
                 RecordatorioEnviado = false
