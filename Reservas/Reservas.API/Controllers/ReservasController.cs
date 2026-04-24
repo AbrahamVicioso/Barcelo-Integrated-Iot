@@ -39,7 +39,6 @@ public class ReservasController : ControllerBase
     }
 
     [HttpGet("me")]
-    [HasPermission(Permissions.Reservas.View)]
     [Authorize]
     public async Task<IActionResult> GetMyReservations()
     {

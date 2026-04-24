@@ -21,6 +21,7 @@ x-dotnet-env: &dotnet-env
   DOTNET_CLI_TELEMETRY_OPTOUT: "1"
   DOTNET_NOLOGO: "1"
   DOTNET_RUNNING_IN_CONTAINER: "true"
+  TZ: America/Santo_Domingo
 
 x-db-conn: &db-conn
   ConnectionStrings__DefaultConnection: "Data source=sqlserver;Database=BarceloIoTDatabase;User Id=sa;Password=Testing1234;TrustServerCertificate=True"
@@ -50,6 +51,7 @@ services:
       - "8081:443"
       - "8082:80"
     environment:
+      TZ: America/Santo_Domingo
       NTFY_BASE_URL: ${NTFY_PUBLIC_BASE_URL:-https://localhost:8081}
       NTFY_CACHE_FILE: /var/lib/ntfy/cache.db
       NTFY_AUTH_FILE: /var/lib/ntfy/auth.db
@@ -80,6 +82,7 @@ services:
           memory: 3G
           cpus: '1.0'
     environment:
+      TZ: America/Santo_Domingo
       SA_PASSWORD: "Testing1234"
       ACCEPT_EULA: "Y"
       MSSQL_PID: Developer
@@ -109,6 +112,7 @@ services:
     ports:
       - "9092:9092"
     environment:
+      TZ: America/Santo_Domingo
       KAFKA_BROKER_ID: 1
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT,CONTROLLER:PLAINTEXT
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
@@ -140,6 +144,7 @@ services:
     ports:
       - "5432:5432"
     environment:
+      TZ: America/Santo_Domingo
       POSTGRES_DB: thingsboard
       POSTGRES_PASSWORD: postgres
     volumes:
@@ -168,6 +173,7 @@ services:
         max-size: "100m"
         max-file: "10"
     environment:
+      TZ: America/Santo_Domingo
       TB_SERVICE_ID: tb-ce-node
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/thingsboard
       TB_QUEUE_TYPE: kafka
@@ -518,6 +524,7 @@ services:
       - "3000:3000"
     restart: unless-stopped
     environment:
+      TZ: America/Santo_Domingo
       API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-http://localhost:5019}
       NTFY_BASE_URL: ${NEXT_PUBLIC_NTFY_BASE_URL:-http://localhost:8082}
     networks:
