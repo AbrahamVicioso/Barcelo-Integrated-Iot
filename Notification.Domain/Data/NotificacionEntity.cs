@@ -5,7 +5,7 @@ namespace Notification.Domain.Data;
 /// </summary>
 public class NotificacionEntity
 {
-    public long NotificacionId { get; set; }
+    public int NotificacionId { get; set; }
     public string UsuarioId { get; set; } = string.Empty;
     public string TipoNotificacion { get; set; } = string.Empty;
     public string Titulo { get; set; } = string.Empty;
