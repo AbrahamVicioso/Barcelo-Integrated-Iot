@@ -7,7 +7,6 @@ using Barcelo.Authorization.Shared;
 namespace Reservas.API.Controllers;
 
 [ApiController]
-[HasPermission(Permissions.Reservas.View)]
 [Route("[controller]")]
 public class ActividadesRecreativasController : ControllerBase
 {
