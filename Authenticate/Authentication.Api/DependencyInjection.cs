@@ -31,6 +31,12 @@ namespace Authentication.Api
             // TwoFactor cache
             services.AddSingleton<ITwoFactorCacheService, TwoFactorCacheService>();
 
+            // Identity runtime settings singleton (mutable at runtime)
+            services.AddSingleton<IdentityRuntimeSettings>();
+
+            // Configuracion de identidad
+            services.AddScoped<IIdentityConfiguracionService, IdentityConfiguracionService>();
+
             // Register Audit Kafka Producer
             var auditConfig = new AuditKafkaProducerConfig();
             configuration.GetSection("AuditProducer").Bind(auditConfig);

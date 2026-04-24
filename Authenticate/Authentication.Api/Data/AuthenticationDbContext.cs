@@ -1,4 +1,5 @@
-﻿using Authentication.Domain.Entities;
+﻿using Authentication.Api.Entities;
+using Authentication.Domain.Entities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -10,8 +11,10 @@ namespace Authentication.Api.Data
         public AuthenticationDbContext(DbContextOptions<AuthenticationDbContext> options)
             :base(options)
         {
-            
+
         }
+
+        public DbSet<ConfiguracionSistema> ConfiguracionSistema => Set<ConfiguracionSistema>();
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -25,6 +28,12 @@ namespace Authentication.Api.Data
             builder.Entity<IdentityUserLogin<string>>().ToTable("UserLogins");
             builder.Entity<IdentityUserToken<string>>().ToTable("UserTokens");
             builder.Entity<IdentityRoleClaim<string>>().ToTable("RoleClaims");
+
+            builder.Entity<ConfiguracionSistema>().ToTable("ConfiguracionSistema");
+            builder.Entity<ConfiguracionSistema>()
+                .HasIndex(c => new { c.HotelId, c.Clave })
+                .IsUnique()
+                .HasDatabaseName("UQ_Configuracion_Clave");
         }
     }
 }

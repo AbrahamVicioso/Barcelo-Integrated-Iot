@@ -1,6 +1,9 @@
 using System.Security.Claims;
+using Authentication.Api.Entities;
+using Authentication.Api.Services;
 using Authentication.Domain.Entities;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Barcelo.Authorization.Shared;
 
 namespace Authentication.Api.Data;
@@ -9,10 +12,11 @@ public static class DbSeeder
 {
     private const string NtfyTokenClaim = "ntfy_token";
 
-    public static async Task SeedAsync(UserManager<User> userManager, RoleManager<IdentityRole> roleManager, IConfiguration configuration)
+    public static async Task SeedAsync(UserManager<User> userManager, RoleManager<IdentityRole> roleManager, IConfiguration configuration, AuthenticationDbContext db)
     {
         await SeedRolesAsync(roleManager);
         await SeedAdminUserAsync(userManager, roleManager, configuration);
+        await SeedConfiguracionDefaultsAsync(db);
     }
 
     private static async Task SeedRolesAsync(RoleManager<IdentityRole> roleManager)
@@ -109,6 +113,43 @@ public static class DbSeeder
             await userManager.AddToRoleAsync(admin, "Admin");
             await EnsureNtfyClaimAsync(userManager, admin, configuration);
         }
+    }
+
+    private static async Task SeedConfiguracionDefaultsAsync(AuthenticationDbContext db)
+    {
+        var defaults = new (string Clave, string Valor, string Tipo, string Descripcion)[]
+        {
+            ("Auth.Password.RequiredLength",        "8",     "int",  "Longitud mínima de contraseña"),
+            ("Auth.Password.RequireUppercase",       "true",  "bool", "Requerir al menos una letra mayúscula"),
+            ("Auth.Password.RequireDigit",           "true",  "bool", "Requerir al menos un número"),
+            ("Auth.Password.RequireNonAlphanumeric", "true",  "bool", "Requerir al menos un carácter especial"),
+            ("Auth.Lockout.MaxFailedAttempts",       "5",     "int",  "Intentos fallidos antes de bloqueo"),
+            ("Auth.Lockout.LockoutMinutes",          "15",    "int",  "Minutos de bloqueo tras superar intentos"),
+            ("Auth.Session.TokenExpirationMinutes",  "30",    "int",  "Minutos de expiración del token JWT"),
+            ("Auth.SignIn.RequireConfirmedEmail",     "false", "bool", "Requerir confirmación de correo antes de login"),
+            ("Auth.SignIn.AllowPasswordReset",        "true",  "bool", "Permitir restablecimiento de contraseña"),
+            ("Auth.TwoFactor.RequireForAdmins",      "false", "bool", "Requerir 2FA para usuarios con rol Admin"),
+        };
+
+        foreach (var (clave, valor, tipo, descripcion) in defaults)
+        {
+            var exists = await db.ConfiguracionSistema.AnyAsync(c => c.HotelId == null && c.Clave == clave);
+            if (!exists)
+            {
+                db.ConfiguracionSistema.Add(new ConfiguracionSistema
+                {
+                    Clave         = clave,
+                    Valor         = valor,
+                    TipoDato      = tipo,
+                    Descripcion   = descripcion,
+                    EsGlobal      = true,
+                    FechaCreacion = DateTime.UtcNow,
+                    ModificadoPor = "system"
+                });
+            }
+        }
+
+        await db.SaveChangesAsync();
     }
 
     private static async Task EnsureNtfyClaimAsync(UserManager<User> userManager, User user, IConfiguration configuration)

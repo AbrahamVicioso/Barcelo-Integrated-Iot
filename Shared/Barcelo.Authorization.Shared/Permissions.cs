@@ -107,6 +107,12 @@ public static class Permissions
         public const string View = "Permissions.Audit.View";
     }
 
+    public static class Configuracion
+    {
+        public const string View = "Permissions.Configuracion.View";
+        public const string Edit = "Permissions.Configuracion.Edit";
+    }
+
     public static class Admin
     {
         public const string All = "Permissions.Admin.All";
@@ -129,6 +135,7 @@ public static class Permissions
             Credenciales.View, Credenciales.Create, Credenciales.Edit, Credenciales.Delete,
             Mantenimientos.View, Mantenimientos.Create, Mantenimientos.Edit, Mantenimientos.Delete,
             Roles.View, Roles.Create, Roles.Edit, Roles.Delete, Roles.ManagePermissions,
+            Configuracion.View, Configuracion.Edit,
             Reports.View,
             Audit.View,
         ];
@@ -197,6 +204,8 @@ public static class PermissionDescriptions
             new() { Permission = Permissions.Roles.Edit, Description = "Editar roles existentes", Category = "Roles", Action = "Editar" },
             new() { Permission = Permissions.Roles.Delete, Description = "Eliminar roles", Category = "Roles", Action = "Eliminar" },
             new() { Permission = Permissions.Roles.ManagePermissions, Description = "Asignar permisos a roles", Category = "Roles", Action = "Administrar" },
+            new() { Permission = Permissions.Configuracion.View, Description = "Ver configuración de identidad y seguridad", Category = "Configuración", Action = "Ver" },
+            new() { Permission = Permissions.Configuracion.Edit, Description = "Modificar configuración de identidad y seguridad", Category = "Configuración", Action = "Editar" },
             new() { Permission = Permissions.Reports.View, Description = "Ver reportes y estadísticas", Category = "Reportes", Action = "Ver" },
             new() { Permission = Permissions.Audit.View, Description = "Ver registros de auditoría", Category = "Auditoría", Action = "Ver" },
         ];

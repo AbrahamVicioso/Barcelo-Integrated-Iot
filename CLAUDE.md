@@ -635,6 +635,17 @@ Config: `KafkaProducer:BootstrapServers`, `KafkaProducer:Topic` (`credenciales.c
 | GET | /confirmemail?userId=&token= | confirma email (token Base64Url) |
 | POST | /forgotpassword | `{ Email }` → genera token + envía email con link · siempre 200 |
 | POST | /resetpassword | `{ Email, Token, NewPassword }` → resetea contraseña (token Base64Url del email) |
+| GET | /configuracion/identidad | [Configuracion.View] → toda la config Identity |
+| GET | /configuracion/identidad/password | política de contraseñas |
+| PUT | /configuracion/identidad/password | actualiza política + aplica a Identity en memoria |
+| GET | /configuracion/identidad/lockout | config de bloqueo |
+| PUT | /configuracion/identidad/lockout | actualiza bloqueo + aplica |
+| GET | /configuracion/identidad/session | config de sesión (expiry JWT) |
+| PUT | /configuracion/identidad/session | actualiza expiry JWT |
+| GET | /configuracion/identidad/signin | verificación de email + password reset |
+| PUT | /configuracion/identidad/signin | actualiza RequireConfirmedEmail + AllowPasswordReset |
+| GET | /configuracion/identidad/twofactor | config 2FA |
+| PUT | /configuracion/identidad/twofactor | actualiza RequireForAdmins |
 
 ## Endpoints — Reservas.API
 
@@ -1076,6 +1087,7 @@ Permissions.Mantenimientos.View / Create / Edit / Delete
 Permissions.Roles.View / Create / Edit / Delete / ManagePermissions
 Permissions.Reports.View
 Permissions.Audit.View
+Permissions.Configuracion.View / Edit
 Permissions.Admin.All
 ```
 
@@ -1176,6 +1188,7 @@ Estos endpoints no requieren permisos porque son operaciones del recurso propio 
 - **AuthController**: `POST /create` → `Permissions.Usuarios.Create`, `GET /getuserbyemail` → `Permissions.Usuarios.View`
 - **RolesController**: todo requiere `Permissions.Roles.*`
 - **UsersController**: requiere `Permissions.Usuarios.*` según operación
+- **ConfiguracionController**: GET → `Permissions.Configuracion.View`, PUT → `Permissions.Configuracion.Edit` (solo Admin tiene ambos por defecto)
 
 #### Usuarios.API
 - **HuespedController**: `Permissions.Usuarios.*`. Excluir `/me` y `/me` (POST)

@@ -43,6 +43,7 @@ namespace Authentication.Api.Controllers
         private readonly ILogger<TwoFactorEnableHandler> twoFactorEnableLogger;
         private readonly ILogger<TwoFactorConfirmHandler> twoFactorConfirmLogger;
         private readonly ITwoFactorCacheService twoFactorCacheService;
+        private readonly IdentityRuntimeSettings runtimeSettings;
 
         public AuthController(
             UserManager<User> userManager,
@@ -54,7 +55,8 @@ namespace Authentication.Api.Controllers
             IConfiguration configuration,
             ILogger<AuthController> logger,
             ILoggerFactory loggerFactory,
-            ITwoFactorCacheService twoFactorCacheService)
+            ITwoFactorCacheService twoFactorCacheService,
+            IdentityRuntimeSettings runtimeSettings)
         {
             this.userManager = userManager;
             this.userStore = userStore;
@@ -68,12 +70,13 @@ namespace Authentication.Api.Controllers
             this.twoFactorEnableLogger = loggerFactory.CreateLogger<TwoFactorEnableHandler>();
             this.twoFactorConfirmLogger = loggerFactory.CreateLogger<TwoFactorConfirmHandler>();
             this.twoFactorCacheService = twoFactorCacheService;
+            this.runtimeSettings = runtimeSettings;
         }
 
         [HttpPost]
         public async Task<IResult> Login(LoginRequest loginRequest)
         {
-            var result = await LoginUserHandler.Handle(loginRequest, signInManager, userManager, jwtGenerator, kafkaProducerService, configuration);
+            var result = await LoginUserHandler.Handle(loginRequest, signInManager, userManager, jwtGenerator, kafkaProducerService, configuration, runtimeSettings);
 
             var user = await userManager.FindByEmailAsync(loginRequest.Email);
             if (user != null)

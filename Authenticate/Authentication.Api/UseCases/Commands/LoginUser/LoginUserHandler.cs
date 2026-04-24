@@ -45,7 +45,8 @@ namespace Authentication.Api.UseCases.Commands.LoginUser
             UserManager<User> userManager,
             IJwtGenerator jwtGenerator,
             IKafkaProducerService kafkaProducer,
-            IConfiguration configuration)
+            IConfiguration configuration,
+            Authentication.Api.Services.IdentityRuntimeSettings? runtimeSettings = null)
         {
             var user = await userManager.FindByEmailAsync(login.Email);
             if (user == null)
@@ -68,7 +69,14 @@ namespace Authentication.Api.UseCases.Commands.LoginUser
                 return TypedResults.Problem("Credenciales inválidas.", statusCode: StatusCodes.Status401Unauthorized);
             }
 
-            if (user.TwoFactorEnabled)
+            var roles = await userManager.GetRolesAsync(user);
+
+            // 2FA: siempre si está habilitado; o si la configuración lo requiere para admins
+            var isAdmin = roles.Contains("Admin");
+            var requiresTwoFactor = user.TwoFactorEnabled ||
+                (isAdmin && (runtimeSettings?.TwoFactorRequireForAdmins ?? false));
+
+            if (requiresTwoFactor)
             {
                 var token = await userManager.GenerateTwoFactorTokenAsync(user, "Email");
                 var expirationMinutes = configuration.GetValue<int>("TwoFactorAuth:TokenExpirationMinutes", 5);
@@ -91,14 +99,14 @@ namespace Authentication.Api.UseCases.Commands.LoginUser
                 };
             }
 
-            var roles = await userManager.GetRolesAsync(user);
             var (accessToken, refreshToken) = await jwtGenerator.GenerateTokensAsync(roles, user);
+            var expiresIn = (runtimeSettings?.TokenExpirationMinutes ?? 30) * 60;
 
             return TypedResults.Ok(new LoginResponse
             {
                 AccessToken = accessToken,
                 RefreshToken = refreshToken,
-                ExpiresIn = 1800
+                ExpiresIn = expiresIn
             });
         }
     }

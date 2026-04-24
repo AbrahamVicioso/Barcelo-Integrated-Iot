@@ -13,11 +13,13 @@ public class JwtGenerator : IJwtGenerator
 {
     private readonly IConfiguration configuration;
     private readonly RoleManager<IdentityRole> roleManager;
+    private readonly IdentityRuntimeSettings runtimeSettings;
 
-    public JwtGenerator(IConfiguration configuration, RoleManager<IdentityRole> roleManager)
+    public JwtGenerator(IConfiguration configuration, RoleManager<IdentityRole> roleManager, IdentityRuntimeSettings runtimeSettings)
     {
         this.configuration = configuration;
         this.roleManager = roleManager;
+        this.runtimeSettings = runtimeSettings;
     }
 
     public async Task<(string accessToken, string refreshToken)> GenerateTokensAsync(IList<string> roles, User user)
@@ -50,7 +52,7 @@ public class JwtGenerator : IJwtGenerator
             issuer: configuration["Jwt:Issuer"],
             audience: configuration["Jwt:Audience"],
             claims: claims,
-            expires: DateTime.UtcNow.AddMinutes(30),
+            expires: DateTime.UtcNow.AddMinutes(runtimeSettings.TokenExpirationMinutes),
             signingCredentials: creds
         ));
 

@@ -80,13 +80,17 @@ app.MapGrpcService<UserLookupService>();
 
 using (var scope = app.Services.CreateScope())
 {
-    var context      = scope.ServiceProvider.GetRequiredService<AuthenticationDbContext>();
+    var context       = scope.ServiceProvider.GetRequiredService<AuthenticationDbContext>();
     await context.Database.EnsureCreatedAsync();
 
-    var userManager  = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
-    var roleManager  = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+    var userManager   = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
+    var roleManager   = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
     var configuration = scope.ServiceProvider.GetRequiredService<IConfiguration>();
-    await DbSeeder.SeedAsync(userManager, roleManager, configuration);
+    await DbSeeder.SeedAsync(userManager, roleManager, configuration, context);
+
+    // Aplicar configuración de identidad guardada en DB
+    var configuracionService = scope.ServiceProvider.GetRequiredService<Authentication.Api.Services.IIdentityConfiguracionService>();
+    await configuracionService.ApplyAllToIdentityAsync();
 }
 
 app.Run();
