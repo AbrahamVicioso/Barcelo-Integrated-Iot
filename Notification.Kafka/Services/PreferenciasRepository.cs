@@ -7,29 +7,32 @@ namespace Notification.Kafka.Services;
 
 public class PreferenciasRepository : IPreferenciasRepository
 {
-    private readonly NotificacionDbContext _context;
+    private readonly IDbContextFactory<NotificacionDbContext> _contextFactory;
 
-    public PreferenciasRepository(NotificacionDbContext context)
+    public PreferenciasRepository(IDbContextFactory<NotificacionDbContext> contextFactory)
     {
-        _context = context;
+        _contextFactory = contextFactory;
     }
 
     public async Task<PreferenciaNotificacion?> GetByUsuarioIdAsync(string usuarioId, CancellationToken cancellationToken = default)
     {
-        return await _context.PreferenciasNotificacion
+        await using var context = await _contextFactory.CreateDbContextAsync(cancellationToken);
+        return await context.PreferenciasNotificacion
             .FirstOrDefaultAsync(p => p.UsuarioId == usuarioId, cancellationToken);
     }
 
     public async Task<PreferenciaNotificacion> AddAsync(PreferenciaNotificacion preferencia, CancellationToken cancellationToken = default)
     {
-        _context.PreferenciasNotificacion.Add(preferencia);
-        await _context.SaveChangesAsync(cancellationToken);
+        await using var context = await _contextFactory.CreateDbContextAsync(cancellationToken);
+        context.PreferenciasNotificacion.Add(preferencia);
+        await context.SaveChangesAsync(cancellationToken);
         return preferencia;
     }
 
     public async Task UpdateAsync(PreferenciaNotificacion preferencia, CancellationToken cancellationToken = default)
     {
-        _context.PreferenciasNotificacion.Update(preferencia);
-        await _context.SaveChangesAsync(cancellationToken);
+        await using var context = await _contextFactory.CreateDbContextAsync(cancellationToken);
+        context.PreferenciasNotificacion.Update(preferencia);
+        await context.SaveChangesAsync(cancellationToken);
     }
 }
