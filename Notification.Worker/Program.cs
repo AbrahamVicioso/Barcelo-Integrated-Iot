@@ -35,9 +35,13 @@ namespace Notification.Worker
                 services.AddDbContext<NotificacionDbContext>(options =>
                     options.UseSqlServer(connectionString));
 
+                // Add DbContextFactory (puede ser inyectado en singletons)
+                services.AddDbContextFactory<NotificacionDbContext>(options =>
+                    options.UseSqlServer(connectionString));
+
                 // Add Repositories
-                services.AddScoped<IPreferenciasRepository, PreferenciasRepository>();
-                services.AddScoped<INotificacionesRepository, NotificacionesRepository>();
+                services.AddSingleton<IPreferenciasRepository, PreferenciasRepository>();
+                services.AddSingleton<INotificacionesRepository, NotificacionesRepository>();
 
                 // Configure SmtpSettings
                 services.AddEmailService(context.Configuration);

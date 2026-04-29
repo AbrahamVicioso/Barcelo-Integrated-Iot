@@ -7,29 +7,32 @@ namespace Notification.Kafka.Services;
 
 public class NotificacionesRepository : INotificacionesRepository
 {
-    private readonly NotificacionDbContext _context;
+    private readonly IDbContextFactory<NotificacionDbContext> _contextFactory;
 
-    public NotificacionesRepository(NotificacionDbContext context)
+    public NotificacionesRepository(IDbContextFactory<NotificacionDbContext> contextFactory)
     {
-        _context = context;
+        _contextFactory = contextFactory;
     }
 
     public async Task<NotificacionEntity> AddAsync(NotificacionEntity notificacion, CancellationToken cancellationToken = default)
     {
-        _context.Notificaciones.Add(notificacion);
-        await _context.SaveChangesAsync(cancellationToken);
+        await using var context = await _contextFactory.CreateDbContextAsync(cancellationToken);
+        context.Notificaciones.Add(notificacion);
+        await context.SaveChangesAsync(cancellationToken);
         return notificacion;
     }
 
     public async Task<NotificacionEntity?> GetByIdAsync(int notificacionId, CancellationToken cancellationToken = default)
     {
-        return await _context.Notificaciones
+        await using var context = await _contextFactory.CreateDbContextAsync(cancellationToken);
+        return await context.Notificaciones
             .FirstOrDefaultAsync(n => n.NotificacionId == notificacionId, cancellationToken);
     }
 
     public async Task<List<NotificacionEntity>> GetByUsuarioIdAsync(string usuarioId, int skip, int take, CancellationToken cancellationToken = default)
     {
-        return await _context.Notificaciones
+        await using var context = await _contextFactory.CreateDbContextAsync(cancellationToken);
+        return await context.Notificaciones
             .Where(n => n.UsuarioId == usuarioId)
             .OrderByDescending(n => n.FechaEnvio)
             .Skip(skip)
@@ -39,23 +42,27 @@ public class NotificacionesRepository : INotificacionesRepository
 
     public async Task<int> CountByUsuarioIdAsync(string usuarioId, CancellationToken cancellationToken = default)
     {
-        return await _context.Notificaciones
+        await using var context = await _contextFactory.CreateDbContextAsync(cancellationToken);
+        return await context.Notificaciones
             .CountAsync(n => n.UsuarioId == usuarioId, cancellationToken);
     }
 
     public async Task UpdateAsync(NotificacionEntity notificacion, CancellationToken cancellationToken = default)
     {
-        _context.Notificaciones.Update(notificacion);
-        await _context.SaveChangesAsync(cancellationToken);
+        await using var context = await _contextFactory.CreateDbContextAsync(cancellationToken);
+        context.Notificaciones.Update(notificacion);
+        await context.SaveChangesAsync(cancellationToken);
     }
 
     public async Task DeleteAsync(int notificacionId, CancellationToken cancellationToken = default)
     {
-        var notificacion = await GetByIdAsync(notificacionId, cancellationToken);
+        await using var context = await _contextFactory.CreateDbContextAsync(cancellationToken);
+        var notificacion = await context.Notificaciones
+            .FirstOrDefaultAsync(n => n.NotificacionId == notificacionId, cancellationToken);
         if (notificacion != null)
         {
-            _context.Notificaciones.Remove(notificacion);
-            await _context.SaveChangesAsync(cancellationToken);
+            context.Notificaciones.Remove(notificacion);
+            await context.SaveChangesAsync(cancellationToken);
         }
     }
 }
