@@ -1,0 +1,226 @@
+{
+  "main": {
+    "id": "cf4907f1613c2fe2",
+    "type": "split",
+    "children": [
+      {
+        "id": "faeed4b2f3a51300",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "1dadedd409e4aba5",
+            "type": "leaf",
+            "state": {
+              "type": "graph",
+              "state": {},
+              "icon": "lucide-git-fork",
+              "title": "Vista gráfica"
+            }
+          },
+          {
+            "id": "b2e3b0afae573c07",
+            "type": "leaf",
+            "state": {
+              "type": "graph",
+              "state": {},
+              "icon": "lucide-git-fork",
+              "title": "Vista gráfica"
+            }
+          }
+        ],
+        "currentTab": 1
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "f5ac23573cf3b825",
+    "type": "split",
+    "children": [
+      {
+        "id": "7d5b606c42b2374c",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "a14b5be303e33603",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical",
+                "autoReveal": false
+              },
+              "icon": "lucide-folder-closed",
+              "title": "Explorador de archivos"
+            }
+          },
+          {
+            "id": "16327a26ee67db2a",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "Buscar"
+            }
+          },
+          {
+            "id": "61c186886cd22b70",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {},
+              "icon": "lucide-bookmark",
+              "title": "Marcadores"
+            }
+          }
+        ],
+        "currentTab": 1
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300
+  },
+  "right": {
+    "id": "ce4bb69672020ae8",
+    "type": "split",
+    "children": [
+      {
+        "id": "29484323677db6bb",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "53d9852bfae93cba",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "Enlaces entrantes"
+            }
+          },
+          {
+            "id": "cc2214c181dc816b",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "Enlaces salientes"
+            }
+          },
+          {
+            "id": "3ace505448b049b6",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-tags",
+              "title": "Etiquetas"
+            }
+          },
+          {
+            "id": "3cc2b0f28464ecbc",
+            "type": "leaf",
+            "state": {
+              "type": "all-properties",
+              "state": {
+                "sortOrder": "frequency",
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-archive",
+              "title": "Todas las propiedades"
+            }
+          },
+          {
+            "id": "c94d147abb50516b",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "followCursor": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-list",
+              "title": "Esquema"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:Abrir selector rápido": false,
+      "graph:Abrir vista gráfica": false,
+      "canvas:Crear nuevo lienzo": false,
+      "daily-notes:Abrir la nota de hoy": false,
+      "templates:Insertar plantilla": false,
+      "command-palette:Abrir paleta de comandos": false,
+      "bases:Crear nueva base": false
+    }
+  },
+  "active": "b2e3b0afae573c07",
+  "lastOpenFiles": [
+    "IRequestHandler.md",
+    "GetPersonalByUserIdRequest.md",
+    "CreateEstadoDispositivoCommandHandler.md",
+    "Reservas.Domain.Entities.md",
+    "Sin título 2.canvas",
+    "IRequest.md",
+    "GetDispositivosByHotelIdQueryHandler.cs.md",
+    "GetAllPuestosQuery.cs.md",
+    "Sin título 1.canvas",
+    "Sin título.canvas",
+    "2026-04-29.md",
+    "Sin título 1.base",
+    "Sin título.base",
+    "index.md",
+    "run_graphify.py_1.md",
+    "GetAllRegistrosAccesoQuery.md",
+    "ConfiguracionSistema.md",
+    "graph.canvas",
+    "AuthenticationApiOptions.md",
+    "Usuarios.ExternalService.Utils.md",
+    "AuthenticationApiOptions.cs.md",
+    "IDispositivosApiService_1.md",
+    "DispositivosGrpcClient.md",
+    "DispositivosGrpcClient.cs.md",
+    "IAuthenticationApiClient_1.md",
+    "AuthenticationGrpcClient.md",
+    "Usuarios.ExternalService.Repositories.md",
+    "AuthenticationGrpcClient.cs.md",
+    "UserLookupClient_1.md",
+    "UserLookup_1.md",
+    "UserLookupGrpc.cs_1.md",
+    "UserLookup.cs_1.md"
+  ]
+}
