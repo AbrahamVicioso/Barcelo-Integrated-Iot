@@ -20,7 +20,9 @@
       "Bash(find /mnt/c/Users/abrah/Desktop/Barcelo-Integrated-Iot/Reservas -name \"HuespedeDto.cs\" | xargs cat)",
       "Bash(find /mnt/c/Users/abrah/Desktop/Barcelo-Integrated-Iot/Reservas -name \"GenericRepository.cs\" -o -name \"IGenericRepository.cs\" | xargs cat)",
       "Bash(cd /mnt/c/Users/abrah/Desktop/Barcelo-Integrated-Iot/Reservas && dotnet ef migrations add AddCheckInTable --project Reservas.Persistence --startup-project Reservas.API 2>&1)",
-      "Bash(find /mnt/c/Users/abrah/Desktop/Barcelo-Integrated-Iot -name \"*.sqlproj\" -o -name \"*.sql\" 2>/dev/null | grep -v obj | grep -v bin | head -30)"
+      "Bash(find /mnt/c/Users/abrah/Desktop/Barcelo-Integrated-Iot -name \"*.sqlproj\" -o -name \"*.sql\" 2>/dev/null | grep -v obj | grep -v bin | head -30)",
+      "Bash(rm -rf \"C:/Users/abrah/.claude/hooks/gitnexus\")",
+      "Bash(rm -rf \"C:/Users/abrah/.claude/skills/gitnexus-cli\" \"C:/Users/abrah/.claude/skills/gitnexus-debugging\" \"C:/Users/abrah/.claude/skills/gitnexus-exploring\" \"C:/Users/abrah/.claude/skills/gitnexus-guide\" \"C:/Users/abrah/.claude/skills/gitnexus-impact-analysis\" \"C:/Users/abrah/.claude/skills/gitnexus-pr-review\" \"C:/Users/abrah/.claude/skills/gitnexus-refactoring\")"
     ],
     "defaultMode": "bypassPermissions"
   }
