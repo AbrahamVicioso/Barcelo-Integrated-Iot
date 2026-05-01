@@ -66,7 +66,7 @@ public async Task<bool> IsHabitacionOcupadaAsync(int habitacionId, DateTime fech
 {
     return await _dbSet.AnyAsync(r =>
         r.HabitacionId == habitacionId &&
-        (r.EstadoReservaId != EstadoReserva.Cancelada || r.EstadoReservaId != EstadoReserva.CheckOut) &&
+        (r.EstadoReservaId != EstadoReserva.Cancelada && r.EstadoReservaId != EstadoReserva.CheckOut) &&
         r.FechaCheckIn < fechaCheckOut &&
         r.FechaCheckOut > fechaCheckIn &&
         (excludeReservaId == null || r.ReservaId != excludeReservaId),
