@@ -71,6 +71,12 @@ public static class DependencyInjection
         services.AddSingleton(cerraduraAccesoConfig);
         services.AddHostedService<CerraduraAccesoKafkaConsumer>();
 
+        // Register Kafka consumer for reserva actividad confirmada events (generates activity lock credentials)
+        var reservaActividadConfig = new ReservaActividadKafkaConsumerConfig();
+        configuration.GetSection("KafkaConsumer:ReservaActividad").Bind(reservaActividadConfig);
+        services.AddSingleton(reservaActividadConfig);
+        services.AddHostedService<ReservaActividadKafkaConsumer>();
+
         // Register Audit Kafka Producer
         var auditConfig = new AuditKafkaProducerConfig();
         configuration.GetSection("AuditProducer").Bind(auditConfig);

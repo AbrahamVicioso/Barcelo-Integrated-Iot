@@ -14,5 +14,7 @@ public class CredencialCreadaEvent
     public DateTime FechaExpiracion { get; set; }
     public string TipoCredencial { get; set; } = string.Empty;
     public string? NumeroReserva { get; set; }
+    public int? ReservaActividadId { get; set; }
+    public string? NombreActividad { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }

@@ -19,6 +19,13 @@ namespace Reservas.Infrastructure
             services.AddSingleton(kafkaConfig);
             services.AddSingleton<IReservaKafkaProducer, ReservaKafkaProducer>();
 
+            // Registrar Kafka Producer para actividades recreativas
+            var actividadKafkaConfig = new ReservaActividadKafkaProducerConfig();
+            configuration.GetSection("KafkaProducer").Bind(actividadKafkaConfig);
+            actividadKafkaConfig.Topic = configuration["KafkaProducer:ActividadTopic"] ?? "actividades.reserva-confirmada";
+            services.AddSingleton(actividadKafkaConfig);
+            services.AddSingleton<IReservaActividadKafkaProducer, ReservaActividadKafkaProducer>();
+
             // Registrar Audit Kafka Producer
             var auditConfig = new AuditKafkaProducerConfig();
             configuration.GetSection("AuditProducer").Bind(auditConfig);

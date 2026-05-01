@@ -23,6 +23,9 @@ namespace Dispositivos.Persistence.Data.Configurations
 
             entity.HasIndex(e => e.ReservaId, "IX_Credenciales_ReservaId").HasFilter("([ReservaId] IS NOT NULL)");
 
+            entity.HasIndex(e => e.ReservaActividadId, "IX_Credenciales_ReservaActividadId")
+                .HasFilter("([ReservaActividadId] IS NOT NULL)");
+
             entity.Property(e => e.CodigoPin)
                 .IsRequired()
                 .HasMaxLength(6)

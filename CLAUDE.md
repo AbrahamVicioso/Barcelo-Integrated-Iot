@@ -87,6 +87,7 @@ catch (Exception ex) when (ex.GetType().Name == "DbUpdateException") {
 - `habitacion.personal-unlock` (Reservas → Dispositivos)
 - `habitacion.permiso-personal` (Usuarios → Dispositivos)
 - `cerradura.acceso` (ThingsBoard → Dispositivos)
+- `actividades.reserva-confirmada` (Reservas → Dispositivos)
 
 ---
 

@@ -6,6 +6,7 @@ public class UpdateCredencialesAccesoDto
     public int? HuespedId { get; set; }
     public int? PersonalId { get; set; }
     public int? ReservaId { get; set; }
+    public int? ReservaActividadId { get; set; }
     public string CodigoPin { get; set; } = string.Empty;
     public DateTime FechaActivacion { get; set; }
     public DateTime FechaExpiracion { get; set; }

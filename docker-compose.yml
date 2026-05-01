@@ -317,6 +317,7 @@ services:
       KafkaProducer__CheckInRealizadoTopic: reservas.checkin-realizado
       KafkaProducer__PersonalUnlockDoorTopic: habitacion.personal-unlock
       KafkaProducer__HabitacionSyncTopic: habitacion.permiso-personal
+      KafkaProducer__ActividadTopic: actividades.reserva-confirmada
       KafkaProducer__ClientId: reservas-api
       AuditProducer__BootstrapServers: kafka:29092
       AuditProducer__Topic: audit.events
@@ -381,6 +382,9 @@ services:
       KafkaConsumer__CerraduraAcceso__AuthenticateGrpcUrl: https://auth-api:5118
       KafkaConsumer__CerraduraAcceso__ReservasGrpcUrl: http://reservas-api:5142
       KafkaConsumer__CerraduraAcceso__SkipCertValidation: "true"
+      KafkaConsumer__ReservaActividad__BootstrapServers: kafka:29092
+      KafkaConsumer__ReservaActividad__GroupId: dispositivos-actividad-group
+      KafkaConsumer__ReservaActividad__Topic: actividades.reserva-confirmada
     networks:
       - barcelo-net
     depends_on:

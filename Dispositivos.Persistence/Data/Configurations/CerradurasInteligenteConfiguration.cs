@@ -17,9 +17,19 @@ namespace Dispositivos.Persistence.Data.Configurations
 
             entity.HasIndex(e => new { e.EstadoPuerta, e.EstaActiva }, "IX_Cerraduras_EstadoPuerta");
 
-            entity.HasIndex(e => e.HabitacionId, "IX_Cerraduras_HabitacionId");
+            entity.HasIndex(e => e.HabitacionId, "IX_Cerraduras_HabitacionId")
+                .HasFilter("([HabitacionId] IS NOT NULL)");
 
-            entity.HasIndex(e => e.HabitacionId, "UQ_Cerraduras_Habitacion").IsUnique();
+            entity.HasIndex(e => e.HabitacionId, "UQ_Cerraduras_Habitacion")
+                .IsUnique()
+                .HasFilter("([HabitacionId] IS NOT NULL)");
+
+            entity.HasIndex(e => e.ActividadId, "IX_Cerraduras_ActividadId")
+                .HasFilter("([ActividadId] IS NOT NULL)");
+
+            entity.HasIndex(e => e.ActividadId, "UQ_Cerraduras_Actividad")
+                .IsUnique()
+                .HasFilter("([ActividadId] IS NOT NULL)");
 
             entity.Property(e => e.EstaActiva).HasDefaultValue(true);
             entity.Property(e => e.EstadoPuerta)

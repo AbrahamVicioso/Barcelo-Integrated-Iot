@@ -46,6 +46,14 @@ public class CerradurasInteligenteRepository : ICerradurasInteligenteRepository
             .ToListAsync();
     }
 
+    public async Task<CerradurasInteligente?> GetByActividadIdAsync(int actividadId, CancellationToken cancellationToken = default)
+    {
+        return await _context.CerradurasInteligentes
+            .Where(c => c.ActividadId == actividadId && c.EstaActiva)
+            .AsNoTracking()
+            .FirstOrDefaultAsync(cancellationToken);
+    }
+
     public async Task<IEnumerable<CerradurasInteligente>> GetByEstaActiva(bool estaActiva)
     {
         return await _context.CerradurasInteligentes

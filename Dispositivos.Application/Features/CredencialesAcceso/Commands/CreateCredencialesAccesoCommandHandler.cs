@@ -220,6 +220,8 @@ public class CreateCredencialesAccesoCommandHandler : IRequestHandler<CreateCred
                 await syncService.SyncByHuespedIdAsync(request.Credencial.HuespedId.Value, cancellationToken);
             else if (request.Credencial.ReservaId.HasValue)
                 await syncService.SyncByReservaIdAsync(request.Credencial.ReservaId.Value, cancellationToken);
+            else if (request.Credencial.ReservaActividadId.HasValue)
+                await syncService.SyncByReservaActividadIdAsync(request.Credencial.ReservaActividadId.Value, cancellationToken);
 
             // Publicar evento para enviar notificación por email y push
             try

@@ -219,6 +219,166 @@ public class TbCredencialesSyncService : ITbCredencialesSyncService
         }
     }
 
+    public async Task SyncByReservaActividadIdAsync(int reservaActividadId, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var connection = _context.Database.GetDbConnection();
+            if (connection.State != ConnectionState.Open)
+                await connection.OpenAsync(cancellationToken);
+
+            using var cmd = (System.Data.Common.DbCommand)connection.CreateCommand();
+            cmd.CommandText = @"
+                SELECT TOP 1 c.CerraduraId
+                FROM   CerradurasInteligentes c
+                INNER JOIN ReservasActividades ra ON ra.ActividadId = c.ActividadId
+                WHERE  ra.ReservaActividadId = @reservaActividadId
+                  AND  c.EstaActiva = 1";
+            AddParam(cmd, "@reservaActividadId", reservaActividadId);
+
+            var result = await cmd.ExecuteScalarAsync(cancellationToken);
+            if (result is null || result == DBNull.Value)
+            {
+                _logger.LogDebug("ReservaActividad {ReservaActividadId} no tiene cerradura activa, sync omitido.", reservaActividadId);
+                return;
+            }
+
+            await SyncByCerraduraIdAsync(Convert.ToInt32(result), cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error en SyncByReservaActividadIdAsync para ReservaActividad {ReservaActividadId}.", reservaActividadId);
+        }
+    }
+
+    public async Task SyncByCerraduraIdAsync(int cerraduraId, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var connection = _context.Database.GetDbConnection();
+            if (connection.State != ConnectionState.Open)
+                await connection.OpenAsync(cancellationToken);
+
+            // Get the lock directly by CerraduraId
+            using var cerraduraCmd = (System.Data.Common.DbCommand)connection.CreateCommand();
+            cerraduraCmd.CommandText = "SELECT TOP 1 CerraduraId, DispositivoId, ActividadId FROM CerradurasInteligentes WHERE CerraduraId = @cerraduraId AND EstaActiva = 1";
+            AddParam(cerraduraCmd, "@cerraduraId", cerraduraId);
+
+            CerraduraActividadInfo? cerradura = null;
+            using (var reader = await cerraduraCmd.ExecuteReaderAsync(cancellationToken))
+            {
+                if (await reader.ReadAsync(cancellationToken))
+                {
+                    cerradura = new CerraduraActividadInfo
+                    {
+                        CerraduraId = reader.GetInt32(0),
+                        DispositivoId = reader.GetGuid(1),
+                        ActividadId = reader.IsDBNull(2) ? null : reader.GetInt32(2)
+                    };
+                }
+            }
+
+            if (cerradura == null)
+            {
+                _logger.LogDebug("Cerradura {CerraduraId} no encontrada o inactiva, sync omitido.", cerraduraId);
+                return;
+            }
+
+            if (cerradura.ActividadId == null)
+            {
+                _logger.LogDebug("Cerradura {CerraduraId} no es de actividad, usar SyncAsync.", cerraduraId);
+                return;
+            }
+
+            // Collect active credentials for this activity
+            var credenciales = await GetCredencialesActividadAsync(connection, cerraduraId, cancellationToken);
+
+            var actividades = credenciales
+                .GroupBy(c => new { c.HuespedId, c.ReservaActividadId })
+                .Select(g => new
+                {
+                    huespedId = g.Key.HuespedId,
+                    reservaActividadId = g.Key.ReservaActividadId,
+                    credenciales = g.Select(c => new
+                    {
+                        pin = c.CodigoPin,
+                        activacion = c.FechaActivacion.ToString("o"),
+                        expiracion = c.FechaExpiracion.ToString("o")
+                    }).ToList()
+                })
+                .ToList<object>();
+
+            var payload = new { actividades };
+
+            var device = await _tbDeviceService.GetDeviceByNameAsync(cerradura.DispositivoId.ToString());
+            if (device == null || string.IsNullOrEmpty(device.Id))
+            {
+                _logger.LogWarning(
+                    "ThingsBoard device no encontrado para Cerradura {CerraduraId} (Dispositivo {DispositivoId}), sync omitido.",
+                    cerraduraId, cerradura.DispositivoId);
+                return;
+            }
+
+            var attrs = new Dictionary<string, object>
+            {
+                ["credenciales"] = JsonSerializer.Serialize(payload, new JsonSerializerOptions
+                {
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                    WriteIndented = false,
+                    DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
+                }),
+                ["ultimaSincronizacionCredenciales"] = DateTime.UtcNow.ToString("o")
+            };
+
+            await _tbDeviceService.SetSharedAttributesAsync(device.Id, attrs, cancellationToken);
+
+            _logger.LogInformation(
+                "ThingsBoard sync OK: Cerradura {CerraduraId}, dispositivo {DispositivoId}, {NumActividades} credenciales actividad.",
+                cerraduraId, cerradura.DispositivoId, actividades.Count);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error sincronizando credenciales de actividad a ThingsBoard para Cerradura {CerraduraId}.", cerraduraId);
+        }
+    }
+
+    private static async Task<List<CredencialActividadInfo>> GetCredencialesActividadAsync(
+        IDbConnection connection, int cerraduraId, CancellationToken ct)
+    {
+        using var cmd = (System.Data.Common.DbCommand)connection.CreateCommand();
+        cmd.CommandText = @"
+            SELECT ca.CodigoPIN, ca.HuespedId, ca.ReservaActividadId, ca.FechaActivacion, ca.FechaExpiracion
+            FROM   CredencialesAcceso ca
+            WHERE  ca.ReservaActividadId IN (
+                       SELECT ra.ReservaActividadId FROM ReservasActividades ra
+                       WHERE  ra.ActividadId = (
+                           SELECT ActividadId FROM CerradurasInteligentes WHERE CerraduraId = @cerraduraId
+                       )
+                   )
+              AND  ca.EstaActiva = 1
+              AND  ca.HuespedId IS NOT NULL
+              AND  ca.FechaActivacion <= DATEADD(day, 7, @ahora)
+              AND  ca.FechaExpiracion  >= @ahora";
+
+        AddParam(cmd, "@cerraduraId", cerraduraId);
+        AddParam(cmd, "@ahora", DateTime.UtcNow);
+
+        var result = new List<CredencialActividadInfo>();
+        using var reader = await cmd.ExecuteReaderAsync(ct);
+        while (await reader.ReadAsync(ct))
+        {
+            result.Add(new CredencialActividadInfo
+            {
+                CodigoPin = reader.GetString(0),
+                HuespedId = reader.GetInt32(1),
+                ReservaActividadId = reader.IsDBNull(2) ? null : reader.GetInt32(2),
+                FechaActivacion = reader.GetDateTime(3),
+                FechaExpiracion = reader.GetDateTime(4)
+            });
+        }
+        return result;
+    }
+
     private static async Task<CerraduraInfo?> GetCerraduraActivaAsync(
         IDbConnection connection, int habitacionId, CancellationToken ct)
     {
@@ -407,5 +567,21 @@ public class TbCredencialesSyncService : ITbCredencialesSyncService
         public int PersonalId { get; init; }
         public string NombreCompleto { get; init; } = string.Empty;
         public DateTime? FechaExpiracion { get; init; }
+    }
+
+    private record CerraduraActividadInfo
+    {
+        public int CerraduraId { get; init; }
+        public Guid DispositivoId { get; init; }
+        public int? ActividadId { get; init; }
+    }
+
+    private record CredencialActividadInfo
+    {
+        public string CodigoPin { get; init; } = string.Empty;
+        public int HuespedId { get; init; }
+        public int? ReservaActividadId { get; init; }
+        public DateTime FechaActivacion { get; init; }
+        public DateTime FechaExpiracion { get; init; }
     }
 }

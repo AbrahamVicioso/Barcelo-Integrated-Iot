@@ -330,7 +330,9 @@ public class CerraduraAccesoKafkaConsumer : BackgroundService
 
             var huespedes = new List<HuespedCheckInInfo>();
 
-            var reservaResponse = await ObtenerReservaActivaAsync(cerradura.HabitacionId, cancellationToken);
+            var reservaResponse = cerradura.HabitacionId.HasValue
+                ? await ObtenerReservaActivaAsync(cerradura.HabitacionId.Value, cancellationToken)
+                : null;
             if (reservaResponse != null)
             {
                 _logger.LogInformation(
@@ -364,8 +366,8 @@ public class CerraduraAccesoKafkaConsumer : BackgroundService
 
             var accesoEvent = new PersonalAccesoHabitacionEvent
             {
-                HabitacionId = cerradura.HabitacionId,
-                NumeroHabitacion = cerradura.HabitacionId.ToString(),
+                HabitacionId = cerradura.HabitacionId ?? 0,
+                NumeroHabitacion = cerradura.HabitacionId?.ToString() ?? string.Empty,
                 PersonalId = personalId,
                 NombrePersonal = datosPersonal?.NombreCompleto ?? $"Personal {personalId}",
                 Puesto = datosPersonal?.Cargo,
@@ -377,7 +379,7 @@ public class CerraduraAccesoKafkaConsumer : BackgroundService
 
             var message = new Message<string, string>
             {
-                Key = cerradura.HabitacionId.ToString(),
+                Key = cerradura.HabitacionId?.ToString() ?? string.Empty,
                 Value = JsonSerializer.Serialize(accesoEvent, new JsonSerializerOptions
                 {
                     PropertyNamingPolicy = JsonNamingPolicy.CamelCase

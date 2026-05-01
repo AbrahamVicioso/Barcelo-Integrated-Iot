@@ -5,8 +5,10 @@ public class CerradurasInteligenteDto
     public int CerraduraId { get; set; }
     public Guid DispositivoId { get; set; }
     public string? NombreDispositivo { get; set; }
-    public int HabitacionId { get; set; }
+    public int? HabitacionId { get; set; }
     public string? NombreHabitacion { get; set; }
+    public int? ActividadId { get; set; }
+    public string? NombreActividad { get; set; }
     public string EstadoPuerta { get; set; } = string.Empty;
     public DateTime? UltimaApertura { get; set; }
     public int ContadorAperturas { get; set; }

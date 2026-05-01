@@ -13,6 +13,7 @@
 	[CreadoPor] [nvarchar](450) NULL,
 	[NumeroUsos] [int] NOT NULL,
 	[UltimoUso] [datetime2](7) NULL,
+	[ReservaActividadId] [int] NULL,
  CONSTRAINT [PK_CredencialesAcceso] PRIMARY KEY CLUSTERED 
 (
 	[CredencialId] ASC
@@ -84,4 +85,18 @@ CREATE NONCLUSTERED INDEX [IX_Credenciales_ReservaId] ON [dbo].[CredencialesAcce
 	[ReservaId] ASC
 )
 WHERE ([ReservaId] IS NOT NULL)
+WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+GO
+ALTER TABLE [dbo].[CredencialesAcceso]  WITH CHECK ADD  CONSTRAINT [FK_Credenciales_ReservasActividades] FOREIGN KEY([ReservaActividadId])
+REFERENCES [dbo].[ReservasActividades] ([ReservaActividadId])
+GO
+
+ALTER TABLE [dbo].[CredencialesAcceso] CHECK CONSTRAINT [FK_Credenciales_ReservasActividades]
+GO
+/****** Object:  Index [IX_Credenciales_ReservaActividadId] ******/
+CREATE NONCLUSTERED INDEX [IX_Credenciales_ReservaActividadId] ON [dbo].[CredencialesAcceso]
+(
+	[ReservaActividadId] ASC
+)
+WHERE ([ReservaActividadId] IS NOT NULL)
 WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]

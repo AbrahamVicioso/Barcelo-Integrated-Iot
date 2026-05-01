@@ -8,6 +8,7 @@ public interface ICerradurasInteligenteRepository
     Task<CerradurasInteligente?> GetById(int id);
     Task<IEnumerable<CerradurasInteligente>> GetByDispositivoId(Guid dispositivoId);
     Task<IEnumerable<CerradurasInteligente>> GetByHabitacionId(int habitacionId);
+    Task<CerradurasInteligente?> GetByActividadIdAsync(int actividadId, CancellationToken cancellationToken = default);
     Task<IEnumerable<CerradurasInteligente>> GetByEstaActiva(bool estaActiva);
     Task AddAsync(CerradurasInteligente cerradura, CancellationToken cancellationToken = default);
     Task UpdateAsync(CerradurasInteligente cerradura, CancellationToken cancellationToken = default);

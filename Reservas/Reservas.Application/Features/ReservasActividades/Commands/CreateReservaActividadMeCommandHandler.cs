@@ -1,5 +1,6 @@
 using AutoMapper;
 using MediatR;
+using Notification.Domain.Events;
 using Reservas.Application.Common;
 using Reservas.Application.DTOs;
 using Reservas.Application.Interfaces;
@@ -12,15 +13,18 @@ public class CreateReservaActividadMeCommandHandler : IRequestHandler<CreateRese
     private readonly IUnitOfWork _unitOfWork;
     private readonly IHuespedRepository _huespedRepository;
     private readonly IMapper _mapper;
+    private readonly IReservaActividadKafkaProducer _kafkaProducer;
 
     public CreateReservaActividadMeCommandHandler(
         IUnitOfWork unitOfWork,
         IHuespedRepository huespedRepository,
-        IMapper mapper)
+        IMapper mapper,
+        IReservaActividadKafkaProducer kafkaProducer)
     {
         _unitOfWork = unitOfWork;
         _huespedRepository = huespedRepository;
         _mapper = mapper;
+        _kafkaProducer = kafkaProducer;
     }
 
     public async Task<Result<ReservaActividadDto>> Handle(CreateReservaActividadMeCommand request, CancellationToken cancellationToken)
@@ -29,9 +33,7 @@ public class CreateReservaActividadMeCommandHandler : IRequestHandler<CreateRese
         {
             var huespedId = await _huespedRepository.GetHuespedIdByUserIdAsync(request.UsuarioId, cancellationToken);
             if (huespedId == null)
-            {
                 return Result<ReservaActividadDto>.NotFound("Huésped no encontrado para este usuario.");
-            }
 
             var reserva = new Domain.Entites.ReservasActividades
             {
@@ -53,6 +55,32 @@ public class CreateReservaActividadMeCommandHandler : IRequestHandler<CreateRese
 
             var reservaDto = _mapper.Map<ReservaActividadDto>(reserva);
             reservaDto.Estado = "Confirmada";
+
+            // Publish event so Dispositivos can generate a PIN for the activity lock (fire-and-forget)
+            try
+            {
+                var actividad = await _unitOfWork.ActividadesRecreativas.GetByIdAsync(request.ActividadId, cancellationToken);
+                if (actividad?.RequiereReserva == true)
+                {
+                    var evt = new ReservaActividadConfirmadaEvent
+                    {
+                        ReservaActividadId = reserva.ReservaActividadId,
+                        ActividadId = reserva.ActividadId,
+                        HuespedId = reserva.HuespedId,
+                        FechaReserva = reserva.FechaReserva,
+                        HoraReserva = reserva.HoraReserva,
+                        DuracionMinutos = actividad.DuracionMinutos,
+                        NombreActividad = actividad.NombreActividad ?? string.Empty
+                    };
+                    await _kafkaProducer.PublishReservaActividadConfirmadaAsync(evt, cancellationToken);
+                }
+            }
+            catch (Exception ex)
+            {
+                // Non-fatal: reservation was already saved
+                _ = ex;
+            }
+
             return Result<ReservaActividadDto>.Success(reservaDto);
         }
         catch (Exception ex)
