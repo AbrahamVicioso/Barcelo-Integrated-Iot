@@ -45,4 +45,10 @@ public interface ITbCredencialesSyncService
     /// No-op if the reserva has no activity lock. Never throws.
     /// </summary>
     Task SyncByReservaActividadIdAsync(int reservaActividadId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Finds the active lock for the given actividad and calls SyncByCerraduraIdAsync.
+    /// No-op if the actividad has no active lock. Never throws.
+    /// </summary>
+    Task SyncByActividadIdAsync(int actividadId, CancellationToken cancellationToken = default);
 }

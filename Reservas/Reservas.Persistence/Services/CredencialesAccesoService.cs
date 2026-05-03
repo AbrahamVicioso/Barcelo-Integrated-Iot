@@ -270,4 +270,145 @@ public class CredencialesAccesoService : ICredencialesAccesoService
         }
         return results;
     }
+
+    public async Task<bool> ActividadTieneCerraduraActivaAsync(int actividadId, CancellationToken cancellationToken = default)
+    {
+        var connection = _context.Database.GetDbConnection();
+        if (connection.State != ConnectionState.Open)
+            await connection.OpenAsync(cancellationToken);
+
+        using var command = connection.CreateCommand();
+        command.CommandText = @"
+            SELECT COUNT(1) FROM CerradurasInteligentes
+            WHERE ActividadId = @actividadId
+              AND EstaActiva = 1";
+
+        var pActividadId = command.CreateParameter();
+        pActividadId.ParameterName = "@actividadId";
+        pActividadId.Value = actividadId;
+        command.Parameters.Add(pActividadId);
+
+        var result = await command.ExecuteScalarAsync(cancellationToken);
+        return Convert.ToInt32(result) > 0;
+    }
+
+    public async Task<bool> PersonalTienePermisoActividadAsync(int personalId, int actividadId, CancellationToken cancellationToken = default)
+    {
+        var connection = _context.Database.GetDbConnection();
+        if (connection.State != ConnectionState.Open)
+            await connection.OpenAsync(cancellationToken);
+
+        using var command = connection.CreateCommand();
+        command.CommandText = @"
+            SELECT COUNT(1) FROM PermisosPersonal
+            WHERE PersonalId = @personalId
+              AND ActividadId = @actividadId
+              AND EstaActivo = 1
+              AND (FechaExpiracion IS NULL OR FechaExpiracion >= @now)";
+
+        var pPersonalId = command.CreateParameter();
+        pPersonalId.ParameterName = "@personalId";
+        pPersonalId.Value = personalId;
+        command.Parameters.Add(pPersonalId);
+
+        var pActividadId = command.CreateParameter();
+        pActividadId.ParameterName = "@actividadId";
+        pActividadId.Value = actividadId;
+        command.Parameters.Add(pActividadId);
+
+        var pNow = command.CreateParameter();
+        pNow.ParameterName = "@now";
+        pNow.Value = DateTime.UtcNow;
+        command.Parameters.Add(pNow);
+
+        var result = await command.ExecuteScalarAsync(cancellationToken);
+        return Convert.ToInt32(result) > 0;
+    }
+
+    public async Task<int?> GetCredencialActividadIdAsync(int reservaActividadId, string pin, CancellationToken cancellationToken = default)
+    {
+        var connection = _context.Database.GetDbConnection();
+        if (connection.State != ConnectionState.Open)
+            await connection.OpenAsync(cancellationToken);
+
+        using var command = connection.CreateCommand();
+        command.CommandText = @"
+            SELECT TOP 1 CredencialId FROM CredencialesAcceso
+            WHERE ReservaActividadId = @reservaActividadId
+              AND CodigoPIN = @pin
+              AND EstaActiva = 1
+              AND FechaActivacion <= @now
+              AND FechaExpiracion >= @now";
+
+        var pReservaActividadId = command.CreateParameter();
+        pReservaActividadId.ParameterName = "@reservaActividadId";
+        pReservaActividadId.Value = reservaActividadId;
+        command.Parameters.Add(pReservaActividadId);
+
+        var pPin = command.CreateParameter();
+        pPin.ParameterName = "@pin";
+        pPin.Value = pin;
+        command.Parameters.Add(pPin);
+
+        var pNow = command.CreateParameter();
+        pNow.ParameterName = "@now";
+        pNow.Value = DateTime.UtcNow;
+        command.Parameters.Add(pNow);
+
+        var result = await command.ExecuteScalarAsync(cancellationToken);
+        return result is null || result == DBNull.Value ? null : Convert.ToInt32(result);
+    }
+
+    public async Task RegistrarAccesoActividadAsync(int actividadId, int? credencialId = null, CancellationToken cancellationToken = default)
+    {
+        var connection = _context.Database.GetDbConnection();
+        if (connection.State != ConnectionState.Open)
+            await connection.OpenAsync(cancellationToken);
+
+        var now = DateTime.UtcNow;
+
+        using (var command = connection.CreateCommand())
+        {
+            command.CommandText = @"
+                UPDATE CerradurasInteligentes
+                SET ContadorAperturas = ContadorAperturas + 1,
+                    UltimaApertura = @now
+                WHERE ActividadId = @actividadId
+                  AND EstaActiva = 1";
+
+            var pActividadId = command.CreateParameter();
+            pActividadId.ParameterName = "@actividadId";
+            pActividadId.Value = actividadId;
+            command.Parameters.Add(pActividadId);
+
+            var pNow = command.CreateParameter();
+            pNow.ParameterName = "@now";
+            pNow.Value = now;
+            command.Parameters.Add(pNow);
+
+            await command.ExecuteNonQueryAsync(cancellationToken);
+        }
+
+        if (credencialId.HasValue)
+        {
+            using var command = connection.CreateCommand();
+            command.CommandText = @"
+                UPDATE CredencialesAcceso
+                SET NumeroUsos = NumeroUsos + 1,
+                    UltimoUso  = @now
+                WHERE CredencialId = @credencialId";
+
+            var pCredencialId = command.CreateParameter();
+            pCredencialId.ParameterName = "@credencialId";
+            pCredencialId.Value = credencialId.Value;
+            command.Parameters.Add(pCredencialId);
+
+            var pNow = command.CreateParameter();
+            pNow.ParameterName = "@now";
+            pNow.Value = now;
+            command.Parameters.Add(pNow);
+
+            await command.ExecuteNonQueryAsync(cancellationToken);
+        }
+    }
 }

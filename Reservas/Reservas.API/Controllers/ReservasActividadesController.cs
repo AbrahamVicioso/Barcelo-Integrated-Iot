@@ -130,4 +130,5 @@ public class ReservasActividadesController : ControllerBase
         var result = await _mediator.Send(new UpdateReservaActividadEstadoCommand { ReservaActividadId = id, EstadoReservaActividadId = estadoId });
         return result.IsSuccess ? Ok(result.Data) : BadRequest(result.ErrorMessage);
     }
+
 }

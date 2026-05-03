@@ -23,6 +23,8 @@ namespace Reservas.Infrastructure
             var actividadKafkaConfig = new ReservaActividadKafkaProducerConfig();
             configuration.GetSection("KafkaProducer").Bind(actividadKafkaConfig);
             actividadKafkaConfig.Topic = configuration["KafkaProducer:ActividadTopic"] ?? "actividades.reserva-confirmada";
+            actividadKafkaConfig.ActividadUnlockDoorTopic = configuration["KafkaProducer:ActividadUnlockDoorTopic"] ?? "actividades.unlock-door";
+            actividadKafkaConfig.PersonalActividadUnlockDoorTopic = configuration["KafkaProducer:PersonalActividadUnlockDoorTopic"] ?? "actividades.personal-unlock";
             services.AddSingleton(actividadKafkaConfig);
             services.AddSingleton<IReservaActividadKafkaProducer, ReservaActividadKafkaProducer>();
 

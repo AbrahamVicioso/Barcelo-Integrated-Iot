@@ -46,4 +46,11 @@ public class ReservaActividadRepository : GenericRepository<ReservasActividades>
             .OrderByDescending(r => r.FechaReserva)
             .ToListAsync(cancellationToken);
     }
+
+    public async Task<ReservasActividades?> GetByIdWithActividadAsync(int id, CancellationToken cancellationToken = default)
+    {
+        return await _dbSet
+            .Include(r => r.Actividad)
+            .FirstOrDefaultAsync(r => r.ReservaActividadId == id, cancellationToken);
+    }
 }

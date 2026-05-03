@@ -72,9 +72,11 @@ public class CreatePermisoCommandHandler : IRequestHandler<CreatePermisoCommand,
             var createdPermiso = await _unitOfWork.PermisosPersonal.AddAsync(permiso);
             await _unitOfWork.SaveChangesAsync();
 
-            // Notify Dispositivos to sync ThingsBoard credentials for this habitacion
+            // Notify Dispositivos to sync ThingsBoard credentials
             if (request.Permiso.HabitacionId.HasValue)
                 await _syncProducer.PublishAsync(request.Permiso.HabitacionId.Value, cancellationToken);
+            else if (request.Permiso.ActividadId.HasValue)
+                await _syncProducer.PublishActividadAsync(request.Permiso.ActividadId.Value, cancellationToken);
 
             return _mapper.Map<PermisosPersonalDto>(createdPermiso);
         }

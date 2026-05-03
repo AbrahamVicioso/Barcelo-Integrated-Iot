@@ -1,8 +1,10 @@
 using AutoMapper;
 using MediatR;
+using Notification.Domain.Events;
 using Reservas.Application.Common;
 using Reservas.Application.DTOs;
 using Reservas.Application.Interfaces;
+using Reservas.Domain.Entites;
 
 namespace Reservas.Application.Features.ReservasActividades.Commands;
 
@@ -10,11 +12,16 @@ public class UpdateReservaActividadEstadoCommandHandler : IRequestHandler<Update
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
+    private readonly IReservaActividadKafkaProducer _kafkaProducer;
 
-    public UpdateReservaActividadEstadoCommandHandler(IUnitOfWork unitOfWork, IMapper mapper)
+    public UpdateReservaActividadEstadoCommandHandler(
+        IUnitOfWork unitOfWork,
+        IMapper mapper,
+        IReservaActividadKafkaProducer kafkaProducer)
     {
         _unitOfWork = unitOfWork;
         _mapper = mapper;
+        _kafkaProducer = kafkaProducer;
     }
 
     public async Task<Result<ReservaActividadDto>> Handle(UpdateReservaActividadEstadoCommand request, CancellationToken cancellationToken)
@@ -39,6 +46,33 @@ public class UpdateReservaActividadEstadoCommandHandler : IRequestHandler<Update
 
             await _unitOfWork.ReservasActividades.UpdateAsync(reserva, cancellationToken);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+            // When state changes to Confirmada, generate a credential for the activity lock
+            if (request.EstadoReservaActividadId == EstadoReservaActividad.Confirmada)
+            {
+                try
+                {
+                    var actividad = await _unitOfWork.ActividadesRecreativas.GetByIdAsync(reserva.ActividadId, cancellationToken);
+                    if (actividad?.RequiereReserva == true)
+                    {
+                        var evt = new ReservaActividadConfirmadaEvent
+                        {
+                            ReservaActividadId = reserva.ReservaActividadId,
+                            ActividadId = reserva.ActividadId,
+                            HuespedId = reserva.HuespedId,
+                            FechaReserva = reserva.FechaReserva,
+                            HoraReserva = reserva.HoraReserva,
+                            DuracionMinutos = actividad.DuracionMinutos,
+                            NombreActividad = actividad.NombreActividad ?? string.Empty
+                        };
+                        await _kafkaProducer.PublishReservaActividadConfirmadaAsync(evt, cancellationToken);
+                    }
+                }
+                catch
+                {
+                    // Non-fatal: state was already updated; credential generation is best-effort
+                }
+            }
 
             var reservaDto = _mapper.Map<ReservaActividadDto>(reserva);
             return Result<ReservaActividadDto>.Success(reservaDto);

@@ -25,12 +25,15 @@ public class DeletePermisoCommandHandler : IRequestHandler<DeletePermisoCommand,
         }
 
         var habitacionId = permiso.HabitacionId;
+        var actividadId = permiso.ActividadId;
 
         await _unitOfWork.PermisosPersonal.DeleteAsync(permiso);
         await _unitOfWork.SaveChangesAsync();
 
         if (habitacionId.HasValue)
             await _syncProducer.PublishAsync(habitacionId.Value, cancellationToken);
+        else if (actividadId.HasValue)
+            await _syncProducer.PublishActividadAsync(actividadId.Value, cancellationToken);
 
         return true;
     }

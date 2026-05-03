@@ -8,4 +8,5 @@ public interface IReservaActividadRepository : IGenericRepository<ReservasActivi
     Task<IEnumerable<ReservasActividades>> GetReservasByActividadIdAsync(int actividadId, CancellationToken cancellationToken = default);
     Task<IEnumerable<ReservasActividades>> GetReservasByFechaAsync(DateTime fecha, CancellationToken cancellationToken = default);
     Task<IEnumerable<ReservasActividades>> GetReservasByEstadoAsync(string estado, CancellationToken cancellationToken = default);
+    Task<ReservasActividades?> GetByIdWithActividadAsync(int id, CancellationToken cancellationToken = default);
 }

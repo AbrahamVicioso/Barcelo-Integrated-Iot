@@ -21,4 +21,13 @@ public interface ICredencialesAccesoService
 
     /// <summary>Returns active credentials for a specific guest and reservation.</summary>
     Task<IEnumerable<CredencialHuespedDto>> GetCredencialesForHuespedAsync(int reservaId, int huespedId, CancellationToken cancellationToken = default);
+
+    /// <summary>Returns true if the actividad has an active smart lock.</summary>
+    Task<bool> ActividadTieneCerraduraActivaAsync(int actividadId, CancellationToken cancellationToken = default);
+    /// <summary>Returns true if the personal has an active, non-expired permission for the given actividad.</summary>
+    Task<bool> PersonalTienePermisoActividadAsync(int personalId, int actividadId, CancellationToken cancellationToken = default);
+    /// <summary>Returns the CredencialId if the PIN is valid and active for the reservaActividad, null otherwise.</summary>
+    Task<int?> GetCredencialActividadIdAsync(int reservaActividadId, string pin, CancellationToken cancellationToken = default);
+    /// <summary>Increments ContadorAperturas on the lock for the actividad and optionally NumeroUsos on the credential.</summary>
+    Task RegistrarAccesoActividadAsync(int actividadId, int? credencialId = null, CancellationToken cancellationToken = default);
 }

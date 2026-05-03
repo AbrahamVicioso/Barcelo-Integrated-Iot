@@ -1,7 +1,9 @@
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Reservas.Application.Features.ActividadesRecreativas.Commands;
 using Reservas.Application.Features.ActividadesRecreativas.Queries;
+using Reservas.Application.Features.ReservasActividades.Commands;
 using Barcelo.Authorization.Shared;
 
 namespace Reservas.API.Controllers;
@@ -56,5 +58,25 @@ public class ActividadesRecreativasController : ControllerBase
     {
         var result = await _mediator.Send(new DeleteActividadRecreativaCommand { ActividadId = id });
         return result.IsSuccess ? NoContent() : BadRequest(result.ErrorMessage);
+    }
+
+    [HttpPost("{id}/unlock")]
+    [Authorize]
+    public async Task<IActionResult> Unlock(int id, [FromQuery] string? pin)
+    {
+        var result = await _mediator.Send(new UnlockActividadCommand(id, pin));
+        return !result.IsSuccess
+            ? (result.IsNotFound ? NotFound(result.ErrorMessage) : BadRequest(result.ErrorMessage))
+            : Ok(new { message = result.Data });
+    }
+
+    [HttpPost("{id}/personal-unlock")]
+    [Authorize]
+    public async Task<IActionResult> UnlockPersonal(int id)
+    {
+        var result = await _mediator.Send(new UnlockActividadPersonalCommand(id));
+        return !result.IsSuccess
+            ? (result.IsNotFound ? NotFound(result.ErrorMessage) : BadRequest(result.ErrorMessage))
+            : Ok(new { message = result.Data });
     }
 }

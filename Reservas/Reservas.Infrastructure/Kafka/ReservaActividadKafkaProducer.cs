@@ -10,12 +10,16 @@ public class ReservaActividadKafkaProducer : IReservaActividadKafkaProducer, IDi
 {
     private readonly IProducer<string, string> _producer;
     private readonly string _topic;
+    private readonly string _actividadUnlockDoorTopic;
+    private readonly string _personalActividadUnlockDoorTopic;
     private readonly ILogger<ReservaActividadKafkaProducer> _logger;
     private bool _disposed;
 
     public ReservaActividadKafkaProducer(ReservaActividadKafkaProducerConfig config, ILogger<ReservaActividadKafkaProducer> logger)
     {
         _topic = config.Topic;
+        _actividadUnlockDoorTopic = config.ActividadUnlockDoorTopic;
+        _personalActividadUnlockDoorTopic = config.PersonalActividadUnlockDoorTopic;
         _logger = logger;
 
         var producerConfig = new ProducerConfig
@@ -57,6 +61,59 @@ public class ReservaActividadKafkaProducer : IReservaActividadKafkaProducer, IDi
         }
     }
 
+    public async Task PublishActividadUnlockDoorAsync(ActividadUnlockDoorEvent unlockEvent, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var message = new Message<string, string>
+            {
+                Key = unlockEvent.ReservaActividadId.ToString(),
+                Value = JsonSerializer.Serialize(unlockEvent, new JsonSerializerOptions
+                {
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                })
+            };
+
+            var result = await _producer.ProduceAsync(_actividadUnlockDoorTopic, message, cancellationToken);
+
+            _logger.LogInformation(
+                "Published ActividadUnlockDoorEvent for actividad {ActividadId}, reservaActividad {ReservaActividadId} to partition {Partition} at offset {Offset}",
+                unlockEvent.ActividadId, unlockEvent.ReservaActividadId, result.Partition.Value, result.Offset.Value);
+        }
+        catch (ProduceException<string, string> ex)
+        {
+            _logger.LogError(ex, "Failed to publish ActividadUnlockDoorEvent for reservaActividad {ReservaActividadId}", unlockEvent.ReservaActividadId);
+            throw;
+        }
+    }
+
+    public async Task PublishPersonalActividadUnlockDoorAsync(PersonalActividadUnlockDoorEvent unlockEvent, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var message = new Message<string, string>
+            {
+                Key = unlockEvent.ActividadId.ToString(),
+                Value = JsonSerializer.Serialize(unlockEvent, new JsonSerializerOptions
+                {
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                })
+            };
+
+            var result = await _producer.ProduceAsync(_personalActividadUnlockDoorTopic, message, cancellationToken);
+
+            _logger.LogInformation(
+                "Published PersonalActividadUnlockDoorEvent for personal {PersonalId}, actividad {ActividadId} to partition {Partition} at offset {Offset}",
+                unlockEvent.PersonalId, unlockEvent.ActividadId, result.Partition.Value, result.Offset.Value);
+        }
+        catch (ProduceException<string, string> ex)
+        {
+            _logger.LogError(ex, "Failed to publish PersonalActividadUnlockDoorEvent for personal {PersonalId}, actividad {ActividadId}",
+                unlockEvent.PersonalId, unlockEvent.ActividadId);
+            throw;
+        }
+    }
+
     public void Dispose()
     {
         if (_disposed) return;
@@ -70,5 +127,7 @@ public class ReservaActividadKafkaProducerConfig
 {
     public string BootstrapServers { get; set; } = string.Empty;
     public string Topic { get; set; } = "actividades.reserva-confirmada";
+    public string ActividadUnlockDoorTopic { get; set; } = "actividades.unlock-door";
+    public string PersonalActividadUnlockDoorTopic { get; set; } = "actividades.personal-unlock";
     public string? ClientId { get; set; }
 }

@@ -251,6 +251,33 @@ public class TbCredencialesSyncService : ITbCredencialesSyncService
         }
     }
 
+    public async Task SyncByActividadIdAsync(int actividadId, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var connection = _context.Database.GetDbConnection();
+            if (connection.State != ConnectionState.Open)
+                await connection.OpenAsync(cancellationToken);
+
+            using var cmd = (System.Data.Common.DbCommand)connection.CreateCommand();
+            cmd.CommandText = "SELECT TOP 1 CerraduraId FROM CerradurasInteligentes WHERE ActividadId = @actividadId AND EstaActiva = 1";
+            AddParam(cmd, "@actividadId", actividadId);
+
+            var result = await cmd.ExecuteScalarAsync(cancellationToken);
+            if (result is null || result == DBNull.Value)
+            {
+                _logger.LogDebug("Actividad {ActividadId} no tiene cerradura activa, sync omitido.", actividadId);
+                return;
+            }
+
+            await SyncByCerraduraIdAsync(Convert.ToInt32(result), cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error en SyncByActividadIdAsync para Actividad {ActividadId}.", actividadId);
+        }
+    }
+
     public async Task SyncByCerraduraIdAsync(int cerraduraId, CancellationToken cancellationToken = default)
     {
         try
@@ -259,7 +286,6 @@ public class TbCredencialesSyncService : ITbCredencialesSyncService
             if (connection.State != ConnectionState.Open)
                 await connection.OpenAsync(cancellationToken);
 
-            // Get the lock directly by CerraduraId
             using var cerraduraCmd = (System.Data.Common.DbCommand)connection.CreateCommand();
             cerraduraCmd.CommandText = "SELECT TOP 1 CerraduraId, DispositivoId, ActividadId FROM CerradurasInteligentes WHERE CerraduraId = @cerraduraId AND EstaActiva = 1";
             AddParam(cerraduraCmd, "@cerraduraId", cerraduraId);
@@ -290,10 +316,18 @@ public class TbCredencialesSyncService : ITbCredencialesSyncService
                 return;
             }
 
-            // Collect active credentials for this activity
-            var credenciales = await GetCredencialesActividadAsync(connection, cerraduraId, cancellationToken);
+            // Credenciales de huespedes para esta actividad
+            var credencialesHuesped = await GetCredencialesActividadAsync(connection, cerraduraId, cancellationToken);
 
-            var actividades = credenciales
+            // Permisos y credenciales de personal para esta actividad
+            var permisos = await GetPermisosPersonalActividadAsync(connection, cerradura.ActividadId.Value, cancellationToken);
+            var personalIds = permisos.Select(p => p.PersonalId).ToList();
+            var credencialesPersonal = personalIds.Count > 0
+                ? await GetCredencialesPersonalAsync(connection, personalIds, cancellationToken)
+                : new List<CredencialPersonalInfo>();
+
+            // Mismo formato que habitaciones
+            var huespedes = credencialesHuesped
                 .GroupBy(c => new { c.HuespedId, c.ReservaActividadId })
                 .Select(g => new
                 {
@@ -308,7 +342,25 @@ public class TbCredencialesSyncService : ITbCredencialesSyncService
                 })
                 .ToList<object>();
 
-            var payload = new { actividades };
+            var personal = permisos
+                .Select(p => new
+                {
+                    personalId = p.PersonalId,
+                    nombre = p.NombreCompleto,
+                    expiracion = p.FechaExpiracion.HasValue ? p.FechaExpiracion.Value.ToString("o") : (string?)null,
+                    credenciales = credencialesPersonal
+                        .Where(cp => cp.PersonalId == p.PersonalId)
+                        .Select(cp => new
+                        {
+                            pin = cp.CodigoPin,
+                            activacion = cp.FechaActivacion.ToString("o"),
+                            expiracion = cp.FechaExpiracion.ToString("o")
+                        })
+                        .ToList()
+                })
+                .ToList<object>();
+
+            var payload = new { huespedes, personal };
 
             var device = await _tbDeviceService.GetDeviceByNameAsync(cerradura.DispositivoId.ToString());
             if (device == null || string.IsNullOrEmpty(device.Id))
@@ -333,8 +385,8 @@ public class TbCredencialesSyncService : ITbCredencialesSyncService
             await _tbDeviceService.SetSharedAttributesAsync(device.Id, attrs, cancellationToken);
 
             _logger.LogInformation(
-                "ThingsBoard sync OK: Cerradura {CerraduraId}, dispositivo {DispositivoId}, {NumActividades} credenciales actividad.",
-                cerraduraId, cerradura.DispositivoId, actividades.Count);
+                "ThingsBoard sync OK: Cerradura {CerraduraId}, dispositivo {DispositivoId}, {NumHuespedes} huespedes, {NumPersonal} personal.",
+                cerraduraId, cerradura.DispositivoId, huespedes.Count, personal.Count);
         }
         catch (Exception ex)
         {
@@ -515,6 +567,36 @@ public class TbCredencialesSyncService : ITbCredencialesSyncService
               AND (pp.FechaExpiracion IS NULL OR pp.FechaExpiracion >= @ahora)";
 
         AddParam(cmd, "@habitacionId", habitacionId);
+        AddParam(cmd, "@ahora", DateTime.UtcNow);
+
+        var result = new List<PermisoPersonalInfo>();
+        using var reader = await cmd.ExecuteReaderAsync(ct);
+        while (await reader.ReadAsync(ct))
+        {
+            result.Add(new PermisoPersonalInfo
+            {
+                PersonalId = reader.GetInt32(0),
+                NombreCompleto = reader.GetString(1),
+                FechaExpiracion = reader.IsDBNull(2) ? null : reader.GetDateTime(2)
+            });
+        }
+        return result;
+    }
+
+    private static async Task<List<PermisoPersonalInfo>> GetPermisosPersonalActividadAsync(
+        IDbConnection connection, int actividadId, CancellationToken ct)
+    {
+        using var cmd = (System.Data.Common.DbCommand)connection.CreateCommand();
+        cmd.CommandText = @"
+            SELECT pp.PersonalId, p.NombreCompleto, pp.FechaExpiracion
+            FROM PermisosPersonal pp
+            INNER JOIN Personal p ON pp.PersonalId = p.PersonalId
+            WHERE pp.ActividadId = @actividadId
+              AND pp.EstaActivo = 1
+              AND p.EstaActivo = 1
+              AND (pp.FechaExpiracion IS NULL OR pp.FechaExpiracion >= @ahora)";
+
+        AddParam(cmd, "@actividadId", actividadId);
         AddParam(cmd, "@ahora", DateTime.UtcNow);
 
         var result = new List<PermisoPersonalInfo>();

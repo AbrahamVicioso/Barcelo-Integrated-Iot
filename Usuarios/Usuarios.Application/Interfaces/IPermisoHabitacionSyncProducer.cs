@@ -7,4 +7,5 @@ namespace Usuarios.Application.Interfaces;
 public interface IPermisoHabitacionSyncProducer
 {
     Task PublishAsync(int habitacionId, CancellationToken cancellationToken = default);
+    Task PublishActividadAsync(int actividadId, CancellationToken cancellationToken = default);
 }

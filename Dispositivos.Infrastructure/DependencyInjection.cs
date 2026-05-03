@@ -77,6 +77,18 @@ public static class DependencyInjection
         services.AddSingleton(reservaActividadConfig);
         services.AddHostedService<ReservaActividadKafkaConsumer>();
 
+        // Register Kafka consumer for actividad unlock-door events (huesped)
+        var actividadUnlockConfig = new ActividadUnlockDoorKafkaConsumerConfig();
+        configuration.GetSection("KafkaConsumer:ActividadUnlockDoor").Bind(actividadUnlockConfig);
+        services.AddSingleton(actividadUnlockConfig);
+        services.AddHostedService<ActividadUnlockDoorKafkaConsumer>();
+
+        // Register Kafka consumer for personal actividad unlock-door events
+        var personalActividadUnlockConfig = new PersonalActividadUnlockDoorKafkaConsumerConfig();
+        configuration.GetSection("KafkaConsumer:PersonalActividadUnlockDoor").Bind(personalActividadUnlockConfig);
+        services.AddSingleton(personalActividadUnlockConfig);
+        services.AddHostedService<PersonalActividadUnlockDoorKafkaConsumer>();
+
         // Register Audit Kafka Producer
         var auditConfig = new AuditKafkaProducerConfig();
         configuration.GetSection("AuditProducer").Bind(auditConfig);

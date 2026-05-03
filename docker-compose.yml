@@ -385,6 +385,12 @@ services:
       KafkaConsumer__ReservaActividad__BootstrapServers: kafka:29092
       KafkaConsumer__ReservaActividad__GroupId: dispositivos-actividad-group
       KafkaConsumer__ReservaActividad__Topic: actividades.reserva-confirmada
+      KafkaConsumer__ActividadUnlockDoor__BootstrapServers: kafka:29092
+      KafkaConsumer__ActividadUnlockDoor__GroupId: dispositivos-actividad-unlock-group
+      KafkaConsumer__ActividadUnlockDoor__Topic: actividades.unlock-door
+      KafkaConsumer__PersonalActividadUnlockDoor__BootstrapServers: kafka:29092
+      KafkaConsumer__PersonalActividadUnlockDoor__GroupId: dispositivos-personal-actividad-unlock-group
+      KafkaConsumer__PersonalActividadUnlockDoor__Topic: actividades.personal-unlock
     networks:
       - barcelo-net
     depends_on:

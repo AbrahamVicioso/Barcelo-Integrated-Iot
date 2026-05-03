@@ -52,6 +52,29 @@ public class PermisoHabitacionKafkaProducer : IPermisoHabitacionSyncProducer, ID
         }
     }
 
+    public async Task PublishActividadAsync(int actividadId, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var evt = new PermisoPersonalCreadoEvent { ActividadId = actividadId };
+            var message = new Message<string, string>
+            {
+                Key = actividadId.ToString(),
+                Value = JsonSerializer.Serialize(evt, new JsonSerializerOptions
+                {
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                })
+            };
+
+            await _producer.ProduceAsync(_topic, message, cancellationToken);
+            _logger.LogDebug("PermisoPersonalCreadoEvent publicado para Actividad {ActividadId}.", actividadId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error publicando PermisoPersonalCreadoEvent para Actividad {ActividadId}.", actividadId);
+        }
+    }
+
     public void Dispose()
     {
         if (_disposed) return;

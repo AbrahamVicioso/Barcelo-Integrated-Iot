@@ -37,6 +37,8 @@ public class UpdatePermisoCommandHandler : IRequestHandler<UpdatePermisoCommand,
 
         if (permiso.HabitacionId.HasValue)
             await _syncProducer.PublishAsync(permiso.HabitacionId.Value, cancellationToken);
+        else if (permiso.ActividadId.HasValue)
+            await _syncProducer.PublishActividadAsync(permiso.ActividadId.Value, cancellationToken);
 
         var permisoDto = _mapper.Map<PermisosPersonalDto>(permiso);
         return permisoDto;
