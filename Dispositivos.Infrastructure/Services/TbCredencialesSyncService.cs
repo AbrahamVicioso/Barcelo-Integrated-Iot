@@ -359,7 +359,7 @@ public class TbCredencialesSyncService : ITbCredencialesSyncService
                 .Select(g => new
                 {
                     huespedId = g.Key.HuespedId,
-                    reservaActividadId = g.Key.ReservaActividadId,
+                    reservaId = g.Key.ReservaActividadId,
                     credenciales = g.Select(c => new
                     {
                         pin = c.CodigoPin,
@@ -435,11 +435,9 @@ public class TbCredencialesSyncService : ITbCredencialesSyncService
                        )
                    )
               AND  ca.EstaActiva = 1
-              AND  ca.HuespedId IS NOT NULL
-              AND  ca.FechaExpiracion >= @ahora";
+              AND  ca.HuespedId IS NOT NULL";
 
         AddParam(cmd, "@cerraduraId", cerraduraId);
-        AddParam(cmd, "@ahora", DateTime.UtcNow);
 
         var result = new List<CredencialActividadInfo>();
         using var reader = await cmd.ExecuteReaderAsync(ct);

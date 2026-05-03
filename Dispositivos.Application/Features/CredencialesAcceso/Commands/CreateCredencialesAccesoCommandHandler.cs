@@ -216,6 +216,8 @@ public class CreateCredencialesAccesoCommandHandler : IRequestHandler<CreateCred
             var syncService = scope.ServiceProvider.GetRequiredService<ITbCredencialesSyncService>();
             if (request.Credencial.PersonalId.HasValue)
                 await syncService.SyncByPersonalIdAsync(request.Credencial.PersonalId.Value, cancellationToken);
+            else if (request.Credencial.HuespedId.HasValue && request.Credencial.ReservaActividadId.HasValue)
+                await syncService.SyncByReservaActividadIdAsync(request.Credencial.ReservaActividadId.Value, cancellationToken);
             else if (request.Credencial.HuespedId.HasValue)
                 await syncService.SyncByHuespedIdAsync(request.Credencial.HuespedId.Value, cancellationToken);
             else if (request.Credencial.ReservaId.HasValue)
