@@ -49,6 +49,7 @@ public class UpdateCredencialesAccesoCommandHandler : IRequestHandler<UpdateCred
                 return Result<CredencialesAccesoDto>.Failure("La fecha de expiración debe ser posterior a la fecha de activación.");
 
             var oldReservaId = credencial.ReservaId;
+            var oldReservaActividadId = credencial.ReservaActividadId;
             var oldPersonalId = credencial.PersonalId;
             var oldHuespedId = credencial.HuespedId;
             var oldPin = credencial.CodigoPin;
@@ -63,9 +64,9 @@ public class UpdateCredencialesAccesoCommandHandler : IRequestHandler<UpdateCred
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
             // Sync ThingsBoard: cerraduras del usuario anterior y nuevo (si cambió)
-            await TriggerSyncAsync(oldPersonalId, oldHuespedId, oldReservaId, cancellationToken);
-            if (request.Credencial.PersonalId != oldPersonalId || request.Credencial.HuespedId != oldHuespedId || request.Credencial.ReservaId != oldReservaId)
-                await TriggerSyncAsync(request.Credencial.PersonalId, request.Credencial.HuespedId, request.Credencial.ReservaId, cancellationToken);
+            await TriggerSyncAsync(oldPersonalId, oldHuespedId, oldReservaId, oldReservaActividadId, cancellationToken);
+            if (request.Credencial.PersonalId != oldPersonalId || request.Credencial.HuespedId != oldHuespedId || request.Credencial.ReservaId != oldReservaId || request.Credencial.ReservaActividadId != oldReservaActividadId)
+                await TriggerSyncAsync(request.Credencial.PersonalId, request.Credencial.HuespedId, request.Credencial.ReservaId, request.Credencial.ReservaActividadId, cancellationToken);
 
             var credencialDto = _mapper.Map<CredencialesAccesoDto>(credencial);
             return Result<CredencialesAccesoDto>.Success(credencialDto);
@@ -83,15 +84,19 @@ public class UpdateCredencialesAccesoCommandHandler : IRequestHandler<UpdateCred
         }
     }
 
-    private async Task TriggerSyncAsync(int? personalId, int? huespedId, int? reservaId, CancellationToken cancellationToken)
+    private async Task TriggerSyncAsync(int? personalId, int? huespedId, int? reservaId, int? reservaActividadId, CancellationToken cancellationToken)
     {
         using var scope = _scopeFactory.CreateScope();
         var syncService = scope.ServiceProvider.GetRequiredService<ITbCredencialesSyncService>();
         if (personalId.HasValue)
             await syncService.SyncByPersonalIdAsync(personalId.Value, cancellationToken);
+        else if (huespedId.HasValue && reservaActividadId.HasValue)
+            await syncService.SyncByReservaActividadIdAsync(reservaActividadId.Value, cancellationToken);
         else if (huespedId.HasValue)
             await syncService.SyncByHuespedIdAsync(huespedId.Value, cancellationToken);
         else if (reservaId.HasValue)
             await syncService.SyncByReservaIdAsync(reservaId.Value, cancellationToken);
+        else if (reservaActividadId.HasValue)
+            await syncService.SyncByReservaActividadIdAsync(reservaActividadId.Value, cancellationToken);
     }
 }

@@ -194,24 +194,51 @@ public class TbCredencialesSyncService : ITbCredencialesSyncService
             if (connection.State != ConnectionState.Open)
                 await connection.OpenAsync(cancellationToken);
 
-            using var cmd = (System.Data.Common.DbCommand)connection.CreateCommand();
-            cmd.CommandText = @"
-                SELECT DISTINCT pp.HabitacionId
-                FROM PermisosPersonal pp
-                WHERE pp.PersonalId = @personalId
-                  AND pp.EstaActivo = 1
-                  AND (pp.FechaExpiracion IS NULL OR pp.FechaExpiracion >= @ahora)";
-            AddParam(cmd, "@personalId", personalId);
-            AddParam(cmd, "@ahora", DateTime.UtcNow);
+            // Habitaciones
+            using (var cmd = (System.Data.Common.DbCommand)connection.CreateCommand())
+            {
+                cmd.CommandText = @"
+                    SELECT DISTINCT pp.HabitacionId
+                    FROM PermisosPersonal pp
+                    WHERE pp.PersonalId = @personalId
+                      AND pp.HabitacionId IS NOT NULL
+                      AND pp.EstaActivo = 1
+                      AND (pp.FechaExpiracion IS NULL OR pp.FechaExpiracion >= @ahora)";
+                AddParam(cmd, "@personalId", personalId);
+                AddParam(cmd, "@ahora", DateTime.UtcNow);
 
-            var habitaciones = new List<int>();
-            using (var reader = await cmd.ExecuteReaderAsync(cancellationToken))
-                while (await reader.ReadAsync(cancellationToken))
-                    habitaciones.Add(reader.GetInt32(0));
+                var habitaciones = new List<int>();
+                using (var reader = await cmd.ExecuteReaderAsync(cancellationToken))
+                    while (await reader.ReadAsync(cancellationToken))
+                        habitaciones.Add(reader.GetInt32(0));
 
-            _logger.LogDebug("SyncByPersonalIdAsync: Personal {PersonalId}, {Count} habitaciones.", personalId, habitaciones.Count);
-            foreach (var habitacionId in habitaciones)
-                await SyncAsync(habitacionId, cancellationToken);
+                _logger.LogDebug("SyncByPersonalIdAsync: Personal {PersonalId}, {Count} habitaciones.", personalId, habitaciones.Count);
+                foreach (var habitacionId in habitaciones)
+                    await SyncAsync(habitacionId, cancellationToken);
+            }
+
+            // Actividades
+            using (var cmd = (System.Data.Common.DbCommand)connection.CreateCommand())
+            {
+                cmd.CommandText = @"
+                    SELECT DISTINCT pp.ActividadId
+                    FROM PermisosPersonal pp
+                    WHERE pp.PersonalId = @personalId
+                      AND pp.ActividadId IS NOT NULL
+                      AND pp.EstaActivo = 1
+                      AND (pp.FechaExpiracion IS NULL OR pp.FechaExpiracion >= @ahora)";
+                AddParam(cmd, "@personalId", personalId);
+                AddParam(cmd, "@ahora", DateTime.UtcNow);
+
+                var actividades = new List<int>();
+                using (var reader = await cmd.ExecuteReaderAsync(cancellationToken))
+                    while (await reader.ReadAsync(cancellationToken))
+                        actividades.Add(reader.GetInt32(0));
+
+                _logger.LogDebug("SyncByPersonalIdAsync: Personal {PersonalId}, {Count} actividades.", personalId, actividades.Count);
+                foreach (var actividadId in actividades)
+                    await SyncByActividadIdAsync(actividadId, cancellationToken);
+            }
         }
         catch (Exception ex)
         {
@@ -409,8 +436,7 @@ public class TbCredencialesSyncService : ITbCredencialesSyncService
                    )
               AND  ca.EstaActiva = 1
               AND  ca.HuespedId IS NOT NULL
-              AND  ca.FechaActivacion <= DATEADD(day, 7, @ahora)
-              AND  ca.FechaExpiracion  >= @ahora";
+              AND  ca.FechaExpiracion >= @ahora";
 
         AddParam(cmd, "@cerraduraId", cerraduraId);
         AddParam(cmd, "@ahora", DateTime.UtcNow);
