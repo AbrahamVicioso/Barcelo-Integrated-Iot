@@ -490,7 +490,7 @@ public class TbCredencialesSyncService : ITbCredencialesSyncService
             WHERE r.HabitacionId = @habitacionId
               AND ca.EstaActiva = 1
               AND ca.HuespedId IS NOT NULL
-              AND r.EstadoReservaId != 4
+              AND r.EstadoReservaId NOT IN (3, 4)
               AND ca.FechaActivacion <= @horizonte
               AND ca.FechaExpiracion >= @ahora";
 
