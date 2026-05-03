@@ -99,7 +99,7 @@ public class PerformCheckInCommandHandler : IRequestHandler<PerformCheckInComman
                 ReservaId = reserva.ReservaId,
                 NumeroReserva = reserva.NumeroReserva,
                 Huespedes = huespedInfos,
-                FechaCheckIn = fechaCheckIn,
+                FechaCheckIn = reserva.FechaCheckIn,
                 FechaCheckOut = reserva.FechaCheckOut
             };
 
