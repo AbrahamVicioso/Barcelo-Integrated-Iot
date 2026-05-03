@@ -87,12 +87,19 @@ public interface ITbDeviceService
     /// <summary>
     /// Sets shared attributes on a device in Thingsboard
     /// </summary>
-    /// <param name="deviceId">Thingsboard device identifier</param>
-    /// <param name="attributes">Key-value pairs of attributes to set</param>
-    /// <param name="cancellationToken">Cancellation token</param>
     Task SetSharedAttributesAsync(
         string deviceId,
         Dictionary<string, object> attributes,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Sends telemetry (time-series) to a device in Thingsboard.
+    /// Unlike shared attributes, telemetry is one-time and does not persist as device state.
+    /// Use for commands like unlock that should not re-trigger on reconnect.
+    /// </summary>
+    Task SendTelemetryAsync(
+        string deviceId,
+        Dictionary<string, object> telemetry,
         CancellationToken cancellationToken = default);
 }
 

@@ -213,7 +213,7 @@ public class UnlockDoorKafkaConsumer : BackgroundService
             return;
         }
 
-        await tbDeviceService.SetSharedAttributesAsync(
+        await tbDeviceService.SendTelemetryAsync(
             tbDevice.Id,
             new Dictionary<string, object> { { "lockState", "unlocked" } },
             cancellationToken);

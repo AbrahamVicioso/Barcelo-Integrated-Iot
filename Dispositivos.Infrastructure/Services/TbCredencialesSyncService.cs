@@ -428,12 +428,11 @@ public class TbCredencialesSyncService : ITbCredencialesSyncService
         cmd.CommandText = @"
             SELECT ca.CodigoPIN, ca.HuespedId, ca.ReservaActividadId, ca.FechaActivacion, ca.FechaExpiracion
             FROM   CredencialesAcceso ca
-            WHERE  ca.ReservaActividadId IN (
-                       SELECT ra.ReservaActividadId FROM ReservasActividades ra
-                       WHERE  ra.ActividadId = (
-                           SELECT ActividadId FROM CerradurasInteligentes WHERE CerraduraId = @cerraduraId
-                       )
+            INNER JOIN ReservasActividades ra ON ra.ReservaActividadId = ca.ReservaActividadId
+            WHERE  ra.ActividadId = (
+                       SELECT ActividadId FROM CerradurasInteligentes WHERE CerraduraId = @cerraduraId
                    )
+              AND  ra.EstadoReservaActividadId != 3
               AND  ca.EstaActiva = 1
               AND  ca.HuespedId IS NOT NULL";
 

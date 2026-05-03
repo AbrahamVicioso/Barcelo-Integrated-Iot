@@ -433,6 +433,44 @@ public class TbDeviceService : ITbDeviceService
         }
     }
 
+    /// <inheritdoc />
+    public async Task SendTelemetryAsync(
+        string deviceId,
+        Dictionary<string, object> telemetry,
+        CancellationToken cancellationToken = default)
+    {
+        var token = await GetValidTokenAsync(cancellationToken);
+
+        // Server-side one-way RPC: device processes once, does not persist as state.
+        // Device must subscribe to v1/devices/me/rpc/request/+ (MQTT) or poll HTTP.
+        var url = $"/api/rpc/oneway/{deviceId}";
+
+        var body = new
+        {
+            method = "unlock",
+            @params = telemetry
+        };
+
+        var request = new HttpRequestMessage(HttpMethod.Post, url)
+        {
+            Content = new StringContent(
+                JsonConvert.SerializeObject(body),
+                Encoding.UTF8,
+                "application/json")
+        };
+
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        var response = await _httpClient.SendAsync(request, cancellationToken);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var errorContent = await response.Content.ReadAsStringAsync(cancellationToken);
+            throw new HttpRequestException(
+                $"Failed to send RPC unlock to device {deviceId} in Thingsboard. Status: {response.StatusCode}, Error: {errorContent}");
+        }
+    }
+
     private Task<string> GetValidTokenAsync(CancellationToken cancellationToken)
     {
         return _tokenCache.GetOrRefreshAsync(AuthenticateAsync, cancellationToken);
