@@ -22,7 +22,7 @@ public class NotificacionesRepository : INotificacionesRepository
         return notificacion;
     }
 
-    public async Task<NotificacionEntity?> GetByIdAsync(int notificacionId, CancellationToken cancellationToken = default)
+    public async Task<NotificacionEntity?> GetByIdAsync(long notificacionId, CancellationToken cancellationToken = default)
     {
         await using var context = await _contextFactory.CreateDbContextAsync(cancellationToken);
         return await context.Notificaciones
@@ -54,7 +54,7 @@ public class NotificacionesRepository : INotificacionesRepository
         await context.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task DeleteAsync(int notificacionId, CancellationToken cancellationToken = default)
+    public async Task DeleteAsync(long notificacionId, CancellationToken cancellationToken = default)
     {
         await using var context = await _contextFactory.CreateDbContextAsync(cancellationToken);
         var notificacion = await context.Notificaciones

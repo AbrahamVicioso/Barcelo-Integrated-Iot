@@ -160,7 +160,7 @@ public class PreferenciasController : ControllerBase
     /// Marcar notificación como leída
     /// </summary>
     [HttpPut("{id}/leida")]
-    public async Task<IActionResult> MarcarLeida(int id)
+    public async Task<IActionResult> MarcarLeida(long id)
     {
         var user = await _userManager.GetUserAsync(User);
         if (user == null) return Unauthorized();
@@ -181,7 +181,7 @@ public class PreferenciasController : ControllerBase
     /// Eliminar notificación del historial
     /// </summary>
     [HttpDelete("{id}")]
-    public async Task<IActionResult> EliminarNotificacion(int id)
+    public async Task<IActionResult> EliminarNotificacion(long id)
     {
         var user = await _userManager.GetUserAsync(User);
         if (user == null) return Unauthorized();

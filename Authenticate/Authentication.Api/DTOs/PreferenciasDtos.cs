@@ -51,7 +51,7 @@ public class UpdatePreferenciasDto
 /// </summary>
 public class NotificacionResponseDto
 {
-    public int NotificacionId { get; set; }
+    public long NotificacionId { get; set; }
     public string TipoNotificacion { get; set; } = string.Empty;
     public string Titulo { get; set; } = string.Empty;
     public string Mensaje { get; set; } = string.Empty;

@@ -79,7 +79,7 @@ public class HuespedController : ControllerBase
             return Unauthorized();
 
         var result = await _mediator.Send(new CreateHuespedeMeCommand(usuarioId, dto));
-        return CreatedAtAction(nameof(GetById), new { id = result.HuespedId }, result);
+        return Ok(result);
     }
 
     [HttpPost]

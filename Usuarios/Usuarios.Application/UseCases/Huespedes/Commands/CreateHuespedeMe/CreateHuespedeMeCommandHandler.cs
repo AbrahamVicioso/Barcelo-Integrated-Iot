@@ -41,35 +41,60 @@ public class CreateHuespedeMeCommandHandler : IRequestHandler<CreateHuespedeMeCo
         }
 
         var existingByUsuario = await _unitOfWork.Huespedes.GetByUsuarioIdAsync(request.UsuarioId);
-        if (existingByUsuario != null)
-            throw new ConflictException("Ya existe un perfil de huésped asociado a tu cuenta");
 
         var existingByDocumento = await _unitOfWork.Huespedes.GetByDocumentoAsync(
             request.Huespede.TipoDocumentoId,
             request.Huespede.NumeroDocumento);
-        if (existingByDocumento != null)
-            throw new ConflictException("Ya existe un huésped con ese documento");
 
-        var huespede = new Huespede
+        HuespedeDto huespedeDto;
+
+        if (existingByUsuario != null)
         {
-            UsuarioId = request.UsuarioId,
-            NombreCompleto = request.Huespede.NombreCompleto,
-            TipoDocumentoId = request.Huespede.TipoDocumentoId,
-            NumeroDocumento = request.Huespede.NumeroDocumento,
-            Nacionalidad = request.Huespede.Nacionalidad,
-            FechaNacimiento = request.Huespede.FechaNacimiento,
-            ContactoEmergencia = request.Huespede.ContactoEmergencia,
-            TelefonoEmergencia = request.Huespede.TelefonoEmergencia,
-            PreferenciasAlimentarias = request.Huespede.PreferenciasAlimentarias,
-            NotasEspeciales = request.Huespede.NotasEspeciales,
-            EsVip = false,
-            FechaRegistro = DateTime.UtcNow
-        };
+            if (existingByDocumento != null && existingByDocumento.HuespedId != existingByUsuario.HuespedId)
+                throw new ConflictException("Ya existe un huésped con ese documento");
 
-        var createdHuespede = await _unitOfWork.Huespedes.AddAsync(huespede);
-        await _unitOfWork.SaveChangesAsync();
+            existingByUsuario.NombreCompleto = request.Huespede.NombreCompleto;
+            existingByUsuario.TipoDocumentoId = request.Huespede.TipoDocumentoId;
+            existingByUsuario.NumeroDocumento = request.Huespede.NumeroDocumento;
+            existingByUsuario.Nacionalidad = request.Huespede.Nacionalidad;
+            existingByUsuario.FechaNacimiento = request.Huespede.FechaNacimiento;
+            existingByUsuario.ContactoEmergencia = request.Huespede.ContactoEmergencia;
+            existingByUsuario.TelefonoEmergencia = request.Huespede.TelefonoEmergencia;
+            existingByUsuario.PreferenciasAlimentarias = request.Huespede.PreferenciasAlimentarias;
+            existingByUsuario.NotasEspeciales = request.Huespede.NotasEspeciales;
 
-        var huespedeDto = _mapper.Map<HuespedeDto>(createdHuespede);
+            await _unitOfWork.Huespedes.UpdateAsync(existingByUsuario);
+            await _unitOfWork.SaveChangesAsync();
+
+            huespedeDto = _mapper.Map<HuespedeDto>(existingByUsuario);
+        }
+        else
+        {
+            if (existingByDocumento != null)
+                throw new ConflictException("Ya existe un huésped con ese documento");
+
+            var huespede = new Huespede
+            {
+                UsuarioId = request.UsuarioId,
+                NombreCompleto = request.Huespede.NombreCompleto,
+                TipoDocumentoId = request.Huespede.TipoDocumentoId,
+                NumeroDocumento = request.Huespede.NumeroDocumento,
+                Nacionalidad = request.Huespede.Nacionalidad,
+                FechaNacimiento = request.Huespede.FechaNacimiento,
+                ContactoEmergencia = request.Huespede.ContactoEmergencia,
+                TelefonoEmergencia = request.Huespede.TelefonoEmergencia,
+                PreferenciasAlimentarias = request.Huespede.PreferenciasAlimentarias,
+                NotasEspeciales = request.Huespede.NotasEspeciales,
+                EsVip = false,
+                FechaRegistro = DateTime.UtcNow
+            };
+
+            var createdHuespede = await _unitOfWork.Huespedes.AddAsync(huespede);
+            await _unitOfWork.SaveChangesAsync();
+
+            huespedeDto = _mapper.Map<HuespedeDto>(createdHuespede);
+        }
+
         huespedeDto.NombreTipoDocumento = tipoDocumento.Nombre;
         huespedeDto.CorreoElectronico = await _authenticationApiClient.GetEmailByUserIdAsync(request.UsuarioId);
 
