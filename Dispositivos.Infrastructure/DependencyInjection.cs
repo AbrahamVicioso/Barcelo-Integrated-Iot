@@ -1,8 +1,11 @@
 using Dispositivos.Application.Interfaces;
 using Dispositivos.Infrastructure.Configuration;
+using Dispositivos.Infrastructure.GrpcClients;
 using Dispositivos.Infrastructure.Services;
+using Grpc.Net.Client;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Notification.Domain.Interfaces;
 
@@ -88,6 +91,38 @@ public static class DependencyInjection
         configuration.GetSection("KafkaConsumer:PersonalActividadUnlockDoor").Bind(personalActividadUnlockConfig);
         services.AddSingleton(personalActividadUnlockConfig);
         services.AddHostedService<PersonalActividadUnlockDoorKafkaConsumer>();
+
+        // Register gRPC client → Usuarios.API
+        var usuariosGrpcUrl = configuration["ExternalServices:Usuarios:GrpcUrl"]
+            ?? throw new InvalidOperationException("Missing 'ExternalServices:Usuarios:GrpcUrl' configuration.");
+        var skipUsuariosCert = configuration.GetValue<bool>("ExternalServices:Usuarios:SkipCertValidation");
+
+        services.AddSingleton<GrpcChannel>(sp =>
+        {
+            if (usuariosGrpcUrl.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+            {
+                var httpHandler = new HttpClientHandler();
+                if (skipUsuariosCert)
+                    httpHandler.ServerCertificateCustomValidationCallback =
+                        HttpClientHandler.DangerousAcceptAnyServerCertificateValidator;
+                return GrpcChannel.ForAddress(usuariosGrpcUrl.TrimEnd('/'), new GrpcChannelOptions { HttpHandler = httpHandler });
+            }
+
+            var handler = new SocketsHttpHandler { EnableMultipleHttp2Connections = true };
+            var httpClient = new HttpClient(handler)
+            {
+                DefaultRequestVersion = System.Net.HttpVersion.Version20,
+                DefaultVersionPolicy = System.Net.Http.HttpVersionPolicy.RequestVersionOrHigher
+            };
+            return GrpcChannel.ForAddress(usuariosGrpcUrl.TrimEnd('/'), new GrpcChannelOptions { HttpClient = httpClient });
+        });
+
+        services.AddScoped<IUsuariosGrpcService>(sp =>
+        {
+            var channel = sp.GetRequiredService<GrpcChannel>();
+            var logger = sp.GetRequiredService<ILogger<UsuariosGrpcClient>>();
+            return new UsuariosGrpcClient(channel, logger);
+        });
 
         // Register Audit Kafka Producer
         var auditConfig = new AuditKafkaProducerConfig();

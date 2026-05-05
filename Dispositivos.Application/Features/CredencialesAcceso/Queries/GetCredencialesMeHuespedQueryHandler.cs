@@ -1,0 +1,48 @@
+using AutoMapper;
+using MediatR;
+using Dispositivos.Application.Common;
+using Dispositivos.Application.DTOs;
+using Dispositivos.Application.Interfaces;
+
+namespace Dispositivos.Application.Features.CredencialesAcceso.Queries;
+
+public class GetCredencialesMeHuespedQueryHandler : IRequestHandler<GetCredencialesMeHuespedQuery, Result<PagedResult<CredencialesAccesoDto>>>
+{
+    private readonly ICredencialesAccesoRepository _credencialRepository;
+    private readonly IUsuariosGrpcService _usuariosGrpcService;
+    private readonly IMapper _mapper;
+
+    public GetCredencialesMeHuespedQueryHandler(
+        ICredencialesAccesoRepository credencialRepository,
+        IUsuariosGrpcService usuariosGrpcService,
+        IMapper mapper)
+    {
+        _credencialRepository = credencialRepository;
+        _usuariosGrpcService = usuariosGrpcService;
+        _mapper = mapper;
+    }
+
+    public async Task<Result<PagedResult<CredencialesAccesoDto>>> Handle(GetCredencialesMeHuespedQuery request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var huespedId = await _usuariosGrpcService.GetHuespedIdByUsuarioIdAsync(request.UsuarioId, cancellationToken);
+            if (huespedId is null)
+                return Result<PagedResult<CredencialesAccesoDto>>.Failure("El usuario autenticado no tiene un perfil de huésped.");
+
+            var todos = await _credencialRepository.GetByHuespedId(huespedId.Value);
+            var todosDto = _mapper.Map<IEnumerable<CredencialesAccesoDto>>(todos).ToList();
+            var items = todosDto
+                .Skip((request.Page - 1) * request.PageSize)
+                .Take(request.PageSize)
+                .ToList();
+
+            return Result<PagedResult<CredencialesAccesoDto>>.Success(
+                new PagedResult<CredencialesAccesoDto>(items, request.Page, request.PageSize, todosDto.Count));
+        }
+        catch (Exception ex)
+        {
+            return Result<PagedResult<CredencialesAccesoDto>>.Failure($"Error al obtener las credenciales de huésped: {ex.Message}");
+        }
+    }
+}

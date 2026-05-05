@@ -53,5 +53,27 @@ namespace Reservas.Persistence.Repositories
             var result = await cmd.ExecuteScalarAsync();
             return result?.ToString() ?? string.Empty;
         }
+
+        public async Task<(string Email, string NombreCompleto)?> GetHuespedEmailYNombreAsync(int huespedId, CancellationToken cancellationToken = default)
+        {
+            var conn = _context.Database.GetDbConnection();
+            if (conn.State != System.Data.ConnectionState.Open)
+                await conn.OpenAsync(cancellationToken);
+
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = @"
+                SELECT u.Email, H.NombreCompleto
+                FROM Huespedes H
+                INNER JOIN Users u ON H.UsuarioId = u.Id
+                WHERE H.HuespedId = @huespedId
+            ";
+            cmd.Parameters.Add(new SqlParameter("@huespedId", huespedId));
+
+            using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
+            if (await reader.ReadAsync(cancellationToken))
+                return (reader.GetString(0), reader.GetString(1));
+
+            return null;
+        }
     }
 }

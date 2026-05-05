@@ -1,5 +1,6 @@
 using Authentication.Api.Contracts;
 using Authentication.Api.DTOs;
+using Authentication.Api.Services;
 using Authentication.Domain.Entities;
 using Microsoft.AspNetCore.Authentication.BearerToken;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -12,7 +13,8 @@ public class RefreshTokenHandler
     public static async Task<Results<Ok<AccessTokenResponse>, ProblemHttpResult>> Handle(
         RefreshTokenRequest request,
         UserManager<User> userManager,
-        IJwtGenerator jwtGenerator)
+        IJwtGenerator jwtGenerator,
+        IdentityRuntimeSettings runtimeSettings)
     {
         var userId = jwtGenerator.ValidateRefreshToken(request.RefreshToken);
         if (userId == null)
@@ -29,7 +31,7 @@ public class RefreshTokenHandler
         {
             AccessToken = accessToken,
             RefreshToken = newRefreshToken,
-            ExpiresIn = 1800
+            ExpiresIn = runtimeSettings.TokenExpirationMinutes * 60
         });
     }
 }

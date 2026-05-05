@@ -10,5 +10,6 @@ namespace Reservas.Application.Interfaces
     {
         Task<int?> GetHuespedIdByUserIdAsync(string userId, CancellationToken cancellationToken = default);
         Task<string> GetHuespedIdByEmail(int idHuesped);
+        Task<(string Email, string NombreCompleto)?> GetHuespedEmailYNombreAsync(int huespedId, CancellationToken cancellationToken = default);
     }
 }

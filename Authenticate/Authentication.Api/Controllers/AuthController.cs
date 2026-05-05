@@ -101,7 +101,7 @@ namespace Authentication.Api.Controllers
         [HttpPost]
         public async Task<Results<Ok<AccessTokenResponse>, ProblemHttpResult>> RefreshToken([FromBody] RefreshTokenRequest request)
         {
-            return await RefreshTokenHandler.Handle(request, userManager, jwtGenerator);
+            return await RefreshTokenHandler.Handle(request, userManager, jwtGenerator, runtimeSettings);
         }
 
         [HttpPost]

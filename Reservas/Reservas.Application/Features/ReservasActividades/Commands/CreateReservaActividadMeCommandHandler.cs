@@ -62,11 +62,23 @@ public class CreateReservaActividadMeCommandHandler : IRequestHandler<CreateRese
                 var actividad = await _unitOfWork.ActividadesRecreativas.GetByIdAsync(request.ActividadId, cancellationToken);
                 if (actividad?.RequiereReserva == true)
                 {
+                    string? email = null;
+                    string? nombreCompleto = null;
+                    try
+                    {
+                        var huespedInfo = await _huespedRepository.GetHuespedEmailYNombreAsync(huespedId.Value, cancellationToken);
+                        email = huespedInfo?.Email;
+                        nombreCompleto = huespedInfo?.NombreCompleto;
+                    }
+                    catch { /* non-fatal: event published without email */ }
+
                     var evt = new ReservaActividadConfirmadaEvent
                     {
                         ReservaActividadId = reserva.ReservaActividadId,
                         ActividadId = reserva.ActividadId,
                         HuespedId = reserva.HuespedId,
+                        Email = email,
+                        NombreCompleto = nombreCompleto,
                         FechaReserva = reserva.FechaReserva,
                         HoraReserva = reserva.HoraReserva,
                         DuracionMinutos = actividad.DuracionMinutos,

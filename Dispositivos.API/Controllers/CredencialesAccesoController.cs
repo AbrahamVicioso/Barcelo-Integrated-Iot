@@ -1,6 +1,4 @@
 using MediatR;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Dispositivos.Application.Common;
 using Dispositivos.Application.DTOs;
@@ -84,4 +82,5 @@ public class CredencialesAccesoController : ControllerBase
             return result.IsNotFound ? NotFound(new { error = result.ErrorMessage }) : BadRequest(new { error = result.ErrorMessage });
         return Ok(result.Data);
     }
+
 }
