@@ -61,7 +61,7 @@ public class CredencialesAccesoMeController : ControllerBase
         return Ok(result.Data);
     }
 
-    [HttpPatch("personal/{credencialId}/toggle")]
+    [HttpPost("personal/{credencialId}/toggle")]
     public async Task<IActionResult> ToggleMePersonal(int credencialId)
     {
         var usuarioId = GetUsuarioId();
@@ -79,7 +79,7 @@ public class CredencialesAccesoMeController : ControllerBase
         return Ok(result.Data);
     }
 
-    [HttpPatch("huesped/{credencialId}/toggle")]
+    [HttpPost("huesped/{credencialId}/toggle")]
     public async Task<IActionResult> ToggleMeHuesped(int credencialId)
     {
         var usuarioId = GetUsuarioId();
