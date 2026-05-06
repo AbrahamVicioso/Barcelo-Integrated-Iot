@@ -30,8 +30,11 @@ public class GetCredencialesMeHuespedQueryHandler : IRequestHandler<GetCredencia
             if (huespedId is null)
                 return Result<PagedResult<CredencialesAccesoDto>>.Failure("El usuario autenticado no tiene un perfil de huésped.");
 
+            var ahora = DateTime.UtcNow;
             var todos = await _credencialRepository.GetByHuespedId(huespedId.Value);
-            var todosDto = _mapper.Map<IEnumerable<CredencialesAccesoDto>>(todos).ToList();
+            var todosDto = _mapper.Map<IEnumerable<CredencialesAccesoDto>>(todos)
+                .Where(c => c.FechaExpiracion >= ahora)
+                .ToList();
             var items = todosDto
                 .Skip((request.Page - 1) * request.PageSize)
                 .Take(request.PageSize)
