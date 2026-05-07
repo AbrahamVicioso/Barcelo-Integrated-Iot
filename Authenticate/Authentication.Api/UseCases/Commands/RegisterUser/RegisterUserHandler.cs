@@ -41,6 +41,16 @@ namespace Authentication.Api.UseCases.Commands.RegisterUser
                 return result.ToValidationProblem();
             }
 
+            // Publish UserCreatedEvent for ntfy account + welcome email
+            await kafkaProducerService.PublishUserCreatedAsync(new UserCreatedEvent
+            {
+                Id = Guid.Parse(user.Id),
+                Email = registerRequest.Email,
+                GeneratedPassword = string.Empty,
+                UserName = registerRequest.Email.Split('@')[0],
+                CreatedAt = DateTime.UtcNow
+            });
+
             var token = await userManager.GenerateEmailConfirmationTokenAsync(user);
             var encodedToken = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));
             var confirmationUrl = $"{confirmEmailBaseUrl}{confirmEmailSuffix}?userId={user.Id}&token={encodedToken}";

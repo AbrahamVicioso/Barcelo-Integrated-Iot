@@ -142,9 +142,12 @@ public class NtfyAdminService : Notification.Domain.Interfaces.INtfyAdminService
 
     private async Task<bool> DeleteNtfyUserAsync(string username, CancellationToken cancellationToken)
     {
-        var url = $"{_options.BaseUrl.TrimEnd('/')}/v1/users/{username}";
+        var url = $"{_options.BaseUrl.TrimEnd('/')}/v1/users";
 
-        var request = new HttpRequestMessage(HttpMethod.Delete, url);
+        var request = new HttpRequestMessage(HttpMethod.Delete, url)
+        {
+            Content = JsonContent.Create(new { username })
+        };
         AddAdminAuth(request);
 
         var response = await _httpClient.SendAsync(request, cancellationToken);
@@ -205,11 +208,11 @@ public class NtfyAdminService : Notification.Domain.Interfaces.INtfyAdminService
 
     private void AddAdminAuth(HttpRequestMessage request)
     {
-        if (!string.IsNullOrEmpty(_options.AccessToken))
-            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _options.AccessToken);
-        else if (!string.IsNullOrEmpty(_options.AdminPassword))
+        if (!string.IsNullOrEmpty(_options.AdminPassword))
             request.Headers.Authorization = new AuthenticationHeaderValue(
                 "Basic", Convert.ToBase64String(Encoding.UTF8.GetBytes($"admin:{_options.AdminPassword}")));
+        else if (!string.IsNullOrEmpty(_options.AccessToken))
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _options.AccessToken);
     }
 
     public async Task GrantSystemTopicAccessAsync(string ntfyUsername, CancellationToken cancellationToken = default)

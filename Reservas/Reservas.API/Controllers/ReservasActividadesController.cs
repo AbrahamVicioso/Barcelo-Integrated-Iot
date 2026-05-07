@@ -1,6 +1,7 @@
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Reservas.Application.Features.Historial.Queries;
 using Reservas.Application.Features.ReservasActividades.Commands;
 using Reservas.Application.Features.ReservasActividades.Queries;
 using System.Security.Claims;
@@ -80,6 +81,29 @@ public class ReservasActividadesController : ControllerBase
         if (!result.IsSuccess)
             return result.IsNotFound ? NotFound(result.ErrorMessage) : BadRequest(result.ErrorMessage);
         return NoContent();
+    }
+
+    [Authorize]
+    [HttpGet("me/historial")]
+    public async Task<IActionResult> GetMyHistorial(
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 10)
+    {
+        var usuarioId = User.FindFirstValue("nameid") ?? User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (usuarioId == null)
+            return Unauthorized();
+
+        var result = await _mediator.Send(new GetHistorialActividadesMeQuery
+        {
+            UsuarioId = usuarioId,
+            Page = page,
+            PageSize = pageSize
+        });
+
+        if (!result.IsSuccess)
+            return result.IsNotFound ? NotFound(result.ErrorMessage) : BadRequest(result.ErrorMessage);
+
+        return Ok(result.Data);
     }
 
     [HttpGet]

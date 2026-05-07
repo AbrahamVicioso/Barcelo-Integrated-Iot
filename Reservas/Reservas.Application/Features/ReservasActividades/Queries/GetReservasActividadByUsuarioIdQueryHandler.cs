@@ -33,6 +33,16 @@ public class GetReservasActividadByUsuarioIdQueryHandler : IRequestHandler<GetRe
             }
 
             var reservas = await _unitOfWork.ReservasActividades.GetReservasByHuespedIdAsync(huespedId.Value, cancellationToken);
+
+            var ahora = DateTime.Now;
+            reservas = reservas.Where(r =>
+            {
+                var inicio = r.FechaReserva.Date.Add(r.HoraReserva);
+                var duracion = TimeSpan.FromMinutes(r.Actividad?.DuracionMinutos ?? 0);
+                var fin = inicio.Add(duracion);
+                return fin.AddHours(3) >= ahora;
+            });
+
             var dtos = _mapper.Map<IEnumerable<ReservaActividadDto>>(reservas);
 
             return Result<IEnumerable<ReservaActividadDto>>.Success(dtos);

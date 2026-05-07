@@ -2,6 +2,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+using Reservas.Application.Features.Historial.Queries;
+
 using Reservas.Application.Features.Reservas.Commands;
 using Reservas.Application.Features.Reservas.Queries;
 using System.IdentityModel.Tokens.Jwt;
@@ -36,6 +38,29 @@ public class ReservasController : ControllerBase
             NombreHuesped = nombreHuesped
         });
         return result.IsSuccess ? Ok(result.Data) : BadRequest(result.ErrorMessage);
+    }
+
+    [HttpGet("me/historial")]
+    [Authorize]
+    public async Task<IActionResult> GetMyHistorial(
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 10)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userId))
+            return Unauthorized("No se pudo identificar al usuario");
+
+        var result = await _mediator.Send(new GetHistorialReservasMeQuery
+        {
+            UsuarioId = userId,
+            Page = page,
+            PageSize = pageSize
+        });
+
+        if (!result.IsSuccess)
+            return result.IsNotFound ? NotFound(result.ErrorMessage) : BadRequest(result.ErrorMessage);
+
+        return Ok(result.Data);
     }
 
     [HttpGet("me")]

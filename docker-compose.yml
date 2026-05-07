@@ -243,6 +243,7 @@ services:
       Ntfy__PublicBaseUrl: https://smartstay.es:8081/ntfy
       Ntfy__IgnoreCertificateErrors: "true"
       Ntfy__AccessToken: ${NTFY_SERVER_TOKEN:-}
+      Ntfy__AdminPassword: ${NTFY_ADMIN_PASSWORD:-}
     networks:
       - barcelo-net
     depends_on:

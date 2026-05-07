@@ -71,19 +71,17 @@ public class NotificationsController : ControllerBase
         if (user is null)
             return TypedResults.NotFound();
 
-        var claims = await _userManager.GetClaimsAsync(user);
-        var ntfyToken = claims.FirstOrDefault(c => c.Type == NtfyTokenClaim)?.Value;
-
-        // Auto-provision ntfy account if the token is missing (e.g. users created before
-        // the notification worker was running, or seeded directly in the DB).
+        // Always (re)create ntfy account — idempotent: if user exists, resets and regenerates token
+        var ntfyToken = await _ntfyAdmin.CreateUserAccountAsync(user.Email!, HttpContext.RequestAborted);
         if (ntfyToken is null)
-        {
-            ntfyToken = await _ntfyAdmin.CreateUserAccountAsync(user.Email!, HttpContext.RequestAborted);
-            if (ntfyToken is null)
-                return TypedResults.NotFound();
+            return TypedResults.NotFound();
 
-            await _userManager.AddClaimAsync(user, new Claim(NtfyTokenClaim, ntfyToken));
-        }
+        // Replace stored token with fresh one
+        var claims = await _userManager.GetClaimsAsync(user);
+        var existingClaim = claims.FirstOrDefault(c => c.Type == NtfyTokenClaim);
+        if (existingClaim is not null)
+            await _userManager.RemoveClaimAsync(user, existingClaim);
+        await _userManager.AddClaimAsync(user, new Claim(NtfyTokenClaim, ntfyToken));
 
         var ntfyBaseUrl = _ntfyOptions.PublicBaseUrl ?? _ntfyOptions.BaseUrl;
         var topic = NtfyTopicHelper.GetUserTopic(user.Email!);
