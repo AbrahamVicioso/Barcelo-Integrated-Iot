@@ -47,8 +47,8 @@ public abstract class NotificacionHandlerBase
         var usuarioId = await _authApiClient.GetUserIdByEmailAsync(email, cancellationToken);
         if (string.IsNullOrEmpty(usuarioId))
         {
-            _logger.LogWarning("No se pudo obtener UsuarioId para email {Email}, omitiendo verificación de preferencias", email);
-            return false;
+            _logger.LogWarning("No se pudo obtener UsuarioId para email {Email}, enviando por defecto", email);
+            return true;
         }
 
         // 2. Obtener preferencias

@@ -308,16 +308,6 @@ namespace Authentication.Api.Controllers
 
         private string BuildForgotPasswordBaseUrl()
         {
-            var forwardedHost = Request.Headers["X-Forwarded-Host"].FirstOrDefault();
-            var forwardedProto = Request.Headers["X-Forwarded-Proto"].FirstOrDefault();
-
-            if (!string.IsNullOrEmpty(forwardedHost))
-            {
-                var proto = forwardedProto ?? Request.Scheme;
-                var pathPrefix = configuration["ForgotPassword:PathPrefix"] ?? "/api/auth";
-                return $"{proto}://{forwardedHost}{pathPrefix}";
-            }
-
             return configuration["ForgotPassword:BaseUrl"] ?? $"{Request.Scheme}://{Request.Host}";
         }
     }
