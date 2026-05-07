@@ -194,7 +194,7 @@ public class CreateCredencialesAccesoCommandHandler : IRequestHandler<CreateCred
             if (request.Credencial.FechaExpiracion <= request.Credencial.FechaActivacion)
                 return Result<int>.Failure("La fecha de expiración debe ser posterior a la fecha de activación.");
 
-            if (request.Credencial.FechaActivacion < DateTime.UtcNow.Date)
+            if (request.Credencial.FechaActivacion < DateTime.Now.Date)
                 return Result<int>.Failure("La fecha de activación no puede ser en el pasado.");
 
             var user = _httpContextAccessor.HttpContext?.User;
