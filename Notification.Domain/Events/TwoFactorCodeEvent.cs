@@ -7,6 +7,6 @@ namespace Notification.Domain.Events
         public string Code { get; set; } = string.Empty;
         public string Provider { get; set; } = "Email";
         public int ExpirationMinutes { get; set; } = 5;
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime CreatedAt { get; set; } = DateTime.Now;
     }
 }

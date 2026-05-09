@@ -10,6 +10,6 @@ namespace Notification.Domain.Events
         public string? UsuarioId { get; set; }
         public string? DireccionIp { get; set; }
         public string? InfoDispositivo { get; set; }
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime CreatedAt { get; set; } = DateTime.Now;
     }
 }

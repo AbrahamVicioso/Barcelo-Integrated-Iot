@@ -30,7 +30,7 @@ public class GetCredencialesMePersonalQueryHandler : IRequestHandler<GetCredenci
             if (personalId is null)
                 return Result<PagedResult<CredencialesAccesoDto>>.Failure("El usuario autenticado no tiene un perfil de personal activo.");
 
-            var ahora = DateTime.UtcNow;
+            var ahora = DateTime.Now;
             var todos = await _credencialRepository.GetByPersonalId(personalId.Value);
             var todosDto = _mapper.Map<IEnumerable<CredencialesAccesoDto>>(todos)
                 .Where(c => c.FechaExpiracion >= ahora)

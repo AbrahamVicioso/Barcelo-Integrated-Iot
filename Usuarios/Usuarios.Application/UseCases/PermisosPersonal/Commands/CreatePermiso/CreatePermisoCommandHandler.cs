@@ -63,7 +63,7 @@ public class CreatePermisoCommandHandler : IRequestHandler<CreatePermisoCommand,
             throw new BusinessException("No se pudo identificar al usuario autenticado.");
 
         var permiso = _mapper.Map<Domain.Entities.PermisosPersonal>(request.Permiso);
-        permiso.FechaOtorgamiento = DateTime.UtcNow;
+        permiso.FechaOtorgamiento = DateTime.Now;
         permiso.EstaActivo = true;
         permiso.OtorgadoPor = userId;
 

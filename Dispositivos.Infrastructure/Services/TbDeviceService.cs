@@ -20,26 +20,26 @@ public class TbTokenCache
     public bool TryGet(out string? token)
     {
         token = _token;
-        return !string.IsNullOrEmpty(_token) && DateTime.UtcNow < _expiration;
+        return !string.IsNullOrEmpty(_token) && DateTime.Now < _expiration;
     }
 
     public async Task<string> GetOrRefreshAsync(
         Func<CancellationToken, Task<(string token, int expirationMinutes)>> factory,
         CancellationToken cancellationToken)
     {
-        if (!string.IsNullOrEmpty(_token) && DateTime.UtcNow < _expiration)
+        if (!string.IsNullOrEmpty(_token) && DateTime.Now < _expiration)
             return _token!;
 
         await _lock.WaitAsync(cancellationToken);
         try
         {
             // Double-check after acquiring lock
-            if (!string.IsNullOrEmpty(_token) && DateTime.UtcNow < _expiration)
+            if (!string.IsNullOrEmpty(_token) && DateTime.Now < _expiration)
                 return _token!;
 
             var (newToken, minutes) = await factory(cancellationToken);
             _token = newToken;
-            _expiration = DateTime.UtcNow.AddMinutes(minutes);
+            _expiration = DateTime.Now.AddMinutes(minutes);
             return _token;
         }
         finally

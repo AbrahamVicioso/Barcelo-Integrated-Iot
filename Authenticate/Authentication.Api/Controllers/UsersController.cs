@@ -206,7 +206,7 @@ public class UsersController : ControllerBase
             Email = model.Email,
             GeneratedPassword = model.Password,
             UserName = model.UserName,
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTime.Now
         };
 
         await _kafkaProducerService.PublishUserCreatedAsync(userCreatedEvent);

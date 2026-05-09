@@ -8,7 +8,7 @@ public class CredencialesCheckInEvent
     public DateTime FechaCheckIn { get; set; }
     public DateTime FechaCheckOut { get; set; }
     public List<CredencialHuespedInfo> Credenciales { get; set; } = new();
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime CreatedAt { get; set; } = DateTime.Now;
 }
 
 public class CredencialHuespedInfo

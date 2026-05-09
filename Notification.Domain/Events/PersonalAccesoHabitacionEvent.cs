@@ -11,6 +11,6 @@ public class PersonalAccesoHabitacionEvent
     public string? Departamento { get; set; }
     public bool EsAccesoFisico { get; set; }
     public List<HuespedCheckInInfo> Huespedes { get; set; } = new();
-    public DateTime FechaAcceso { get; set; } = DateTime.UtcNow;
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime FechaAcceso { get; set; } = DateTime.Now;
+    public DateTime CreatedAt { get; set; } = DateTime.Now;
 }

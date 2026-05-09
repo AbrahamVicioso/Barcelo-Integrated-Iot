@@ -214,7 +214,7 @@ public class CheckInRealizadoKafkaConsumer : BackgroundService
                     TipoCredencial = "Huesped",
                     CreadoPor = "Sistema",
                     NumeroUsos = 0,
-                    FechaCreacion = DateTime.UtcNow
+                    FechaCreacion = DateTime.Now
                 };
 
                 await unitOfWork.CredencialesAcceso.AddAsync(credencial, cancellationToken);

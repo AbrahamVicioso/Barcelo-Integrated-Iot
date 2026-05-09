@@ -24,7 +24,7 @@ public class DeleteTipoDocumentoCommandHandler : IRequestHandler<DeleteTipoDocum
             throw new BusinessException("No se puede eliminar el tipo de documento porque tiene huéspedes asociados");
 
         tipo.EstaActivo = false;
-        tipo.EliminadoEn = DateTime.UtcNow;
+        tipo.EliminadoEn = DateTime.Now;
 
         await _unitOfWork.TiposDocumento.UpdateAsync(tipo);
         await _unitOfWork.SaveChangesAsync();

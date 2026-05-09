@@ -79,7 +79,7 @@ public class UpdateReservaCommandHandler : IRequestHandler<UpdateReservaCommand,
             var estadoOriginal = reserva.EstadoReservaId;
             _mapper.Map(request, reserva);
             reserva.EstadoReservaId = estadoOriginal;
-            reserva.FechaActualizacion = DateTime.UtcNow;
+            reserva.FechaActualizacion = DateTime.Now;
             reserva.ModificadoPor = userId;
 
             if (request.Huespedes != null)
@@ -108,7 +108,7 @@ public class UpdateReservaCommandHandler : IRequestHandler<UpdateReservaCommand,
                         HuespedId = id,
                         PuedeCrearActividadesRecreativas = permisos?.PuedeCrearActividadesRecreativas ?? false,
                         PuedeDesbloquearCerradura = permisos?.PuedeDesbloquearCerradura ?? false,
-                        FechaAgregado = DateTime.UtcNow
+                        FechaAgregado = DateTime.Now
                     });
                 }
             }

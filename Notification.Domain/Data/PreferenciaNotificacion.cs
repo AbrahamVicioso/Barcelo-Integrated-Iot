@@ -29,5 +29,5 @@ public class PreferenciaNotificacion
     public TimeSpan? HoraInicioNoMolestar { get; set; }
     public TimeSpan? HoraFinNoMolestar { get; set; }
 
-    public DateTime FechaActualizacion { get; set; } = DateTime.UtcNow;
+    public DateTime FechaActualizacion { get; set; } = DateTime.Now;
 }

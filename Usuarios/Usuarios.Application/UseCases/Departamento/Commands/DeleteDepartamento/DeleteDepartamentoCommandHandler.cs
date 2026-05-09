@@ -24,7 +24,7 @@ public class DeleteDepartamentoCommandHandler : IRequestHandler<DeleteDepartamen
             throw new BusinessException("No se puede eliminar el departamento porque tiene personal asignado");
 
         departamento.EstaActivo = false;
-        departamento.EliminadoEn = DateTime.UtcNow;
+        departamento.EliminadoEn = DateTime.Now;
 
         await _unitOfWork.Departamentos.UpdateAsync(departamento);
         await _unitOfWork.SaveChangesAsync();

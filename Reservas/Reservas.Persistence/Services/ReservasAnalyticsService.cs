@@ -31,7 +31,7 @@ public class ReservasAnalyticsService : IReservasAnalyticsService
             return new OcupacionResumenDto { Actual = 0, Objetivo = ObjetivoOcupacion, Tendencia = 0 };
 
         var reservas = (await _unitOfWork.Reservas.GetAllAsync(ct)).ToList();
-        var ahora = DateTime.UtcNow;
+        var ahora = DateTime.Now;
 
         // Current occupancy: rooms with active reservation overlapping now
         var reservasActuales = reservas
@@ -67,7 +67,7 @@ public class ReservasAnalyticsService : IReservasAnalyticsService
         var hoteles = (await _unitOfWork.Hoteles.GetAll()).Where(h => h.EstaActivo).ToList();
         var habitaciones = (await _unitOfWork.Habitaciones.GetAll()).ToList();
         var reservas = (await _unitOfWork.Reservas.GetAllAsync(ct)).ToList();
-        var ahora = DateTime.UtcNow;
+        var ahora = DateTime.Now;
 
         var reservasActivas = reservas
             .Where(r => r.EstadoReservaId != EstadoCancelada
@@ -100,8 +100,8 @@ public class ReservasAnalyticsService : IReservasAnalyticsService
 
     public async Task<List<OcupacionHistoricoDto>> GetOcupacionHistoricoAsync(CancellationToken ct = default)
     {
-        var anio = DateTime.UtcNow.Year;
-        var ahora = DateTime.UtcNow;
+        var anio = DateTime.Now.Year;
+        var ahora = DateTime.Now;
 
         var habitaciones = (await _unitOfWork.Habitaciones.GetAll()).ToList();
         var totalHabitaciones = habitaciones.Count;
@@ -165,8 +165,8 @@ public class ReservasAnalyticsService : IReservasAnalyticsService
 
     public async Task<ActividadesResumenDto> GetActividadesResumenAsync(CancellationToken ct = default)
     {
-        var utcNow = DateTime.UtcNow;
-        var hoyUtc4 = utcNow.AddHours(-4);
+        var ahora = DateTime.Now;
+        var hoyUtc4 = ahora.AddHours(-4);
         var inicioHoy = new DateTime(hoyUtc4.Year, hoyUtc4.Month, hoyUtc4.Day, 0, 0, 0, DateTimeKind.Unspecified).AddHours(4);
         var finHoy = inicioHoy.AddDays(1);
 

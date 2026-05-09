@@ -51,7 +51,7 @@ namespace Authentication.Api.UseCases.Commands.CreateOrGetUser
                 Email = request.Email,
                 GeneratedPassword = request.Password,
                 UserName = request.Email.Split('@')[0],
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.Now
             };
 
             await kafkaProducerService.PublishUserCreatedAsync(userCreatedEvent);

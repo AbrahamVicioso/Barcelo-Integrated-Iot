@@ -31,7 +31,7 @@ public class CreateReservaActividadCommandHandler : IRequestHandler<CreateReserv
             var reserva = _mapper.Map<Domain.Entites.ReservasActividades>(request);
             reserva.EstadoReservaActividadId = EstadoReservaActividad.Confirmada;
             reserva.Estado = "Confirmada";
-            reserva.FechaCreacion = DateTime.UtcNow;
+            reserva.FechaCreacion = DateTime.Now;
             reserva.RecordatorioEnviado = false;
 
             await _unitOfWork.ReservasActividades.AddAsync(reserva, cancellationToken);

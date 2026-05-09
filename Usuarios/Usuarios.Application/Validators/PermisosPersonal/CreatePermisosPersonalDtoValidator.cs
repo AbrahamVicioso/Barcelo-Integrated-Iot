@@ -23,7 +23,7 @@ public class CreatePermisosPersonalDtoValidator : AbstractValidator<CreatePermis
             .WithMessage("Debe especificar al menos una HabitacionId o ActividadId");
 
         RuleFor(x => x.FechaExpiracion)
-            .GreaterThan(DateTime.UtcNow).WithMessage("La fecha de expiración debe ser futura")
+            .GreaterThan(DateTime.Now).WithMessage("La fecha de expiración debe ser futura")
             .When(x => x.FechaExpiracion.HasValue);
 
         RuleFor(x => x.FechaExpiracion)

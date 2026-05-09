@@ -134,7 +134,7 @@ public class GetDashboardReservasStatsQueryHandler
     {
         var reservas = await _unitOfWork.Reservas.GetAllAsync(cancellationToken);
         var habitaciones = await _unitOfWork.Habitaciones.GetAll();
-        var ahora = DateTime.UtcNow;
+        var ahora = DateTime.Now;
         var hoy = ahora.Date;
         var inicioMes = new DateTime(ahora.Year, ahora.Month, 1);
 
@@ -242,7 +242,7 @@ public class GetDashboardReservasStatsQueryHandler
     {
         var actividades = await _unitOfWork.ActividadesRecreativas.GetAllAsync(cancellationToken);
         var reservasActividades = await _unitOfWork.ReservasActividades.GetAllAsync(cancellationToken);
-        var ahora = DateTime.UtcNow;
+        var ahora = DateTime.Now;
         var hoy = ahora.Date;
 
         var actividadesList = actividades.ToList();

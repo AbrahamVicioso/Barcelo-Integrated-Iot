@@ -47,7 +47,7 @@ public class UnlockDoorCommandHandler : IRequestHandler<UnlockDoorCommand, Resul
                 return Result<string>.Failure("La reserva no tiene el estado de check-in realizado.");
 
             // Validar fechas de check-in y check-out
-            var hoy = DateTime.UtcNow;
+            var hoy = DateTime.Now;
             if (reserva.FechaCheckIn > hoy || reserva.FechaCheckOut < hoy)
                 return Result<string>.Failure("La reserva no está dentro del rango de fechas válido para desbloquear la cerradura.");
 

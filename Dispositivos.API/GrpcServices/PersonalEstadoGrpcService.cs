@@ -47,7 +47,7 @@ public class PersonalEstadoGrpcService : PersonalEstado.PersonalEstadoBase
             }
             else
             {
-                afectadas = credenciales.Where(c => !c.EstaActiva && c.FechaExpiracion >= DateTime.UtcNow).ToList();
+                afectadas = credenciales.Where(c => !c.EstaActiva && c.FechaExpiracion >= DateTime.Now).ToList();
                 foreach (var c in afectadas) c.EstaActiva = true;
             }
 
@@ -112,7 +112,7 @@ public class PersonalEstadoGrpcService : PersonalEstado.PersonalEstadoBase
 
             var pAhora = cmd.CreateParameter();
             pAhora.ParameterName = "@ahora";
-            pAhora.Value = DateTime.UtcNow;
+            pAhora.Value = DateTime.Now;
             cmd.Parameters.Add(pAhora);
         }
 

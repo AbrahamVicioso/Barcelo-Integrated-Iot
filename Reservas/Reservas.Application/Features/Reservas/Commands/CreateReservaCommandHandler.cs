@@ -95,7 +95,7 @@ public class CreateReservaCommandHandler : IRequestHandler<CreateReservaCommand,
                     HuespedId = id,
                     PuedeCrearActividadesRecreativas = permisos?.PuedeCrearActividadesRecreativas ?? false,
                     PuedeDesbloquearCerradura = permisos?.PuedeDesbloquearCerradura ?? false,
-                    FechaAgregado = DateTime.UtcNow
+                    FechaAgregado = DateTime.Now
                 };
             }).ToList();
 
@@ -114,9 +114,9 @@ public class CreateReservaCommandHandler : IRequestHandler<CreateReservaCommand,
             };
 
             // Generate unique reservation number
-            reserva.NumeroReserva = $"RES-{DateTime.UtcNow:yyyyMMddHHmmss}-{Guid.NewGuid().ToString("N")[..8].ToUpper()}";
+            reserva.NumeroReserva = $"RES-{DateTime.Now:yyyyMMddHHmmss}-{Guid.NewGuid().ToString("N")[..8].ToUpper()}";
             reserva.EstadoReservaId = Pendiente;
-            reserva.FechaCreacion = DateTime.UtcNow;
+            reserva.FechaCreacion = DateTime.Now;
 
             await _unitOfWork.Reservas.AddAsync(reserva, cancellationToken);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
@@ -133,7 +133,7 @@ public class CreateReservaCommandHandler : IRequestHandler<CreateReservaCommand,
                 MontoTotal = request.MontoTotal,
                 HabitacionNumero = habitacionNumero,
                 HotelNombre = hotelNombre,
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.Now
             };
 
             await _kafkaProducer.PublishReservaCreadaAsync(reservaCreadaEvent, cancellationToken);

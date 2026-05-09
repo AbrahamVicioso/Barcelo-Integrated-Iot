@@ -76,7 +76,7 @@ public class AuditBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TR
                 AgenteUsuario = ctx?.Request?.Headers["User-Agent"].ToString(),
                 Resultado = isSuccess ? "Exitoso" : "Fallido",
                 MensajeError = errorMessage,
-                FechaHora = DateTime.UtcNow
+                FechaHora = DateTime.Now
             };
 
             await _auditProducer.PublishAsync(auditEvent, ct);

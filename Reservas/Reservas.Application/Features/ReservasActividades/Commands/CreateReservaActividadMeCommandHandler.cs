@@ -46,7 +46,7 @@ public class CreateReservaActividadMeCommandHandler : IRequestHandler<CreateRese
                 NotasEspeciales = request.NotasEspeciales,
                 EstadoReservaActividadId = EstadoReservaActividad.Confirmada,
                 Estado = "Confirmada",
-                FechaCreacion = DateTime.UtcNow,
+                FechaCreacion = DateTime.Now,
                 RecordatorioEnviado = false
             };
 

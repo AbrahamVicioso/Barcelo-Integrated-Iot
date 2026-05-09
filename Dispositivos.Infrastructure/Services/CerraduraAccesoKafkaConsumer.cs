@@ -262,7 +262,7 @@ public class CerraduraAccesoKafkaConsumer : BackgroundService
 
         var timestamp = evento.Timestamp > 0
             ? DateTimeOffset.FromUnixTimeMilliseconds(evento.Timestamp).UtcDateTime
-            : DateTime.UtcNow;
+            : DateTime.Now;
 
         var resultadoAcceso = accessGranted ? "Concedido" : "Denegado";
         var codigoError = accessGranted ? null : "ACCESS_DENIED";
@@ -582,7 +582,7 @@ public class CerraduraAccesoKafkaConsumer : BackgroundService
     private async Task ActualizarCredencialConId(IUnitOfWork unitOfWork, CerradurasInteligente cerradura, int credId, CancellationToken cancellationToken)
     {
         cerradura.ContadorAperturas += 1;
-        cerradura.UltimaApertura = DateTime.UtcNow;
+        cerradura.UltimaApertura = DateTime.Now;
         await unitOfWork.CerradurasInteligente.UpdateAsync(cerradura, cancellationToken);
 
         var credencialRepo = unitOfWork.CredencialesAcceso;
@@ -591,9 +591,9 @@ public class CerraduraAccesoKafkaConsumer : BackgroundService
         if (credencial != null)
         {
             credencial.NumeroUsos += 1;
-            credencial.UltimoUso = DateTime.UtcNow;
+            credencial.UltimoUso = DateTime.Now;
 
-            if (credencial.FechaExpiracion < DateTime.UtcNow && credencial.EstaActiva)
+            if (credencial.FechaExpiracion < DateTime.Now && credencial.EstaActiva)
             {
                 credencial.EstaActiva = false;
                 _logger.LogInformation("Credencial {CredencialId} marcada como inactiva por expiración", credId);

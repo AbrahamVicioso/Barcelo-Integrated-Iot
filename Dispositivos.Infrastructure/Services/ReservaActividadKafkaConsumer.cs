@@ -217,7 +217,7 @@ public class ReservaActividadKafkaConsumer : BackgroundService
             TipoCredencial = "Actividad",
             CreadoPor = "Sistema",
             NumeroUsos = 0,
-            FechaCreacion = DateTime.UtcNow
+            FechaCreacion = DateTime.Now
         };
 
         await unitOfWork.CredencialesAcceso.AddAsync(credencial, cancellationToken);

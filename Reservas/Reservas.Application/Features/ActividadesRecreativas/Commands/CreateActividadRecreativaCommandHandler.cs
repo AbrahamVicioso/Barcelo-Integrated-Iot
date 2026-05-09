@@ -24,7 +24,7 @@ public class CreateActividadRecreativaCommandHandler : IRequestHandler<CreateAct
         {
             var actividad = _mapper.Map<Domain.Entites.ActividadesRecreativas>(request);
             actividad.EstaActiva = true;
-            actividad.FechaCreacion = DateTime.UtcNow;
+            actividad.FechaCreacion = DateTime.Now;
 
             await _unitOfWork.ActividadesRecreativas.AddAsync(actividad, cancellationToken);
             await _unitOfWork.SaveChangesAsync(cancellationToken);

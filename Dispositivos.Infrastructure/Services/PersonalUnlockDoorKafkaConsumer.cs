@@ -247,7 +247,7 @@ public class PersonalUnlockDoorKafkaConsumer : BackgroundService
             {
                 CerraduraId = cerraduraId,
                 UsuarioId = unlockEvent.UsuarioId,
-                FechaHoraAcceso = DateTime.UtcNow,
+                FechaHoraAcceso = DateTime.Now,
                 TipoAcceso = "Personal",
                 ResultadoAcceso = "Concedido",
                 MotivoAcceso = $"Acceso de personal - {unlockEvent.NombrePersonal} (ID: {unlockEvent.PersonalId})",
@@ -288,7 +288,7 @@ public class PersonalUnlockDoorKafkaConsumer : BackgroundService
                 PersonalId = unlockEvent.PersonalId,
                 NombrePersonal = unlockEvent.NombrePersonal,
                 Huespedes = unlockEvent.Huespedes,
-                FechaAcceso = DateTime.UtcNow
+                FechaAcceso = DateTime.Now
             };
 
             var message = new Message<string, string>

@@ -24,7 +24,7 @@ public class DeletePuestoCommandHandler : IRequestHandler<DeletePuestoCommand, b
             throw new BusinessException("No se puede eliminar el puesto porque tiene personal asignado");
 
         puesto.EstaActivo = false;
-        puesto.EliminadoEn = DateTime.UtcNow;
+        puesto.EliminadoEn = DateTime.Now;
 
         await _unitOfWork.Puestos.UpdateAsync(puesto);
         await _unitOfWork.SaveChangesAsync();

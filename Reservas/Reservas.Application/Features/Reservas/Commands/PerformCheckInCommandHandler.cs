@@ -48,13 +48,13 @@ public class PerformCheckInCommandHandler : IRequestHandler<PerformCheckInComman
             if (reserva.CheckInRealizado.HasValue)
                 return Result<CheckInDto>.Failure("Ya existe un check-in registrado para esta reserva.");
 
-            var hoy = DateTime.UtcNow.Date;
+            var hoy = DateTime.Now.Date;
             if (hoy < reserva.FechaCheckIn.Date)
                 return Result<CheckInDto>.Failure($"El check-in no puede realizarse antes de la fecha de entrada: {reserva.FechaCheckIn:dd/MM/yyyy}.");
             if (hoy > reserva.FechaCheckOut.Date)
                 return Result<CheckInDto>.Failure($"La reserva venció el {reserva.FechaCheckOut:dd/MM/yyyy}. No es posible realizar el check-in.");
 
-            var fechaCheckIn = DateTime.UtcNow;
+            var fechaCheckIn = DateTime.Now;
 
             reserva.EstadoReservaId = EstadoReserva.Activa;
             reserva.CheckInRealizado = fechaCheckIn;

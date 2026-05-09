@@ -109,7 +109,7 @@ public class TbCredencialesSyncService : ITbCredencialesSyncService
                     WriteIndented = false,
                     DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
                 }),
-                ["ultimaSincronizacionCredenciales"] = DateTime.UtcNow.ToString("o")
+                ["ultimaSincronizacionCredenciales"] = DateTime.Now.ToString("o")
             };
 
             await _tbDeviceService.SetSharedAttributesAsync(device.Id, attrs, cancellationToken);
@@ -205,7 +205,7 @@ public class TbCredencialesSyncService : ITbCredencialesSyncService
                       AND pp.EstaActivo = 1
                       AND (pp.FechaExpiracion IS NULL OR pp.FechaExpiracion >= @ahora)";
                 AddParam(cmd, "@personalId", personalId);
-                AddParam(cmd, "@ahora", DateTime.UtcNow);
+                AddParam(cmd, "@ahora", DateTime.Now);
 
                 var habitaciones = new List<int>();
                 using (var reader = await cmd.ExecuteReaderAsync(cancellationToken))
@@ -228,7 +228,7 @@ public class TbCredencialesSyncService : ITbCredencialesSyncService
                       AND pp.EstaActivo = 1
                       AND (pp.FechaExpiracion IS NULL OR pp.FechaExpiracion >= @ahora)";
                 AddParam(cmd, "@personalId", personalId);
-                AddParam(cmd, "@ahora", DateTime.UtcNow);
+                AddParam(cmd, "@ahora", DateTime.Now);
 
                 var actividades = new List<int>();
                 using (var reader = await cmd.ExecuteReaderAsync(cancellationToken))
@@ -406,7 +406,7 @@ public class TbCredencialesSyncService : ITbCredencialesSyncService
                     WriteIndented = false,
                     DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
                 }),
-                ["ultimaSincronizacionCredenciales"] = DateTime.UtcNow.ToString("o")
+                ["ultimaSincronizacionCredenciales"] = DateTime.Now.ToString("o")
             };
 
             await _tbDeviceService.SetSharedAttributesAsync(device.Id, attrs, cancellationToken);
@@ -494,8 +494,8 @@ public class TbCredencialesSyncService : ITbCredencialesSyncService
               AND ca.FechaExpiracion >= @ahora";
 
         AddParam(cmd, "@habitacionId", habitacionId);
-        AddParam(cmd, "@horizonte", DateTime.UtcNow.AddDays(7));
-        AddParam(cmd, "@ahora", DateTime.UtcNow);
+        AddParam(cmd, "@horizonte", DateTime.Now.AddDays(7));
+        AddParam(cmd, "@ahora", DateTime.Now);
 
         var result = new List<CredencialHuespedInfo>();
         using var reader = await cmd.ExecuteReaderAsync(ct);
@@ -518,7 +518,7 @@ public class TbCredencialesSyncService : ITbCredencialesSyncService
     {
         using var cmd = (System.Data.Common.DbCommand)connection.CreateCommand();
 
-        var ahora = DateTime.UtcNow;
+        var ahora = DateTime.Now;
         var horizonte = ahora.AddDays(7);
 
         // Build IN clause: @p0, @p1, ...
@@ -590,7 +590,7 @@ public class TbCredencialesSyncService : ITbCredencialesSyncService
               AND (pp.FechaExpiracion IS NULL OR pp.FechaExpiracion >= @ahora)";
 
         AddParam(cmd, "@habitacionId", habitacionId);
-        AddParam(cmd, "@ahora", DateTime.UtcNow);
+        AddParam(cmd, "@ahora", DateTime.Now);
 
         var result = new List<PermisoPersonalInfo>();
         using var reader = await cmd.ExecuteReaderAsync(ct);
@@ -620,7 +620,7 @@ public class TbCredencialesSyncService : ITbCredencialesSyncService
               AND (pp.FechaExpiracion IS NULL OR pp.FechaExpiracion >= @ahora)";
 
         AddParam(cmd, "@actividadId", actividadId);
-        AddParam(cmd, "@ahora", DateTime.UtcNow);
+        AddParam(cmd, "@ahora", DateTime.Now);
 
         var result = new List<PermisoPersonalInfo>();
         using var reader = await cmd.ExecuteReaderAsync(ct);

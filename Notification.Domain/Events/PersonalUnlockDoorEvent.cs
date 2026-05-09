@@ -11,5 +11,5 @@ public class PersonalUnlockDoorEvent
     public string? DireccionIp { get; set; }
     public string? InfoDispositivo { get; set; }
     public List<HuespedCheckInInfo> Huespedes { get; set; } = new();
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime CreatedAt { get; set; } = DateTime.Now;
 }

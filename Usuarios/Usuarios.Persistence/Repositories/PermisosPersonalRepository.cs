@@ -65,7 +65,7 @@ public class PermisosPersonalRepository : GenericRepository<PermisosPersonal>, I
 
     public async Task<IEnumerable<PermisosPersonal>> GetPermisosExpiradosAsync()
     {
-        var now = DateTime.UtcNow;
+        var now = DateTime.Now;
         return await WithIncludes()
             .Where(p => p.FechaExpiracion.HasValue && p.FechaExpiracion.Value < now)
             .ToListAsync();

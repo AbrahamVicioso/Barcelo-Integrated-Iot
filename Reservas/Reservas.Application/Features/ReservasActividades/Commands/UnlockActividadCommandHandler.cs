@@ -71,7 +71,7 @@ public class UnlockActividadCommandHandler : IRequestHandler<UnlockActividadComm
                 return Result<string>.Failure("No tiene una reserva confirmada para esta actividad.");
 
             // Validar que sea el día de la reserva y dentro del horario exacto de la actividad
-            var now = DateTime.UtcNow;
+            var now = DateTime.Now;
             if (reservaActividad.FechaReserva.Date != now.Date)
                 return Result<string>.Failure("La actividad no está disponible hoy.");
 

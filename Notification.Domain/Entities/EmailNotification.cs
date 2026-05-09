@@ -7,7 +7,7 @@ namespace Notification.Domain.Entities
         public string Subject { get; set; } = string.Empty;
         public string Body { get; set; } = string.Empty;
         public bool IsHtml { get; set; } = false;
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime CreatedAt { get; set; } = DateTime.Now;
         public NotificationStatus Status { get; set; } = NotificationStatus.Pending;
     }
 

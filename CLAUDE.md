@@ -20,6 +20,7 @@
 2. Lanzar excepciones en handlers de Dispositivos/Reservas → usar `Result<T>`
 3. Usar HTTP para conectar a gRPC si el servidor usa HTTPS (5285, 5118, 7288)
 4. Olvidar HttpClientHandler con bypass de certificado en llamadas gRPC
+5. Usar `DateTime.UtcNow` — usar siempre `DateTime.Now` (containers usan hora local AST, no UTC). Única excepción: `JwtGenerator.cs` (JWT estándar requiere UTC)
 
 ## ✅ SIEMPRE hacer
 1. Retry pattern (3 intentos, delay 500ms * attempt) en llamadas gRPC

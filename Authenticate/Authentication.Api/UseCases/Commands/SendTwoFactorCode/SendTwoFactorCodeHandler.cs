@@ -37,7 +37,7 @@ namespace Authentication.Api.UseCases.Commands.SendTwoFactorCode
                 Code = token,
                 Provider = "Email",
                 ExpirationMinutes = expirationMinutes,
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.Now
             });
 
             return TypedResults.Ok("Código enviado exitosamente.");

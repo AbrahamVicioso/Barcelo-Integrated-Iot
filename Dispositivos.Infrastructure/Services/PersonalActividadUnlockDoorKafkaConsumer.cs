@@ -234,7 +234,7 @@ public class PersonalActividadUnlockDoorKafkaConsumer : BackgroundService
             {
                 CerraduraId = cerraduraId,
                 UsuarioId = unlockEvent.UsuarioId,
-                FechaHoraAcceso = DateTime.UtcNow,
+                FechaHoraAcceso = DateTime.Now,
                 TipoAcceso = "Personal",
                 ResultadoAcceso = "Concedido",
                 MotivoAcceso = $"Acceso de personal a actividad '{unlockEvent.NombreActividad}' - {unlockEvent.NombrePersonal} (ID: {unlockEvent.PersonalId})",

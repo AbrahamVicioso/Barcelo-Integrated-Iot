@@ -32,6 +32,6 @@ namespace Notification.Domain.Events
 
         public int? HotelId { get; set; }
 
-        public DateTime FechaHora { get; set; } = DateTime.UtcNow;
+        public DateTime FechaHora { get; set; } = DateTime.Now;
     }
 }

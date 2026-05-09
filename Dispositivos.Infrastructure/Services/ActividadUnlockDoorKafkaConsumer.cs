@@ -235,7 +235,7 @@ public class ActividadUnlockDoorKafkaConsumer : BackgroundService
                 CerraduraId = cerraduraId,
                 CredencialId = unlockEvent.CredencialId,
                 UsuarioId = unlockEvent.UsuarioId,
-                FechaHoraAcceso = DateTime.UtcNow,
+                FechaHoraAcceso = DateTime.Now,
                 TipoAcceso = unlockEvent.CredencialId.HasValue ? "PIN" : "JWT",
                 ResultadoAcceso = "Concedido",
                 MotivoAcceso = $"Desbloqueo actividad '{unlockEvent.NombreActividad}' (reserva {unlockEvent.ReservaActividadId})",

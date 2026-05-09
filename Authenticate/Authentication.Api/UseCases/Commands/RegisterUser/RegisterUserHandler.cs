@@ -48,7 +48,7 @@ namespace Authentication.Api.UseCases.Commands.RegisterUser
                 Email = registerRequest.Email,
                 GeneratedPassword = string.Empty,
                 UserName = registerRequest.Email.Split('@')[0],
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.Now
             });
 
             var token = await userManager.GenerateEmailConfirmationTokenAsync(user);

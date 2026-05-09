@@ -25,7 +25,7 @@ public class CreateTipoDocumentoCommandHandler : IRequestHandler<CreateTipoDocum
 
         var tipo = _mapper.Map<Domain.Entities.TipoDocumento>(request.TipoDocumento);
         tipo.EstaActivo = true;
-        tipo.FechaCreacion = DateTime.UtcNow;
+        tipo.FechaCreacion = DateTime.Now;
 
         await _unitOfWork.TiposDocumento.AddAsync(tipo);
         await _unitOfWork.SaveChangesAsync();

@@ -12,7 +12,7 @@ public class NotificacionEntity
     public string Mensaje { get; set; } = string.Empty;
     public string Prioridad { get; set; } = "normal";
     public bool FueLeida { get; set; } = false;
-    public DateTime FechaEnvio { get; set; } = DateTime.UtcNow;
+    public DateTime FechaEnvio { get; set; } = DateTime.Now;
     public DateTime? FechaLectura { get; set; }
     public string? TipoEntidadRelacionada { get; set; }
     public int? EntidadRelacionadaId { get; set; }

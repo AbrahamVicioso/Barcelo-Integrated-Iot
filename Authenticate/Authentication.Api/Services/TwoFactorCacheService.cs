@@ -16,7 +16,7 @@ public class TwoFactorCacheService : ITwoFactorCacheService
 
     public void SetPendingVerification(string userId, string code)
     {
-        var expiresAt = DateTime.UtcNow.AddMinutes(5);
+        var expiresAt = DateTime.Now.AddMinutes(5);
         _cache.AddOrUpdate(userId, (code, expiresAt), (_, _) => (code, expiresAt));
     }
 
@@ -24,7 +24,7 @@ public class TwoFactorCacheService : ITwoFactorCacheService
     {
         if (_cache.TryGetValue(userId, out var entry))
         {
-            if (entry.ExpiresAt > DateTime.UtcNow)
+            if (entry.ExpiresAt > DateTime.Now)
                 return entry.Code;
             _cache.TryRemove(userId, out _);
         }
@@ -40,7 +40,7 @@ public class TwoFactorCacheService : ITwoFactorCacheService
     {
         if (_cache.TryGetValue(userId, out var entry))
         {
-            if (entry.ExpiresAt > DateTime.UtcNow && entry.Code == code)
+            if (entry.ExpiresAt > DateTime.Now && entry.Code == code)
             {
                 _cache.TryRemove(userId, out _);
                 return true;

@@ -36,7 +36,7 @@ public class PerformCheckOutCommandHandler : IRequestHandler<PerformCheckOutComm
             if (reserva.EstadoReservaId != EstadoReserva.Activa)
                 return Result<ReservaDto>.Failure("Solo se puede realizar checkout de una reserva activa (con check-in completado).");
 
-            var fechaCheckOut = DateTime.UtcNow;
+            var fechaCheckOut = DateTime.Now;
 
             reserva.EstadoReservaId = EstadoReserva.CheckOut;
             reserva.CheckOutRealizado = fechaCheckOut;

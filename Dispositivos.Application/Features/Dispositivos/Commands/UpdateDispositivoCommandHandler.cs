@@ -75,7 +75,7 @@ public class UpdateDispositivoCommandHandler : IRequestHandler<UpdateDispositivo
             dispositivo.TipoDispositivo = null;
             dispositivo.CerradurasInteligentes = [];
             dispositivo.MantenimientoCerraduras = [];
-            dispositivo.FechaActualizacion = DateTime.UtcNow;
+            dispositivo.FechaActualizacion = DateTime.Now;
 
             await _unitOfWork.Dispositivos.UpdateAsync(dispositivo, cancellationToken);
             await _unitOfWork.SaveChangesAsync(cancellationToken);

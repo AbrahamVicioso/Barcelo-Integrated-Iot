@@ -143,7 +143,7 @@ public static class DbSeeder
                     TipoDato      = tipo,
                     Descripcion   = descripcion,
                     EsGlobal      = true,
-                    FechaCreacion = DateTime.UtcNow,
+                    FechaCreacion = DateTime.Now,
                     ModificadoPor = "system"
                 });
             }

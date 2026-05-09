@@ -25,7 +25,7 @@ public class CreatePuestoCommandHandler : IRequestHandler<CreatePuestoCommand, P
 
         var puesto = _mapper.Map<Domain.Entities.Puesto>(request.Puesto);
         puesto.EstaActivo = true;
-        puesto.FechaCreacion = DateTime.UtcNow;
+        puesto.FechaCreacion = DateTime.Now;
 
         await _unitOfWork.Puestos.AddAsync(puesto);
         await _unitOfWork.SaveChangesAsync();

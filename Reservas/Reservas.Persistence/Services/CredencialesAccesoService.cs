@@ -42,7 +42,7 @@ public class CredencialesAccesoService : ICredencialesAccesoService
 
         var pNow = command.CreateParameter();
         pNow.ParameterName = "@now";
-        pNow.Value = DateTime.UtcNow;
+        pNow.Value = DateTime.Now;
         command.Parameters.Add(pNow);
 
         var result = await command.ExecuteScalarAsync(cancellationToken);
@@ -55,7 +55,7 @@ public class CredencialesAccesoService : ICredencialesAccesoService
         if (connection.State != ConnectionState.Open)
             await connection.OpenAsync(cancellationToken);
 
-        var now = DateTime.UtcNow;
+        var now = DateTime.Now;
 
         // Incrementar ContadorAperturas en CerradurasInteligentes
         using (var command = connection.CreateCommand())
@@ -151,7 +151,7 @@ public class CredencialesAccesoService : ICredencialesAccesoService
 
         var pNow = command.CreateParameter();
         pNow.ParameterName = "@now";
-        pNow.Value = DateTime.UtcNow;
+        pNow.Value = DateTime.Now;
         command.Parameters.Add(pNow);
 
         var result = await command.ExecuteScalarAsync(cancellationToken);
@@ -251,7 +251,7 @@ public class CredencialesAccesoService : ICredencialesAccesoService
 
         var pNow = command.CreateParameter();
         pNow.ParameterName = "@now";
-        pNow.Value = DateTime.UtcNow;
+        pNow.Value = DateTime.Now;
         command.Parameters.Add(pNow);
 
         var results = new List<CredencialHuespedDto>();
@@ -318,7 +318,7 @@ public class CredencialesAccesoService : ICredencialesAccesoService
 
         var pNow = command.CreateParameter();
         pNow.ParameterName = "@now";
-        pNow.Value = DateTime.UtcNow;
+        pNow.Value = DateTime.Now;
         command.Parameters.Add(pNow);
 
         var result = await command.ExecuteScalarAsync(cancellationToken);
@@ -352,7 +352,7 @@ public class CredencialesAccesoService : ICredencialesAccesoService
 
         var pNow = command.CreateParameter();
         pNow.ParameterName = "@now";
-        pNow.Value = DateTime.UtcNow;
+        pNow.Value = DateTime.Now;
         command.Parameters.Add(pNow);
 
         var result = await command.ExecuteScalarAsync(cancellationToken);
@@ -365,7 +365,7 @@ public class CredencialesAccesoService : ICredencialesAccesoService
         if (connection.State != ConnectionState.Open)
             await connection.OpenAsync(cancellationToken);
 
-        var now = DateTime.UtcNow;
+        var now = DateTime.Now;
 
         using (var command = connection.CreateCommand())
         {

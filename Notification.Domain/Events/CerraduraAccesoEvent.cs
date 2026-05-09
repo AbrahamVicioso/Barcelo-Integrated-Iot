@@ -6,7 +6,7 @@ namespace Notification.Domain.Events
         public string DeviceName { get; set; } = string.Empty;
         public long Timestamp { get; set; }
         public CerraduraAccesoData Data { get; set; } = new();
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime CreatedAt { get; set; } = DateTime.Now;
     }
 
     public class CerraduraAccesoData

@@ -25,7 +25,7 @@ public class CreateDepartamentoCommandHandler : IRequestHandler<CreateDepartamen
 
         var departamento = _mapper.Map<Domain.Entities.Departamento>(request.Departamento);
         departamento.EstaActivo = true;
-        departamento.FechaCreacion = DateTime.UtcNow;
+        departamento.FechaCreacion = DateTime.Now;
 
         await _unitOfWork.Departamentos.AddAsync(departamento);
         await _unitOfWork.SaveChangesAsync();

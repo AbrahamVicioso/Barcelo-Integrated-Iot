@@ -70,7 +70,7 @@ namespace Authentication.Api.UseCases.Commands.CreateUserWithRandomPassword
                 Email = request.Email,
                 GeneratedPassword = randomPassword,
                 UserName = request.Email.Split('@')[0],
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.Now
             };
 
             await kafkaProducerService.PublishUserCreatedAsync(userCreatedEvent);

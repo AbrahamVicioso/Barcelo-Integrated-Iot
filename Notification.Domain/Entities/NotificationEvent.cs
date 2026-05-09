@@ -8,6 +8,6 @@ namespace Notification.Domain.Entities
         public string Subject { get; set; } = string.Empty;
         public string Body { get; set; } = string.Empty;
         public Dictionary<string, string> Metadata { get; set; } = new();
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime CreatedAt { get; set; } = DateTime.Now;
     }
 }

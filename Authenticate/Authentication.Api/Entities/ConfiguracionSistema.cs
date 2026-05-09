@@ -22,7 +22,7 @@ public class ConfiguracionSistema
     public string TipoDato { get; set; } = string.Empty;
 
     public bool EsGlobal { get; set; }
-    public DateTime FechaCreacion { get; set; } = DateTime.UtcNow;
+    public DateTime FechaCreacion { get; set; } = DateTime.Now;
     public DateTime? FechaActualizacion { get; set; }
 
     [MaxLength(450)]

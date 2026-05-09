@@ -49,7 +49,7 @@ public class CreatePersonalCommandHandler : IRequestHandler<CreatePersonalComman
         }
 
         var personal = _mapper.Map<Domain.Entities.Personal>(request.Personal);
-        personal.FechaCreacion = DateTime.UtcNow;
+        personal.FechaCreacion = DateTime.Now;
         personal.EstaActivo = true;
 
         var createdPersonal = await _unitOfWork.Personal.AddAsync(personal);

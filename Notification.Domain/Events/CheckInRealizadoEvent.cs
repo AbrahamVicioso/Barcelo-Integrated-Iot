@@ -8,7 +8,7 @@ public class CheckInRealizadoEvent
     public List<HuespedCheckInInfo> Huespedes { get; set; } = new();
     public DateTime FechaCheckIn { get; set; }
     public DateTime FechaCheckOut { get; set; }
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime CreatedAt { get; set; } = DateTime.Now;
 }
 
 public class HuespedCheckInInfo

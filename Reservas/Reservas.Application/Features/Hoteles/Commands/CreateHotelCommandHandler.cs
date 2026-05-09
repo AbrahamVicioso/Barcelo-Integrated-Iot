@@ -24,7 +24,7 @@ public class CreateHotelCommandHandler : IRequestHandler<CreateHotelCommand, Res
         {
             var hotel = _mapper.Map<Hotel>(request.Hotel);
             hotel.EstaActivo = true;
-            hotel.FechaCreacion = DateTime.UtcNow;
+            hotel.FechaCreacion = DateTime.Now;
 
             await _unitOfWork.Hoteles.AddAsync(hotel, cancellationToken);
             await _unitOfWork.SaveChangesAsync(cancellationToken);

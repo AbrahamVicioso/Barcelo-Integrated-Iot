@@ -31,7 +31,7 @@ public class DeleteReservaCommandHandler : IRequestHandler<DeleteReservaCommand,
             var habitacionId = reserva.HabitacionId;
 
             reserva.EstadoReservaId = 4;
-            reserva.FechaActualizacion = DateTime.UtcNow;
+            reserva.FechaActualizacion = DateTime.Now;
 
             await _unitOfWork.Reservas.UpdateAsync(reserva, cancellationToken);
             await _unitOfWork.SaveChangesAsync(cancellationToken);

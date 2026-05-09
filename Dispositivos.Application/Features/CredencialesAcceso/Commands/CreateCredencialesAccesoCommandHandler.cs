@@ -204,7 +204,7 @@ public class CreateCredencialesAccesoCommandHandler : IRequestHandler<CreateCred
                 return Result<int>.Failure("No se pudo identificar al usuario autenticado.");
 
             var credencial = _mapper.Map<CredencialEntity>(request.Credencial);
-            credencial.FechaCreacion = DateTime.UtcNow;
+            credencial.FechaCreacion = DateTime.Now;
             credencial.CreadoPor = userId;
             credencial.HashPin = GenerarHash(credencial.CodigoPin);
 

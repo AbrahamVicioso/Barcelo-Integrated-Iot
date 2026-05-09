@@ -58,7 +58,7 @@ public class PreferenciasController : ControllerBase
                 HorarioNoMolestar = false,
                 HoraInicioNoMolestar = null,
                 HoraFinNoMolestar = null,
-                FechaActualizacion = DateTime.UtcNow
+                FechaActualizacion = DateTime.Now
             });
         }
 
@@ -91,7 +91,7 @@ public class PreferenciasController : ControllerBase
             prefs = new PreferenciaNotificacion
             {
                 UsuarioId = user.Id,
-                FechaActualizacion = DateTime.UtcNow
+                FechaActualizacion = DateTime.Now
             };
             _context.PreferenciasNotificacion.Add(prefs);
         }
@@ -112,7 +112,7 @@ public class PreferenciasController : ControllerBase
         prefs.HorarioNoMolestar = dto.HorarioNoMolestar;
         prefs.HoraInicioNoMolestar = dto.HoraInicioNoMolestar;
         prefs.HoraFinNoMolestar = dto.HoraFinNoMolestar;
-        prefs.FechaActualizacion = DateTime.UtcNow;
+        prefs.FechaActualizacion = DateTime.Now;
 
         await _context.SaveChangesAsync();
 
@@ -171,7 +171,7 @@ public class PreferenciasController : ControllerBase
         if (notificacion == null) return NotFound();
 
         notificacion.FueLeida = true;
-        notificacion.FechaLectura = DateTime.UtcNow;
+        notificacion.FechaLectura = DateTime.Now;
         await _context.SaveChangesAsync();
 
         return NoContent();

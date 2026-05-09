@@ -86,7 +86,7 @@ public class CreateHuespedeMeCommandHandler : IRequestHandler<CreateHuespedeMeCo
                 PreferenciasAlimentarias = request.Huespede.PreferenciasAlimentarias,
                 NotasEspeciales = request.Huespede.NotasEspeciales,
                 EsVip = false,
-                FechaRegistro = DateTime.UtcNow
+                FechaRegistro = DateTime.Now
             };
 
             var createdHuespede = await _unitOfWork.Huespedes.AddAsync(huespede);

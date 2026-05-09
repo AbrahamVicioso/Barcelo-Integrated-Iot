@@ -154,14 +154,14 @@ public class IdentityConfiguracionService(
                 TipoDato     = tipo,
                 Descripcion  = descripcion,
                 EsGlobal     = true,
-                FechaCreacion = DateTime.UtcNow,
+                FechaCreacion = DateTime.Now,
                 ModificadoPor = modifiedBy
             });
         }
         else
         {
             existing.Valor            = valor;
-            existing.FechaActualizacion = DateTime.UtcNow;
+            existing.FechaActualizacion = DateTime.Now;
             existing.ModificadoPor    = modifiedBy;
         }
     }

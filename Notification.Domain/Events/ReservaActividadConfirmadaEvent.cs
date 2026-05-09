@@ -12,5 +12,5 @@ public class ReservaActividadConfirmadaEvent
     public TimeSpan HoraReserva { get; set; }
     public int? DuracionMinutos { get; set; }
     public string NombreActividad { get; set; } = string.Empty;
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime CreatedAt { get; set; } = DateTime.Now;
 }

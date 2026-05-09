@@ -16,8 +16,8 @@ public class DispositivosAnalyticsService : IDispositivosAnalyticsService
 
     public async Task<AccesosResumenDto> GetAccesosResumenAsync(CancellationToken ct = default)
     {
-        var utcNow = DateTime.UtcNow;
-        var hoyUtc4 = utcNow.AddHours(-4);
+        var ahora = DateTime.Now;
+        var hoyUtc4 = ahora.AddHours(-4);
         var inicioHoy = new DateTime(hoyUtc4.Year, hoyUtc4.Month, hoyUtc4.Day, 0, 0, 0, DateTimeKind.Unspecified).AddHours(4);
         var finHoy = inicioHoy.AddDays(1);
 
@@ -92,8 +92,8 @@ public class DispositivosAnalyticsService : IDispositivosAnalyticsService
 
     public async Task<List<AccesoPorTipoDto>> GetAccesosPorTipoAsync(CancellationToken ct = default)
     {
-        var utcNow = DateTime.UtcNow;
-        var hoyUtc4 = utcNow.AddHours(-4);
+        var ahora = DateTime.Now;
+        var hoyUtc4 = ahora.AddHours(-4);
         var inicioMes = new DateTime(hoyUtc4.Year, hoyUtc4.Month, 1, 0, 0, 0, DateTimeKind.Unspecified).AddHours(4);
 
         var grupos = await _context.RegistrosAccesos

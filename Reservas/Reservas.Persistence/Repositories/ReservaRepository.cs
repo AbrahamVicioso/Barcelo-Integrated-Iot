@@ -75,7 +75,7 @@ public async Task<bool> IsHabitacionOcupadaAsync(int habitacionId, DateTime fech
 
 public async Task<Reserva?> GetReservaActivaByHabitacionIdAsync(int habitacionId, CancellationToken cancellationToken = default)
 {
-    var now = DateTime.UtcNow;
+    var now = DateTime.Now;
     return await _dbSet
         .Include(r => r.ReservaHuespedes)
         .FirstOrDefaultAsync(r =>

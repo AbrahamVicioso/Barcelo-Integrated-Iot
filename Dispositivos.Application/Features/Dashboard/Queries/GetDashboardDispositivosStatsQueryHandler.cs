@@ -41,7 +41,7 @@ public class GetDashboardDispositivosStatsQueryHandler
     private async Task<CredencialesStatsDto> GetCredencialesStats(GetDashboardDispositivosStatsQuery request)
     {
         var credenciales = await _unitOfWork.CredencialesAcceso.GetAll();
-        var ahora = DateTime.UtcNow;
+        var ahora = DateTime.Now;
         var diasParaVencer = 7; // Credenciales que vencen en los próximos 7 días
 
         return new CredencialesStatsDto
@@ -160,7 +160,7 @@ public class GetDashboardDispositivosStatsQueryHandler
     private async Task<AuditoriaStatsDto> GetAuditoriaStats(GetDashboardDispositivosStatsQuery request)
     {
         var registros = await _unitOfWork.RegistrosAuditorium.GetAllAsync();
-        var ahora = DateTime.UtcNow;
+        var ahora = DateTime.Now;
 
         // Filtrar por hotel si se especifica
         if (request.HotelId.HasValue)

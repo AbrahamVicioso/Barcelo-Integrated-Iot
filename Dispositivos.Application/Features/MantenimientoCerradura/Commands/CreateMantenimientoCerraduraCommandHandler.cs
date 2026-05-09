@@ -28,7 +28,7 @@ public class CreateMantenimientoCerraduraCommandHandler : IRequestHandler<Create
         try
         {
             var mantenimiento = _mapper.Map<MantenimientoEntity>(request.Mantenimiento);
-            mantenimiento.FechaCreacion = DateTime.UtcNow;
+            mantenimiento.FechaCreacion = DateTime.Now;
             
             await _mantenimientoRepository.AddAsync(mantenimiento, cancellationToken);
             await _unitOfWork.SaveChangesAsync(cancellationToken);

@@ -36,7 +36,7 @@ public class UpdateHabitacionCommandHandler : IRequestHandler<UpdateHabitacionCo
                 return Result<HabitacionDto>.Failure("Ya existe esta habitación en este hotel.");
 
             _mapper.Map(request, habitacion);
-            habitacion.FechaActualizacion = DateTime.UtcNow;
+            habitacion.FechaActualizacion = DateTime.Now;
 
             await _unitOfWork.Habitaciones.UpdateAsync(habitacion, cancellationToken);
             await _unitOfWork.SaveChangesAsync(cancellationToken);

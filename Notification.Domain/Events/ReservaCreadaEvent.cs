@@ -10,6 +10,6 @@ namespace Notification.Domain.Events
         public decimal MontoTotal { get; set; }
         public string HabitacionNumero { get; set; } = string.Empty;
         public string HotelNombre { get; set; } = string.Empty;
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime CreatedAt { get; set; } = DateTime.Now;
     }
 }

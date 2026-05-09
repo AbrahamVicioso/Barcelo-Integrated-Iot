@@ -47,7 +47,7 @@ namespace Authentication.Api.UseCases.Commands.TwoFactorEnable
                 Code = token,
                 Provider = "Email",
                 ExpirationMinutes = expirationMinutes,
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.Now
             });
 
             return TypedResults.Ok(new TwoFactorStatusResponse

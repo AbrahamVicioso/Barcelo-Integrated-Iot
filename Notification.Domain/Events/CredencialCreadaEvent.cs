@@ -16,5 +16,5 @@ public class CredencialCreadaEvent
     public string? NumeroReserva { get; set; }
     public int? ReservaActividadId { get; set; }
     public string? NombreActividad { get; set; }
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime CreatedAt { get; set; } = DateTime.Now;
 }

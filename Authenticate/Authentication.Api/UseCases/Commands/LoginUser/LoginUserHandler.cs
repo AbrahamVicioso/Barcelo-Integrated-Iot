@@ -88,7 +88,7 @@ namespace Authentication.Api.UseCases.Commands.LoginUser
                     Code = token,
                     Provider = "Email",
                     ExpirationMinutes = expirationMinutes,
-                    CreatedAt = DateTime.UtcNow
+                    CreatedAt = DateTime.Now
                 });
 
                 return new TwoFactorRequiredResponse

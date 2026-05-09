@@ -56,7 +56,7 @@ public class CreateHuespedeCommandHandler : IRequestHandler<CreateHuespedeComman
 
         var huespede = _mapper.Map<Huespede>(request.Huespede);
         huespede.UsuarioId = usuarioId.ToString()!;
-        huespede.FechaRegistro = DateTime.UtcNow;
+        huespede.FechaRegistro = DateTime.Now;
 
         var createdHuespede = await _unitOfWork.Huespedes.AddAsync(huespede);
         await _unitOfWork.SaveChangesAsync();

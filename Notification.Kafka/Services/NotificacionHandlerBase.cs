@@ -115,7 +115,7 @@ public abstract class NotificacionHandlerBase
     /// </summary>
     private bool EnHorarioNoMolestar(PreferenciaNotificacion prefs)
     {
-        var ahora = DateTime.UtcNow.TimeOfDay;
+        var ahora = DateTime.Now.TimeOfDay;
         var inicio = prefs.HoraInicioNoMolestar;
         var fin = prefs.HoraFinNoMolestar;
 
@@ -160,7 +160,7 @@ public abstract class NotificacionHandlerBase
                 Mensaje = mensaje,
                 Prioridad = prioridad,
                 FueLeida = false,
-                FechaEnvio = DateTime.UtcNow,
+                FechaEnvio = DateTime.Now,
                 CanalEnvio = canal,
                 EstadoEnvio = "Enviada",
                 TipoEntidadRelacionada = tipoEntidad,
