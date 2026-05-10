@@ -367,14 +367,16 @@ public class CerraduraAccesoKafkaConsumer : BackgroundService
             var accesoEvent = new PersonalAccesoHabitacionEvent
             {
                 HabitacionId = cerradura.HabitacionId ?? 0,
-                NumeroHabitacion = cerradura.HabitacionId?.ToString() ?? string.Empty,
+                NumeroHabitacion = reservaResponse?.NumeroHabitacion ?? cerradura.HabitacionId?.ToString() ?? string.Empty,
                 PersonalId = personalId,
                 NombrePersonal = datosPersonal?.NombreCompleto ?? $"Personal {personalId}",
                 Puesto = datosPersonal?.Cargo,
                 Departamento = datosPersonal?.Departamento,
                 EsAccesoFisico = true,
                 Huespedes = huespedes,
-                FechaAcceso = fechaAcceso
+                FechaAcceso = DateTime.SpecifyKind(
+                    fechaAcceso.Kind == DateTimeKind.Utc ? fechaAcceso.ToLocalTime() : fechaAcceso,
+                    DateTimeKind.Unspecified)
             };
 
             var message = new Message<string, string>

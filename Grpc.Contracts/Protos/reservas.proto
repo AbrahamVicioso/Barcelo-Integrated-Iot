@@ -19,4 +19,5 @@ message ReservaResponse {
   repeated int32 huespedes_adicionales = 4;
   string fecha_check_in = 5;
   string fecha_check_out = 6;
+  string numero_habitacion = 7;
 }

@@ -288,7 +288,7 @@ public class PersonalUnlockDoorKafkaConsumer : BackgroundService
                 PersonalId = unlockEvent.PersonalId,
                 NombrePersonal = unlockEvent.NombrePersonal,
                 Huespedes = unlockEvent.Huespedes,
-                FechaAcceso = DateTime.Now
+                FechaAcceso = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Unspecified)
             };
 
             var message = new Message<string, string>

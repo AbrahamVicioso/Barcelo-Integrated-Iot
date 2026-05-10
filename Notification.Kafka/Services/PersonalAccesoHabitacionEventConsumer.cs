@@ -228,7 +228,7 @@ namespace Notification.Kafka.Services
             <div class='info-box'>
                 <p><strong>Habitación:</strong> {ev.NumeroHabitacion}</p>
                 <p><strong>Personal:</strong> {ev.NombrePersonal}</p>
-                <p><strong>Fecha y hora:</strong> {ev.FechaAcceso:dd/MM/yyyy HH:mm} UTC</p>
+                <p><strong>Fecha y hora:</strong> {ev.FechaAcceso:dd/MM/yyyy HH:mm}</p>
             </div>
             <div class='alert'>
                 Si no solicitaste este servicio o tienes alguna duda, por favor contacta inmediatamente con la recepción del hotel.

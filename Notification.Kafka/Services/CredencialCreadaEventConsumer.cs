@@ -180,7 +180,7 @@ namespace Notification.Kafka.Services
                 {
                     Topic = NtfyTopicHelper.GetUserTopic(credencialEvent.Email),
                     Title = "Nueva credencial de acceso creada",
-                    Message = $"Tu credencial {tipoTexto} ha sido creada. PIN: {credencialEvent.CodigoPin}. Válido hasta {credencialEvent.FechaExpiracion:dd/MM/yyyy}.",
+                    Message = $"Tu credencial {tipoTexto} ha sido creada. PIN: {credencialEvent.CodigoPin}. Válido hasta {credencialEvent.FechaExpiracion:dd/MM/yyyy HH:mm}.",
                     Priority = PushPriority.High,
                     Tags = ["key", "hotel"]
                 };
@@ -237,8 +237,8 @@ namespace Notification.Kafka.Services
             </div>
             <div class='details'>
                 <p><strong>Tipo de credencial:</strong> {credencialEvent.TipoCredencial}</p>
-                <p><strong>Fecha de activación:</strong> {credencialEvent.FechaActivacion:dd/MM/yyyy}</p>
-                <p><strong>Fecha de expiración:</strong> {credencialEvent.FechaExpiracion:dd/MM/yyyy}</p>
+                <p><strong>Fecha de activación:</strong> {credencialEvent.FechaActivacion:dd/MM/yyyy HH:mm}</p>
+                <p><strong>Fecha de expiración:</strong> {credencialEvent.FechaExpiracion:dd/MM/yyyy HH:mm}</p>
             </div>
             <div class='warning'>
                 <strong>⚠️ Importante:</strong> No compartas tu PIN con nadie. Este código es personal e intransferible.

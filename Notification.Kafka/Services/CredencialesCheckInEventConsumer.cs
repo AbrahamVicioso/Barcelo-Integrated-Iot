@@ -180,7 +180,7 @@ namespace Notification.Kafka.Services
                     {
                         Topic = NtfyTopicHelper.GetUserTopic(credencial.Email),
                         Title = "Tu PIN de acceso está listo",
-                        Message = $"Reserva {credencialesEvent.NumeroReserva}: tu PIN de habitación es {credencial.CodigoPin}. Válido hasta el {credencialesEvent.FechaCheckOut:dd/MM/yyyy}.",
+                        Message = $"Reserva {credencialesEvent.NumeroReserva}: tu PIN de habitación es {credencial.CodigoPin}. Válido hasta el {credencialesEvent.FechaCheckOut:dd/MM/yyyy HH:mm}.",
                         Priority = PushPriority.High,
                         Tags = ["key", "hotel"]
                     };
@@ -235,8 +235,8 @@ namespace Notification.Kafka.Services
             </div>
             <div class='details'>
                 <p><strong>Número de Reserva:</strong> {ev.NumeroReserva}</p>
-                <p><strong>Check-in:</strong> {ev.FechaCheckIn:dd/MM/yyyy}</p>
-                <p><strong>Check-out:</strong> {ev.FechaCheckOut:dd/MM/yyyy}</p>
+                <p><strong>Check-in:</strong> {ev.FechaCheckIn:dd/MM/yyyy HH:mm}</p>
+                <p><strong>Check-out:</strong> {ev.FechaCheckOut:dd/MM/yyyy HH:mm}</p>
             </div>
             <div class='warning'>
                 <strong>⚠️ Importante:</strong> No compartas tu PIN con nadie. Este código es personal e intransferible.

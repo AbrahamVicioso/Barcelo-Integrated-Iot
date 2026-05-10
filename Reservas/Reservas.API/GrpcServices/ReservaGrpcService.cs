@@ -8,11 +8,13 @@ namespace Reservas.API.GrpcServices;
 public class ReservaGrpcService : Reserva.ReservaBase
 {
     private readonly IReservaRepository _reservaRepository;
+    private readonly IUnitOfWork _unitOfWork;
     private readonly ILogger<ReservaGrpcService> _logger;
 
-    public ReservaGrpcService(IReservaRepository reservaRepository, ILogger<ReservaGrpcService> logger)
+    public ReservaGrpcService(IReservaRepository reservaRepository, IUnitOfWork unitOfWork, ILogger<ReservaGrpcService> logger)
     {
         _reservaRepository = reservaRepository;
+        _unitOfWork = unitOfWork;
         _logger = logger;
     }
 
@@ -35,6 +37,13 @@ public class ReservaGrpcService : Reserva.ReservaBase
                 .Select(rh => rh.HuespedId)
                 .ToList();
 
+            var numeroHabitacion = string.Empty;
+            if (reserva.HabitacionId.HasValue)
+            {
+                var habitacion = await _unitOfWork.Habitaciones.GetById(reserva.HabitacionId.Value);
+                numeroHabitacion = habitacion?.NumeroHabitacion ?? string.Empty;
+            }
+
             _logger.LogInformation(
                 "gRPC: Reserva {ReservaId} encontrada para habitacionId: {HabitacionId}, HuespedId: {HuespedId}, Adicionales: {Count}",
                 reserva.ReservaId, request.HabitacionId, reserva.HuespedId, huespedesAdicionales.Count);
@@ -46,7 +55,8 @@ public class ReservaGrpcService : Reserva.ReservaBase
                 HuespedId = reserva.HuespedId,
                 HuespedesAdicionales = { huespedesAdicionales },
                 FechaCheckIn = reserva.FechaCheckIn.ToString("O"),
-                FechaCheckOut = reserva.FechaCheckOut.ToString("O")
+                FechaCheckOut = reserva.FechaCheckOut.ToString("O"),
+                NumeroHabitacion = numeroHabitacion
             };
         }
         catch (Exception ex)

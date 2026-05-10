@@ -198,7 +198,7 @@ namespace Notification.Kafka.Services
                 Topic = NtfyTopicHelper.GetUserTopic(reservaEvent.Email),
                 Title = "Reserva Confirmada",
                 Message = $"Tu reserva {reservaEvent.NumeroReserva} en {reservaEvent.HotelNombre} ha sido confirmada. " +
-                          $"Check-in: {reservaEvent.FechaCheckIn:dd/MM/yyyy} · Check-out: {reservaEvent.FechaCheckOut:dd/MM/yyyy}",
+                          $"Check-in: {reservaEvent.FechaCheckIn:dd/MM/yyyy HH:mm} · Check-out: {reservaEvent.FechaCheckOut:dd/MM/yyyy HH:mm}",
                 Priority = PushPriority.High,
                 Tags = ["hotel", "white_check_mark"]
             };
@@ -240,8 +240,8 @@ namespace Notification.Kafka.Services
             <div class='reservation-details'>
                 <p><strong>Número de Reserva:</strong> <span class='reservation-number'>{reservaEvent.NumeroReserva}</span></p>
                 <p><strong>Hotel:</strong> {reservaEvent.HotelNombre}</p>
-                <p><strong>Check-in:</strong> {reservaEvent.FechaCheckIn:dd/MM/yyyy}</p>
-                <p><strong>Check-out:</strong> {reservaEvent.FechaCheckOut:dd/MM/yyyy}</p>
+                <p><strong>Check-in:</strong> {reservaEvent.FechaCheckIn:dd/MM/yyyy HH:mm}</p>
+                <p><strong>Check-out:</strong> {reservaEvent.FechaCheckOut:dd/MM/yyyy HH:mm}</p>
             </div>
             <p>Gracias por elegir Barcelo Integrated IoT para tu estadía.</p>
             <p>Si tienes alguna pregunta o necesitas asistencia, no dudes en contactar a nuestro equipo de soporte.</p>
