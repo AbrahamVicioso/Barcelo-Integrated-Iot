@@ -1,2 +1,5 @@
 # Ignorar certificados generados (contienen claves privadas)
 certs/
+
+# JDBC drivers (binarios grandes, descargar manualmente)
+jasperdrivers/*.jar

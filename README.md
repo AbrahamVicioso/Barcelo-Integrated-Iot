@@ -25,6 +25,7 @@ Plataforma IoT para gestión de habitaciones inteligentes del Hotel Barcelo. Arq
 | PostgreSQL | 5432 | Base de datos de ThingsBoard |
 | ThingsBoard CE | 8080 | Gestión de dispositivos IoT |
 | ntfy | 8082 (HTTP) | Servidor de notificaciones push |
+| Metabase | 3001 | Reportes y visualizaciones (CSV/Excel/JSON) |
 
 ---
 
@@ -228,6 +229,7 @@ Rutas disponibles en `http://localhost:5019`:
 | `/api/user/**` | usuarios-api |
 | `/api/reserva/**` | reservas-api |
 | `/api/device/**` | dispositivos-api |
+| `/api/reserva/reportes/**` | reservas-api (proxy → Metabase) |
 
 ---
 
@@ -273,6 +275,90 @@ Data source=localhost;Database=BarceloIoTDatabase;User Id=barcelo;Password=Testi
 | `NTFY_AUTH_DEFAULT_ACCESS` | read-write | deny-all |
 | `NTFY_SERVER_TOKEN` | (opcional) | requerido |
 | `GATEWAY_PUBLIC_BASE_URL` | https://localhost:5020 | https://tu-dominio.com |
+
+---
+
+## Metabase (Reportes)
+
+Herramienta de BI para crear y exportar reportes conectada a `BarceloIoTDatabase`. Imagen pública oficial, no requiere instalación adicional.
+
+### Instalación
+
+```bash
+# 1. Crear base de datos de metadatos en PostgreSQL (ya corre en el stack)
+docker exec barcelo-postgres psql -U postgres -c "CREATE DATABASE metabase;"
+
+# 2. Levantar Metabase (primera vez toma ~2 minutos)
+docker compose up -d metabase
+
+# 3. Esperar healthcheck
+docker compose ps metabase
+# STATUS debe ser: healthy
+```
+
+### Configuración inicial (una sola vez)
+
+1. Abrir http://localhost:3001
+2. Completar el wizard de setup:
+   - Admin email: `admin@smartstay.es`
+   - Admin password: `Admin1234!` (o el valor en `.env`)
+3. Agregar base de datos SQL Server:
+   - **Type:** SQL Server
+   - **Host:** `sqlserver` (nombre del contenedor)
+   - **Port:** `1433`
+   - **Database:** `BarceloIoTDatabase`
+   - **Username:** `sa` / **Password:** `Testing1234`
+
+### Acceso
+
+| Recurso | URL | Credenciales |
+|---|---|---|
+| Web UI | http://localhost:3001 | admin@smartstay.es / Admin1234! |
+| Via .NET API | `GET /reportes/disponibles` | JWT bearer |
+
+### Consumir reportes via .NET API
+
+Los reportes en Metabase se llaman **Questions** y tienen un ID numérico.
+
+```bash
+# Listar todas las questions disponibles (requiere JWT)
+GET /reportes/disponibles
+
+# Exportar question ID=5 como CSV
+GET /reportes/5?formato=csv
+
+# Exportar question ID=5 como Excel
+GET /reportes/5?formato=xlsx
+
+# Exportar question ID=5 como JSON
+GET /reportes/5?formato=json
+```
+
+### Cargar queries SQL predefinidas
+
+Las plantillas SQL están en `docker/metabase/questions/*.json`. Se cargan automáticamente via API (idempotente — no duplica si ya existen).
+
+```bash
+# Ejecutar UNA VEZ después del setup inicial de Metabase
+docker compose --profile init run --rm metabase-init
+```
+
+Questions incluidas por defecto:
+| Archivo | Question | Filtros |
+|---|---|---|
+| `01-ocupacion-hotel.json` | Ocupación por Hotel | fecha_inicio, fecha_fin |
+| `02-reservas-periodo.json` | Reservas por Período | fecha_inicio, fecha_fin |
+| `03-ingresos-hotel.json` | Ingresos por Hotel | fecha_inicio, fecha_fin |
+| `04-historial-accesos.json` | Historial de Accesos | fecha_inicio, fecha_fin |
+
+Para agregar nuevas plantillas: crear `docker/metabase/questions/05-mi-reporte.json` con la misma estructura y volver a ejecutar `metabase-init`.
+
+### Notas
+
+- Metabase requiere ~**2 GB de RAM** (vs 6 GB de JasperReports).
+- Cambiar `METABASE_ADMIN_EMAIL` y `METABASE_ADMIN_PASSWORD` en `.env` para producción.
+- PDF no está disponible via REST API en la edición open source (sí desde la UI).
+- `GET /reportes/{cardId}/ver` redirige a la URL pública de Metabase (requiere activar Public Sharing en Metabase Settings).
 
 ---
 

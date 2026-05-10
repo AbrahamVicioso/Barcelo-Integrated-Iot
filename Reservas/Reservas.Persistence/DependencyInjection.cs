@@ -34,6 +34,9 @@ namespace Reservas.Persistence
             // Analytics Services
             services.AddScoped<IReservasAnalyticsService, ReservasAnalyticsService>();
 
+            // PDF Report Data Services
+            services.AddScoped<IReportePdfDataService, ReportePdfDataService>();
+
             return services;
         }
     }
