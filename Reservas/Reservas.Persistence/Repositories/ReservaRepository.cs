@@ -25,6 +25,7 @@ public class ReservaRepository : GenericRepository<Reserva>, IReservaRepository
         return await _dbSet
             .Include(r => r.EstadoReserva)
             .Include(r => r.ReservaHuespedes)
+            .OrderByDescending(r => r.FechaCreacion)
             .ToListAsync(cancellationToken);
     }
 

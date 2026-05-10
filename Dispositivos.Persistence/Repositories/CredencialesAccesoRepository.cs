@@ -18,6 +18,7 @@ public class CredencialesAccesoRepository : ICredencialesAccesoRepository
     {
         return await _context.CredencialesAccesos
             .AsNoTracking()
+            .OrderByDescending(c => c.FechaCreacion)
             .ToListAsync();
     }
 

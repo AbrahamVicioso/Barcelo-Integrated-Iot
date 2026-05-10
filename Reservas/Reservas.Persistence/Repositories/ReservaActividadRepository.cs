@@ -11,6 +11,13 @@ public class ReservaActividadRepository : GenericRepository<ReservasActividades>
     {
     }
 
+    public override async Task<IEnumerable<ReservasActividades>> GetAllAsync(CancellationToken cancellationToken = default)
+    {
+        return await _dbSet
+            .OrderByDescending(r => r.FechaCreacion)
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task<IEnumerable<ReservasActividades>> GetReservasByHuespedIdAsync(int huespedId, CancellationToken cancellationToken = default)
     {
         return await _dbSet

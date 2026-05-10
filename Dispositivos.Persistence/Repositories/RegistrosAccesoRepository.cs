@@ -18,6 +18,7 @@ public class RegistrosAccesoRepository : IRegistrosAccesoRepository
     {
         return await _context.RegistrosAccesos
             .AsNoTracking()
+            .OrderByDescending(r => r.FechaHoraAcceso)
             .ToListAsync();
     }
 

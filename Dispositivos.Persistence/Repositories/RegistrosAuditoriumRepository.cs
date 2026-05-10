@@ -18,6 +18,7 @@ public class RegistrosAuditoriumRepository : IRegistrosAuditoriumRepository
     {
         return await _context.RegistrosAuditoria
             .AsNoTracking()
+            .OrderByDescending(r => r.FechaHora)
             .ToListAsync();
     }
 
