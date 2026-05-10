@@ -99,17 +99,33 @@ public class UpdateReservaCommandHandler : IRequestHandler<UpdateReservaCommand,
                             $"pero la reserva incluye {totalHuespedes} huésped(es) (1 titular + {allHuespedIds.Count} adicional(es)).");
                 }
 
-                reserva.ReservaHuespedes.Clear();
+                // Eliminar huéspedes que ya no están en la lista
+                var toRemove = reserva.ReservaHuespedes
+                    .Where(rh => !allHuespedIds.Contains(rh.HuespedId))
+                    .ToList();
+                foreach (var rh in toRemove)
+                    reserva.ReservaHuespedes.Remove(rh);
+
+                // Actualizar existentes o agregar nuevos
                 foreach (var id in allHuespedIds)
                 {
                     var permisos = huespedes.FirstOrDefault(h => h.HuespedId == id);
-                    reserva.ReservaHuespedes.Add(new ReservaHuesped
+                    var existing = reserva.ReservaHuespedes.FirstOrDefault(rh => rh.HuespedId == id);
+                    if (existing != null)
                     {
-                        HuespedId = id,
-                        PuedeCrearActividadesRecreativas = permisos?.PuedeCrearActividadesRecreativas ?? false,
-                        PuedeDesbloquearCerradura = permisos?.PuedeDesbloquearCerradura ?? false,
-                        FechaAgregado = DateTime.Now
-                    });
+                        existing.PuedeCrearActividadesRecreativas = permisos?.PuedeCrearActividadesRecreativas ?? false;
+                        existing.PuedeDesbloquearCerradura = permisos?.PuedeDesbloquearCerradura ?? false;
+                    }
+                    else
+                    {
+                        reserva.ReservaHuespedes.Add(new ReservaHuesped
+                        {
+                            HuespedId = id,
+                            PuedeCrearActividadesRecreativas = permisos?.PuedeCrearActividadesRecreativas ?? false,
+                            PuedeDesbloquearCerradura = permisos?.PuedeDesbloquearCerradura ?? false,
+                            FechaAgregado = DateTime.Now
+                        });
+                    }
                 }
             }
             else if (request.HabitacionId.HasValue || reserva.HabitacionId.HasValue)
