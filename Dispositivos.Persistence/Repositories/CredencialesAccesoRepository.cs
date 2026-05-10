@@ -37,6 +37,13 @@ public class CredencialesAccesoRepository : ICredencialesAccesoRepository
             .ToListAsync();
     }
 
+    public async Task<IEnumerable<CredencialesAcceso>> GetByReservaIdAsync(int reservaId)
+    {
+        return await _context.CredencialesAccesos
+            .Where(c => c.ReservaId == reservaId && c.HuespedId != null)
+            .ToListAsync();
+    }
+
     public async Task<IEnumerable<CredencialesAcceso>> GetByPersonalId(int personalId)
     {
         return await _context.CredencialesAccesos

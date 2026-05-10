@@ -13,5 +13,10 @@ namespace Reservas.Application.Interfaces
         /// Usar cuando cambia la habitación de una reserva con check-in activo.
         /// </summary>
         Task PublishHabitacionSyncAsync(int habitacionId, CancellationToken cancellationToken = default);
+        /// <summary>
+        /// Notifica a Dispositivos que cree/desactive credenciales según los permisos actualizados de huéspedes.
+        /// Usar cuando se agregan, quitan o cambian permisos de huéspedes en una reserva con check-in activo.
+        /// </summary>
+        Task PublishReservaHuespedActualizadoAsync(ReservaHuespedActualizadoEvent evt, CancellationToken cancellationToken = default);
     }
 }

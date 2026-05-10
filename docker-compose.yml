@@ -318,6 +318,7 @@ services:
       KafkaProducer__CheckInRealizadoTopic: reservas.checkin-realizado
       KafkaProducer__PersonalUnlockDoorTopic: habitacion.personal-unlock
       KafkaProducer__HabitacionSyncTopic: habitacion.permiso-personal
+      KafkaProducer__HuespedActualizadoTopic: reservas.huesped-actualizado
       KafkaProducer__ActividadTopic: actividades.reserva-confirmada
       KafkaProducer__ClientId: reservas-api
       AuditProducer__BootstrapServers: kafka:29092
@@ -392,6 +393,9 @@ services:
       KafkaConsumer__PersonalActividadUnlockDoor__BootstrapServers: kafka:29092
       KafkaConsumer__PersonalActividadUnlockDoor__GroupId: dispositivos-personal-actividad-unlock-group
       KafkaConsumer__PersonalActividadUnlockDoor__Topic: actividades.personal-unlock
+      KafkaConsumer__HuespedActualizado__BootstrapServers: kafka:29092
+      KafkaConsumer__HuespedActualizado__GroupId: dispositivos-huesped-actualizado-group
+      KafkaConsumer__HuespedActualizado__Topic: reservas.huesped-actualizado
     networks:
       - barcelo-net
     depends_on:

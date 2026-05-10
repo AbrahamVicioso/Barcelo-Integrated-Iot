@@ -14,6 +14,7 @@ namespace Reservas.Infrastructure.Kafka
         private readonly string _checkInRealizadoTopic;
         private readonly string _personalUnlockDoorTopic;
         private readonly string _habitacionSyncTopic;
+        private readonly string _huespedActualizadoTopic;
         private readonly ILogger<ReservaKafkaProducer> _logger;
         private bool _disposed;
 
@@ -24,6 +25,7 @@ namespace Reservas.Infrastructure.Kafka
             _checkInRealizadoTopic = config.CheckInRealizadoTopic;
             _personalUnlockDoorTopic = config.PersonalUnlockDoorTopic;
             _habitacionSyncTopic = config.HabitacionSyncTopic;
+            _huespedActualizadoTopic = config.HuespedActualizadoTopic;
             _logger = logger;
 
             var producerConfig = new ProducerConfig
@@ -168,6 +170,31 @@ namespace Reservas.Infrastructure.Kafka
             }
         }
 
+        public async Task PublishReservaHuespedActualizadoAsync(ReservaHuespedActualizadoEvent evt, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var message = new Message<string, string>
+                {
+                    Key = evt.ReservaId.ToString(),
+                    Value = JsonSerializer.Serialize(evt, new JsonSerializerOptions
+                    {
+                        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                    })
+                };
+
+                var result = await _producer.ProduceAsync(_huespedActualizadoTopic, message, cancellationToken);
+
+                _logger.LogInformation(
+                    "Published ReservaHuespedActualizadoEvent for reserva {ReservaId} ({AuthCount} autorizados) to partition {Partition} at offset {Offset}",
+                    evt.ReservaId, evt.HuespedesAutorizados.Count, result.Partition.Value, result.Offset.Value);
+            }
+            catch (ProduceException<string, string> ex)
+            {
+                _logger.LogError(ex, "Failed to publish ReservaHuespedActualizadoEvent for reserva {ReservaId}", evt.ReservaId);
+            }
+        }
+
         public void Dispose()
         {
             if (_disposed)
@@ -189,6 +216,7 @@ namespace Reservas.Infrastructure.Kafka
         public string CheckInRealizadoTopic { get; set; } = "reservas.checkin-realizado";
         public string PersonalUnlockDoorTopic { get; set; } = "habitacion.personal-unlock";
         public string HabitacionSyncTopic { get; set; } = "habitacion.permiso-personal";
+        public string HuespedActualizadoTopic { get; set; } = "reservas.huesped-actualizado";
         public string? ClientId { get; set; }
     }
 }

@@ -1,6 +1,7 @@
 using AutoMapper;
 using MediatR;
 using Microsoft.AspNetCore.Http;
+using Notification.Domain.Events;
 using Reservas.Application.Common;
 using Reservas.Application.DTOs;
 using Reservas.Application.Interfaces;
@@ -160,6 +161,36 @@ public class UpdateReservaCommandHandler : IRequestHandler<UpdateReservaCommand,
                 // Sincronizar la nueva si existe
                 if (request.HabitacionId.HasValue)
                     await _kafkaProducer.PublishHabitacionSyncAsync(request.HabitacionId.Value, cancellationToken);
+            }
+
+            // Si la reserva tiene check-in y se modificaron los huéspedes,
+            // notificar a Dispositivos para crear/desactivar credenciales según permisos actuales.
+            if (reserva.CheckInRealizado.HasValue && request.Huespedes != null)
+            {
+                var huespedesAutorizados = reserva.ReservaHuespedes
+                    .Where(rh => rh.PuedeDesbloquearCerradura)
+                    .Select(rh => rh.HuespedId)
+                    .Append(reserva.HuespedId)
+                    .Distinct()
+                    .ToList();
+
+                var todosHuespedes = reserva.ReservaHuespedes
+                    .Select(rh => rh.HuespedId)
+                    .Append(reserva.HuespedId)
+                    .Distinct()
+                    .ToList();
+
+                var huespedEvt = new ReservaHuespedActualizadoEvent
+                {
+                    ReservaId = reserva.ReservaId,
+                    NumeroReserva = reserva.NumeroReserva,
+                    FechaCheckIn = reserva.FechaCheckIn,
+                    FechaCheckOut = reserva.FechaCheckOut,
+                    HuespedesAutorizados = huespedesAutorizados,
+                    TodosHuespedes = todosHuespedes
+                };
+
+                await _kafkaProducer.PublishReservaHuespedActualizadoAsync(huespedEvt, cancellationToken);
             }
 
             var reservaDto = _mapper.Map<ReservaDto>(reserva);
