@@ -44,6 +44,13 @@ public class CredencialesAccesoRepository : ICredencialesAccesoRepository
             .ToListAsync();
     }
 
+    public async Task<IEnumerable<CredencialesAcceso>> GetByReservaActividadIdAsync(int reservaActividadId)
+    {
+        return await _context.CredencialesAccesos
+            .Where(c => c.ReservaActividadId == reservaActividadId && c.EstaActiva)
+            .ToListAsync();
+    }
+
     public async Task<IEnumerable<CredencialesAcceso>> GetByPersonalId(int personalId)
     {
         return await _context.CredencialesAccesos

@@ -60,4 +60,28 @@ public class ReservaActividadRepository : GenericRepository<ReservasActividades>
             .Include(r => r.Actividad)
             .FirstOrDefaultAsync(r => r.ReservaActividadId == id, cancellationToken);
     }
+
+    public async Task<IEnumerable<ReservasActividades>> GetProximasParaRecordatorioAsync(int minutosAntes, CancellationToken cancellationToken = default)
+    {
+        var ahora = DateTime.Now;
+        var limite = ahora.AddMinutes(minutosAntes);
+
+        // EF Core cannot translate DateTime.Add(TimeSpan) to SQL.
+        // Filter by date in SQL, then apply time-window filter in memory.
+        var candidatas = await _dbSet
+            .Include(r => r.Actividad)
+            .Where(r =>
+                !r.RecordatorioEnviado &&
+                r.Estado != "Cancelada" &&
+                r.FechaReserva.Date == ahora.Date)
+            .ToListAsync(cancellationToken);
+
+        return candidatas
+            .Where(r =>
+            {
+                var inicio = r.FechaReserva.Date.Add(r.HoraReserva);
+                return inicio > ahora && inicio <= limite;
+            })
+            .ToList();
+    }
 }

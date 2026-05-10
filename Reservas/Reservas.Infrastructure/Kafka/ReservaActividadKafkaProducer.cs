@@ -12,6 +12,8 @@ public class ReservaActividadKafkaProducer : IReservaActividadKafkaProducer, IDi
     private readonly string _topic;
     private readonly string _actividadUnlockDoorTopic;
     private readonly string _personalActividadUnlockDoorTopic;
+    private readonly string _recordatorioTopic;
+    private readonly string _fechaActualizadaTopic;
     private readonly ILogger<ReservaActividadKafkaProducer> _logger;
     private bool _disposed;
 
@@ -20,6 +22,8 @@ public class ReservaActividadKafkaProducer : IReservaActividadKafkaProducer, IDi
         _topic = config.Topic;
         _actividadUnlockDoorTopic = config.ActividadUnlockDoorTopic;
         _personalActividadUnlockDoorTopic = config.PersonalActividadUnlockDoorTopic;
+        _recordatorioTopic = config.RecordatorioTopic;
+        _fechaActualizadaTopic = config.FechaActualizadaTopic;
         _logger = logger;
 
         var producerConfig = new ProducerConfig
@@ -114,6 +118,58 @@ public class ReservaActividadKafkaProducer : IReservaActividadKafkaProducer, IDi
         }
     }
 
+    public async Task PublishActividadRecordatorioAsync(ActividadRecordatorioEvent evt, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var message = new Message<string, string>
+            {
+                Key = evt.ReservaActividadId.ToString(),
+                Value = JsonSerializer.Serialize(evt, new JsonSerializerOptions
+                {
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                })
+            };
+
+            var result = await _producer.ProduceAsync(_recordatorioTopic, message, cancellationToken);
+
+            _logger.LogInformation(
+                "Published ActividadRecordatorioEvent for reservaActividad {ReservaActividadId}, huesped {HuespedId} to partition {Partition} at offset {Offset}",
+                evt.ReservaActividadId, evt.HuespedId, result.Partition.Value, result.Offset.Value);
+        }
+        catch (ProduceException<string, string> ex)
+        {
+            _logger.LogError(ex, "Failed to publish ActividadRecordatorioEvent for reservaActividad {ReservaActividadId}", evt.ReservaActividadId);
+            throw;
+        }
+    }
+
+    public async Task PublishActividadFechaActualizadaAsync(ActividadFechaActualizadaEvent evt, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var message = new Message<string, string>
+            {
+                Key = evt.ReservaActividadId.ToString(),
+                Value = JsonSerializer.Serialize(evt, new JsonSerializerOptions
+                {
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                })
+            };
+
+            var result = await _producer.ProduceAsync(_fechaActualizadaTopic, message, cancellationToken);
+
+            _logger.LogInformation(
+                "Published ActividadFechaActualizadaEvent for reservaActividad {ReservaActividadId} to partition {Partition} at offset {Offset}",
+                evt.ReservaActividadId, result.Partition.Value, result.Offset.Value);
+        }
+        catch (ProduceException<string, string> ex)
+        {
+            _logger.LogError(ex, "Failed to publish ActividadFechaActualizadaEvent for reservaActividad {ReservaActividadId}", evt.ReservaActividadId);
+            throw;
+        }
+    }
+
     public void Dispose()
     {
         if (_disposed) return;
@@ -129,5 +185,7 @@ public class ReservaActividadKafkaProducerConfig
     public string Topic { get; set; } = "actividades.reserva-confirmada";
     public string ActividadUnlockDoorTopic { get; set; } = "actividades.unlock-door";
     public string PersonalActividadUnlockDoorTopic { get; set; } = "actividades.personal-unlock";
+    public string RecordatorioTopic { get; set; } = "actividades.recordatorio";
+    public string FechaActualizadaTopic { get; set; } = "actividades.fecha-actualizada";
     public string? ClientId { get; set; }
 }

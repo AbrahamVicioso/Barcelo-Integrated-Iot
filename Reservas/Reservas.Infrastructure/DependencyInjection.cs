@@ -6,6 +6,7 @@ using Notification.Domain.Interfaces;
 using Reservas.Application.Interfaces;
 using Reservas.Infrastructure.GrpcClients;
 using Reservas.Infrastructure.Kafka;
+using Reservas.Infrastructure.Services;
 
 namespace Reservas.Infrastructure
 {
@@ -25,8 +26,13 @@ namespace Reservas.Infrastructure
             actividadKafkaConfig.Topic = configuration["KafkaProducer:ActividadTopic"] ?? "actividades.reserva-confirmada";
             actividadKafkaConfig.ActividadUnlockDoorTopic = configuration["KafkaProducer:ActividadUnlockDoorTopic"] ?? "actividades.unlock-door";
             actividadKafkaConfig.PersonalActividadUnlockDoorTopic = configuration["KafkaProducer:PersonalActividadUnlockDoorTopic"] ?? "actividades.personal-unlock";
+            actividadKafkaConfig.RecordatorioTopic = configuration["KafkaProducer:ActividadRecordatorioTopic"] ?? "actividades.recordatorio";
+            actividadKafkaConfig.FechaActualizadaTopic = configuration["KafkaProducer:ActividadFechaActualizadaTopic"] ?? "actividades.fecha-actualizada";
             services.AddSingleton(actividadKafkaConfig);
             services.AddSingleton<IReservaActividadKafkaProducer, ReservaActividadKafkaProducer>();
+
+            // Registrar hosted service de recordatorios de actividades
+            services.AddHostedService<ActividadRecordatorioHostedService>();
 
             // Registrar Audit Kafka Producer
             var auditConfig = new AuditKafkaProducerConfig();

@@ -144,6 +144,14 @@ public class MappingProfile : Profile
             .ForMember(dest => dest.FechaCreacion, opt => opt.Ignore())
             .ForMember(dest => dest.Actividad, opt => opt.Ignore());
 
+        CreateMap<UpdateReservaActividadCommand, ReservasActividades>()
+            .ForMember(dest => dest.ReservaActividadId, opt => opt.Ignore())
+            .ForMember(dest => dest.ActividadId, opt => opt.Ignore())
+            .ForMember(dest => dest.HuespedId, opt => opt.Ignore())
+            .ForMember(dest => dest.FechaCreacion, opt => opt.Ignore())
+            .ForMember(dest => dest.EstadoReservaActividad, opt => opt.Ignore())
+            .ForMember(dest => dest.Actividad, opt => opt.Ignore());
+
         // EstadoReservaActividad mappings
         CreateMap<EstadoReservaActividad, EstadoReservaActividadDto>();
         CreateMap<CreateEstadoReservaActividadDto, EstadoReservaActividad>()

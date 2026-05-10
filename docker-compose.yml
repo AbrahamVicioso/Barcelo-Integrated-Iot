@@ -320,6 +320,8 @@ services:
       KafkaProducer__HabitacionSyncTopic: habitacion.permiso-personal
       KafkaProducer__HuespedActualizadoTopic: reservas.huesped-actualizado
       KafkaProducer__ActividadTopic: actividades.reserva-confirmada
+      KafkaProducer__ActividadRecordatorioTopic: actividades.recordatorio
+      KafkaProducer__ActividadFechaActualizadaTopic: actividades.fecha-actualizada
       KafkaProducer__ClientId: reservas-api
       AuditProducer__BootstrapServers: kafka:29092
       AuditProducer__Topic: audit.events
@@ -396,6 +398,9 @@ services:
       KafkaConsumer__HuespedActualizado__BootstrapServers: kafka:29092
       KafkaConsumer__HuespedActualizado__GroupId: dispositivos-huesped-actualizado-group
       KafkaConsumer__HuespedActualizado__Topic: reservas.huesped-actualizado
+      KafkaConsumer__ActividadFechaActualizada__BootstrapServers: kafka:29092
+      KafkaConsumer__ActividadFechaActualizada__GroupId: dispositivos-actividad-fecha-group
+      KafkaConsumer__ActividadFechaActualizada__Topic: actividades.fecha-actualizada
     networks:
       - barcelo-net
     depends_on:
@@ -475,6 +480,9 @@ services:
       KafkaConsumer__TwoFactorCode__BootstrapServers: kafka:29092
       KafkaConsumer__TwoFactorCode__GroupId: notification-two-factor-group
       KafkaConsumer__TwoFactorCode__Topic: two-factor-code
+      KafkaConsumer__ActividadRecordatorio__BootstrapServers: kafka:29092
+      KafkaConsumer__ActividadRecordatorio__GroupId: notification-actividad-recordatorio-group
+      KafkaConsumer__ActividadRecordatorio__Topic: actividades.recordatorio
       EmailSettings__ConnectionString: ${AZURE_COMMUNICATION_CONNECTION_STRING:?EmailSettings__ConnectionString is required. Set AZURE_COMMUNICATION_CONNECTION_STRING in your .env file}
       EmailSettings__Username: ${AZURE_COMMUNICATION_SENDER_ADDRESS:?EmailSettings__Username is required. Set AZURE_COMMUNICATION_SENDER_ADDRESS in your .env file}
       Ntfy__BaseUrl: https://ntfy:443

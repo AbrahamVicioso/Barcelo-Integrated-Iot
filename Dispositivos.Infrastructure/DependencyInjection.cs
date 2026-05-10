@@ -86,6 +86,12 @@ public static class DependencyInjection
         services.AddSingleton(huespedActualizadoConfig);
         services.AddHostedService<ReservaHuespedActualizadoKafkaConsumer>();
 
+        // Register Kafka consumer for actividad fecha actualizada events (updates credential dates)
+        var actividadFechaConfig = new ActividadFechaActualizadaKafkaConsumerConfig();
+        configuration.GetSection("KafkaConsumer:ActividadFechaActualizada").Bind(actividadFechaConfig);
+        services.AddSingleton(actividadFechaConfig);
+        services.AddHostedService<ActividadFechaActualizadaKafkaConsumer>();
+
         // Register Kafka consumer for actividad unlock-door events (huesped)
         var actividadUnlockConfig = new ActividadUnlockDoorKafkaConsumerConfig();
         configuration.GetSection("KafkaConsumer:ActividadUnlockDoor").Bind(actividadUnlockConfig);
