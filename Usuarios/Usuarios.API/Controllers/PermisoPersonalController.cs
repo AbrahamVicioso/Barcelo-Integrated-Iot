@@ -16,7 +16,6 @@ using Barcelo.Authorization.Shared;
 namespace Usuarios.API.Controllers;
 
 [Authorize]
-[HasPermission(Permissions.Usuarios.View)]
 [ApiController]
 [Route("[controller]")]
 public class PermisoPersonalController : ControllerBase

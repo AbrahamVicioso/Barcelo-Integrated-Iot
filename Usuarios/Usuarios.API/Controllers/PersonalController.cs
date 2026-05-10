@@ -1,5 +1,7 @@
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 using Usuarios.Application.DTOs.Personal;
 using Usuarios.Application.UseCases.Personal.Commands.CreatePersonal;
 using Usuarios.Application.UseCases.Personal.Commands.DeletePersonal;
@@ -14,7 +16,6 @@ using Barcelo.Authorization.Shared;
 namespace Usuarios.API.Controllers;
 
 [ApiController]
-[HasPermission(Permissions.Personal.View)]
 [Route("[controller]")]
 public class PersonalController : ControllerBase
 {
@@ -43,6 +44,18 @@ public class PersonalController : ControllerBase
     public async Task<IActionResult> GetActivo()
     {
         var result = await _mediator.Send(new GetPersonalActivoQuery());
+        return Ok(result);
+    }
+
+    [Authorize]
+    [HttpGet("me")]
+    public async Task<IActionResult> GetMe()
+    {
+        var usuarioId = User.FindFirstValue("nameid") ?? User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (usuarioId == null)
+            return Unauthorized();
+
+        var result = await _mediator.Send(new GetPersonalByUserIdQuery(usuarioId));
         return Ok(result);
     }
 
