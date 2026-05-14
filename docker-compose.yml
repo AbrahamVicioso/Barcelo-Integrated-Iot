@@ -41,29 +41,21 @@ services:
         limits:
           memory: 300M
           cpus: '0.25'
-    # Desarrollo: solo HTTP
-    # Producción: HTTPS con certificados
-    command: >
-      serve
-      --listen-http :80
-      --listen-https :443
+    # nginx termina TLS — ntfy solo HTTP interno
+    command: serve --listen-http :80
     ports:
-      - "8081:443"
       - "8082:80"
     environment:
       TZ: America/Santo_Domingo
-      NTFY_BASE_URL: ${NTFY_PUBLIC_BASE_URL:-https://localhost:8081}
+      NTFY_BASE_URL: ${NTFY_PUBLIC_BASE_URL:-https://ntfy.smartstay.es}
       NTFY_CACHE_FILE: /var/lib/ntfy/cache.db
       NTFY_AUTH_FILE: /var/lib/ntfy/auth.db
       NTFY_AUTH_DEFAULT_ACCESS: ${NTFY_AUTH_DEFAULT_ACCESS:-read-write}
       NTFY_ATTACHMENT_CACHE_DIR: /var/lib/ntfy/attachments
-      NTFY_BEHIND_PROXY: "false"
+      NTFY_BEHIND_PROXY: "true"
       NTFY_ENABLE_CORS: "true"
-      NTFY_KEY_FILE: ${NTFY_KEY_FILE:-/certs/privkey.pem}
-      NTFY_CERT_FILE: ${NTFY_CERT_FILE:-/certs/fullchain.pem}  
     volumes:
       - ntfy-data:/var/lib/ntfy
-      - ./docker/certs/archive/${DOMINIO_PRINCIPAL:-smartstay.es}:/certs:ro
     networks:
       - barcelo-net
     healthcheck:
