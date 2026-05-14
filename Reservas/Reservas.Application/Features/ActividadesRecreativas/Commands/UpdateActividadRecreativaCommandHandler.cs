@@ -36,6 +36,13 @@ public class UpdateActividadRecreativaCommandHandler : IRequestHandler<UpdateAct
             var actividadDto = _mapper.Map<ActividadRecreativaDto>(actividad);
             return Result<ActividadRecreativaDto>.Success(actividadDto);
         }
+        catch (Exception ex) when (ex.GetType().Name == "DbUpdateException")
+        {
+            var inner = ex.InnerException?.Message ?? ex.Message;
+            if (inner.Contains("CHK_Actividades_Horario"))
+                return Result<ActividadRecreativaDto>.Failure("La hora de cierre debe ser posterior a la hora de apertura.");
+            return Result<ActividadRecreativaDto>.Failure($"Error de base de datos al actualizar la actividad: {inner}");
+        }
         catch (Exception ex)
         {
             return Result<ActividadRecreativaDto>.Failure($"Error al actualizar la actividad: {ex.Message}");
