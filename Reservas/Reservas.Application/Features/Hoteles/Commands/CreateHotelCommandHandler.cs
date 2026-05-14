@@ -20,6 +20,9 @@ public class CreateHotelCommandHandler : IRequestHandler<CreateHotelCommand, Res
 
     public async Task<Result<int>> Handle(CreateHotelCommand request, CancellationToken cancellationToken)
     {
+        if (request.Hotel.NumeroHabitaciones <= 0)
+            return Result<int>.Failure("El número de habitaciones debe ser mayor a 0.");
+
         try
         {
             var hotel = _mapper.Map<Hotel>(request.Hotel);

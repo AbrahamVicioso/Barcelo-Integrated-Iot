@@ -41,6 +41,8 @@ namespace Authentication.Api.UseCases.Commands.RegisterUser
                 return result.ToValidationProblem();
             }
 
+            await userManager.AddToRoleAsync(user, "Guest");
+
             // Publish UserCreatedEvent for ntfy account + welcome email
             await kafkaProducerService.PublishUserCreatedAsync(new UserCreatedEvent
             {
