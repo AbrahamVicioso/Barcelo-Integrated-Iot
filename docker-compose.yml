@@ -231,9 +231,9 @@ services:
       ForgotPassword__BaseUrl: ${GATEWAY_PUBLIC_BASE_URL}
       ForgotPassword__PathPrefix: ${RESET_PASSWORD_PATH:-/api/auth}
       ForgotPassword__Suffix: ${RESET_PASSWORD_SUFFIX:-/ResetPassword}
-      Ntfy__BaseUrl: https://ntfy:443
-      Ntfy__PublicBaseUrl: https://smartstay.es:8081/ntfy
-      Ntfy__IgnoreCertificateErrors: "true"
+      Ntfy__BaseUrl: http://ntfy:80
+      Ntfy__PublicBaseUrl: ${NTFY_PUBLIC_BASE_URL:-https://ntfy.smartstay.es}
+      Ntfy__IgnoreCertificateErrors: "false"
       Ntfy__AccessToken: ${NTFY_SERVER_TOKEN:-}
       Ntfy__AdminPassword: ${NTFY_ADMIN_PASSWORD:-}
     networks:
@@ -477,12 +477,12 @@ services:
       KafkaConsumer__ActividadRecordatorio__Topic: actividades.recordatorio
       EmailSettings__ConnectionString: ${AZURE_COMMUNICATION_CONNECTION_STRING:?EmailSettings__ConnectionString is required. Set AZURE_COMMUNICATION_CONNECTION_STRING in your .env file}
       EmailSettings__Username: ${AZURE_COMMUNICATION_SENDER_ADDRESS:?EmailSettings__Username is required. Set AZURE_COMMUNICATION_SENDER_ADDRESS in your .env file}
-      Ntfy__BaseUrl: https://ntfy:443
-      Ntfy__PublicBaseUrl: https://smartstay.es:8081/ntfy
+      Ntfy__BaseUrl: http://ntfy:80
+      Ntfy__PublicBaseUrl: ${NTFY_PUBLIC_BASE_URL:-https://ntfy.smartstay.es}
       Ntfy__TopicPrefix: barcelo
       Ntfy__AccessToken: ${NTFY_SERVER_TOKEN:-}
       Ntfy__AdminPassword: ${NTFY_ADMIN_PASSWORD:-}
-      Ntfy__IgnoreCertificateErrors: "true"
+      Ntfy__IgnoreCertificateErrors: "false"
       AuthApi__BaseUrl: http://auth-api:5117
       ExternalServices__Authenticate__GrpcUrl: https://auth-api:5118
       ExternalServices__Authenticate__SkipCertValidation: "true"
