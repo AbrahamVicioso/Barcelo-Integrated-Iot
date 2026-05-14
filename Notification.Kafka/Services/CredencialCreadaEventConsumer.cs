@@ -165,7 +165,11 @@ namespace Notification.Kafka.Services
 
             try
             {
-                var tipoTexto = credencialEvent.TipoCredencial == "Huesped" ? "de huésped" : "de personal";
+                var tipoTexto = credencialEvent.TipoCredencial switch {
+                    "Huesped" => "de huésped",
+                    "Actividad" => "de actividad",
+                    _ => "de personal"
+                };
                 var emailBody = GenerarEmailCredencial(credencialEvent);
 
                 var emailNotification = new EmailNotification
@@ -203,7 +207,11 @@ namespace Notification.Kafka.Services
 
         private string GenerarEmailCredencial(CredencialCreadaEvent credencialEvent)
         {
-            var tipoTexto = credencialEvent.TipoCredencial == "Huesped" ? "huésped" : "personal";
+            var tipoTexto = credencialEvent.TipoCredencial switch {
+                "Huesped" => "huésped",
+                "Actividad" => "actividad",
+                _ => "personal"
+            };
             var nombre = credencialEvent.NombreCompleto ?? "Usuario";
 
             return $@"
